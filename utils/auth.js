@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // ✅ FIXED: bcrypt → bcryptjs
 
 // JWT Secret - in production, use environment variable
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-for-universal-student-api-2024';
@@ -111,7 +111,7 @@ class AuthUtils {
   }
 
   /**
-   * Hash password using bcrypt
+   * Hash password using bcryptjs
    * @param {string} password - Plain text password
    * @returns {Promise<string>} Hashed password
    */
@@ -130,7 +130,7 @@ class AuthUtils {
   }
 
   /**
-   * Compare password with hashed password
+   * Compare password with hashed password using bcryptjs
    * @param {string} password - Plain text password
    * @param {string} hashedPassword - Hashed password from database
    * @returns {Promise<boolean>} True if passwords match
