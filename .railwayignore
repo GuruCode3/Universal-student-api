@@ -1,0 +1,11 @@
+# Railway ignore file - exclude dev dependencies from build
+node_modules
+.git
+.gitignore
+*.log
+.env.local
+.env.development
+README.md
+docs/
+tests/
+*.md
