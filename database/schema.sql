@@ -1,0 +1,34 @@
+-- Universal Products Table
+CREATE TABLE IF NOT EXISTS products (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    price DECIMAL(10,2),
+    image_url VARCHAR(500),
+    attributes JSON,
+    category_id INTEGER,
+    brand_id INTEGER,
+    rating DECIMAL(3,2) DEFAULT 0,
+    review_count INTEGER DEFAULT 0,
+    in_stock BOOLEAN DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Categories Table
+CREATE TABLE IF NOT EXISTS categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Brands Table  
+CREATE TABLE IF NOT EXISTS brands (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    domain VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    slug VARCHAR(100) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

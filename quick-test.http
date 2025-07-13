@@ -1,0 +1,99 @@
+### 🚀 UNIVERSAL STUDENT API - QUICK TEST
+### გაუშვი server: npm start
+### შემდეგ VS Code-ში დააკლიკე "Send Request" ღილაკს
+
+### 1. 🏠 Root Endpoint - Basic API Info
+GET http://localhost:3000/
+
+###
+
+### 2. 💓 Health Check - Server Status
+GET http://localhost:3000/health
+
+###
+
+### 3. 📊 API Status - Detailed Status
+GET http://localhost:3000/api/v1/status
+
+###
+
+### 4. 🎬 Test Movies Products (Main Test)
+GET http://localhost:3000/api/v1/movies/products?limit=5
+
+###
+
+### 5. 📚 Test Books Products
+GET http://localhost:3000/api/v1/books/products?limit=3
+
+###
+
+### 6. 🏷️ Test Movies Categories
+GET http://localhost:3000/api/v1/movies/categories
+
+###
+
+### 7. 🎯 Test Movies Brands
+GET http://localhost:3000/api/v1/movies/brands
+
+###
+
+### 8. 🌐 Available Domains List
+GET http://localhost:3000/api/v1/domains
+
+###
+
+### 9. 🔍 Search Test
+GET http://localhost:3000/api/v1/movies/products/search?q=batman
+
+###
+
+### 10. 🎯 Single Product Test
+GET http://localhost:3000/api/v1/movies/products/1
+
+###
+
+### ===============================================
+### 🔐 AUTHENTICATION TESTS
+### ===============================================
+
+### 11. 🧪 Auth System Test
+GET http://localhost:3000/api/v1/auth/test
+
+###
+
+### 12. 👤 User Login (Demo User)
+POST http://localhost:3000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo",
+  "password": "demo123"
+}
+
+### COPY THE TOKEN FROM ABOVE RESPONSE!
+
+### 13. 👤 Get User Profile (Protected - Need Token)
+GET http://localhost:3000/api/v1/auth/profile
+Authorization: Bearer PUT_TOKEN_HERE
+
+###
+
+### 14. 🛒 Empty Cart Check (Protected)
+GET http://localhost:3000/api/v1/cart
+Authorization: Bearer PUT_TOKEN_HERE
+
+###
+
+### ===============================================
+### 📋 TEST RESULTS CHECKLIST:
+### ===============================================
+### ✅ Test 1-3: Server running correctly
+### ✅ Test 4-5: Products endpoints working
+### ✅ Test 6-7: Categories/Brands working  
+### ✅ Test 8: Domains list working
+### ✅ Test 9-10: Search & single product working
+### ✅ Test 11-12: Authentication working
+### ✅ Test 13-14: Protected routes working
+
+### 🎯 IF ALL TESTS PASS: Your API is 100% ready!
+### ❌ IF TESTS FAIL: Check console errors and database

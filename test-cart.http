@@ -1,0 +1,62 @@
+### 1. Login to get JWT Token
+POST http://localhost:3000/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "password123"
+}
+
+###
+
+### 2. Get Empty Cart (Protected Route)
+GET http://localhost:3000/api/v1/cart
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NjkwMzQ5LCJleHAiOjE3MzY3NzY3NDksImlzcyI6IlVuaXZlcnNhbFN0dWRlbnRBUEkifQ.yY_swbZEIqMl_jpXkj4OvWZTQQSeEQjH5rqJSsxvwam14
+
+###
+
+### 3. Add Movie to Cart
+POST http://localhost:3000/api/v1/cart/add
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NjkwMzQ5LCJleHAiOjE3MzY3NzY3NDksImlzcyI6IlVuaXZlcnNhbFN0dWRlbnRBUEkifQ.yY_swbZEIqMl_jpXkj4OvWZTQQSeEQjH5rqJSsxvwam14
+Content-Type: application/json
+
+{
+  "domain": "movies",
+  "product_id": 13641,
+  "name": "Inception",
+  "price": 15.99,
+  "quantity": 1
+}
+
+###
+
+### 4. Add Book to Cart
+POST http://localhost:3000/api/v1/cart/add
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NjkwMzQ5LCJleHAiOjE3MzY3NzY3NDksImlzcyI6IlVuaXZlcnNhbFN0dWRlbnRBUEkifQ.yY_swbZEIqMl_jpXkj4OvWZTQQSeEQjH5rqJSsxvwam14
+Content-Type: application/json
+
+{
+  "domain": "books",
+  "product_id": 13611,
+  "name": "1984",
+  "price": 10.99,
+  "quantity": 2
+}
+
+###
+
+### 5. Get Cart with Items
+GET http://localhost:3000/api/v1/cart
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NjkwMzQ5LCJleHAiOjE3MzY3NzY3NDksImlzcyI6IlVuaXZlcnNhbFN0dWRlbnRBUEkifQ.yY_swbZEIqMl_jpXkj4OvWZTQQSeEQjH5rqJSsxvwam14
+
+###
+
+### 6. Mock Checkout
+POST http://localhost:3000/api/v1/cart/checkout
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NjkwMzQ5LCJleHAiOjE3MzY3NzY3NDksImlzcyI6IlVuaXZlcnNhbFN0dWRlbnRBUEkifQ.yY_swbZEIqMl_jpXkj4OvWZTQQSeEQjH5rqJSsxvwam14
+
+###
+
+### 7. Clear Cart
+DELETE http://localhost:3000/api/v1/cart/clear
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwidXNlcm5hbWUiOiJ0ZXN0dXNlciIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzM2NjkwMzQ5LCJleHAiOjE3MzY3NzY3NDksImlzcyI6IlVuaXZlcnNhbFN0dWRlbnRBUEkifQ.yY_swbZEIqMl_jpXkj4OvWZTQQSeEQjH5rqJSsxvwam14
