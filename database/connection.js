@@ -1,296 +1,281 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Client } = require('pg');
 const fs = require('fs');
+const path = require('path');
 
-// Database path - FIXED to match actual filename
-const DB_PATH = path.join(__dirname, 'universal-api.db');
+// Database configuration
+const dbConfig = {
+  // Use Railway's PostgreSQL URL or fallback to SQLite locally
+  connectionString: process.env.DATABASE_URL || process.env.PGDATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+};
 
-let db = null;
+let db;
+let isPostgreSQL = false;
 
-// Initialize database connection
-function initializeDatabase() {
+// Initialize database based on environment
+async function initializeDatabase() {
   try {
     console.log('🗄️ Initializing database...');
-    console.log('📍 Database path:', DB_PATH);
-
-    // Create database connection
-    db = new Database(DB_PATH);
-    console.log('✅ Database connection established');
-
-    // Read and execute schema
-    const schemaPath = path.join(__dirname, 'schema.sql');
-    if (fs.existsSync(schemaPath)) {
-      const schema = fs.readFileSync(schemaPath, 'utf8');
-      db.exec(schema);
-      console.log('✅ Database schema loaded');
-    } else {
-      console.log('⚠️ Schema file not found, creating tables manually...');
-      createTablesManually();
-    }
-
-    // Enable foreign keys
-    db.pragma('foreign_keys = ON');
     
-    // Set WAL mode for better concurrency
-    db.pragma('journal_mode = WAL');
+    // Check if we have PostgreSQL connection string (Railway)
+    if (process.env.DATABASE_URL || process.env.PGDATABASE_URL) {
+      console.log('🐘 Using PostgreSQL database (Railway)');
+      isPostgreSQL = true;
+      
+      // PostgreSQL connection
+      db = new Client(dbConfig);
+      await db.connect();
+      console.log('✅ PostgreSQL connected successfully');
+      
+      // Create tables if they don't exist
+      await createPostgreSQLTables();
+      
+    } else {
+      console.log('📁 Using SQLite database (Local development)');
+      isPostgreSQL = false;
+      
+      // SQLite fallback for local development
+      const Database = require('better-sqlite3');
+      const dbPath = path.join(__dirname, 'universal-api.db');
+      console.log('📍 Database path:', dbPath);
+      
+      db = new Database(dbPath, { verbose: console.log });
+      console.log('✅ SQLite database connection established');
+      
+      // Load schema for SQLite
+      await loadSQLiteSchema();
+    }
     
     console.log('✅ Database initialization complete');
-    return true;
-
+    return db;
+    
   } catch (error) {
     console.error('❌ Database initialization failed:', error);
-    return false;
-  }
-}
-
-// Create tables manually if schema.sql not found
-function createTablesManually() {
-  try {
-    console.log('🔧 Creating tables manually...');
-
-    // Products table
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        domain VARCHAR(50) NOT NULL,
-        name VARCHAR(255) NOT NULL,
-        price DECIMAL(10,2),
-        image_url VARCHAR(500),
-        attributes JSON,
-        category_id INTEGER,
-        brand_id INTEGER,
-        rating DECIMAL(3,2) DEFAULT 0,
-        review_count INTEGER DEFAULT 0,
-        in_stock BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Categories table
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        domain VARCHAR(50) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        slug VARCHAR(100) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Brands table
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS brands (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        domain VARCHAR(50) NOT NULL,
-        name VARCHAR(100) NOT NULL,
-        slug VARCHAR(100) NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Users table
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        email VARCHAR(100) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        first_name VARCHAR(50),
-        last_name VARCHAR(50),
-        avatar_url VARCHAR(500),
-        role VARCHAR(20) DEFAULT 'user',
-        is_active BOOLEAN DEFAULT 1,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // User cart table
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS user_cart (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
-        domain VARCHAR(50) NOT NULL,
-        product_id INTEGER NOT NULL,
-        quantity INTEGER DEFAULT 1,
-        added_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      );
-    `);
-
-    // Create indexes for better performance
-    db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_products_domain ON products(domain);
-      CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
-      CREATE INDEX IF NOT EXISTS idx_products_brand ON products(brand_id);
-      CREATE INDEX IF NOT EXISTS idx_categories_domain ON categories(domain);
-      CREATE INDEX IF NOT EXISTS idx_brands_domain ON brands(domain);
-      CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-      CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-    `);
-
-    console.log('✅ Tables created manually');
-
-  } catch (error) {
-    console.error('❌ Manual table creation failed:', error);
     throw error;
   }
 }
 
-// Test database connection
-function testConnection() {
+// Create PostgreSQL tables
+async function createPostgreSQLTables() {
   try {
-    if (!db) {
-      console.log('❌ Database not initialized');
-      return false;
-    }
-
-    // Simple test query
-    const result = db.prepare('SELECT 1 as test').get();
+    console.log('🔧 Creating PostgreSQL tables...');
     
-    if (result && result.test === 1) {
-      console.log('✅ Database connection test passed');
-      
-      // Log table counts
-      const tables = ['products', 'categories', 'brands', 'users'];
-      tables.forEach(table => {
-        try {
-          const count = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get();
-          console.log(`📊 ${table}: ${count.count} records`);
-        } catch (error) {
-          console.log(`📊 ${table}: table not found or empty`);
-        }
-      });
-      
-      return true;
+    // Products table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        domain VARCHAR(50) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        price DECIMAL(10,2),
+        image_url VARCHAR(500),
+        images JSONB,
+        attributes JSONB,
+        category_id INTEGER,
+        brand_id INTEGER,
+        rating DECIMAL(3,2) DEFAULT 0,
+        review_count INTEGER DEFAULT 0,
+        in_stock BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Categories table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        domain VARCHAR(50) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Brands table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS brands (
+        id SERIAL PRIMARY KEY,
+        domain VARCHAR(50) NOT NULL,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        logo_url VARCHAR(500),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Users table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        avatar_url VARCHAR(500),
+        role VARCHAR(20) DEFAULT 'user',
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    console.log('✅ PostgreSQL tables created successfully');
+    
+    // Check if we need to seed data
+    const productCount = await db.query('SELECT COUNT(*) as count FROM products');
+    if (productCount.rows[0].count === '0') {
+      console.log('🌱 Database is empty, seeding with sample data...');
+      await seedPostgreSQLData();
     }
-
-    return false;
-
+    
   } catch (error) {
-    console.error('❌ Database connection test failed:', error);
-    return false;
+    console.error('❌ PostgreSQL table creation failed:', error);
+    throw error;
   }
 }
 
-// Get database instance
-function getDatabase() {
-  if (!db) {
-    throw new Error('Database not initialized. Call initializeDatabase() first.');
-  }
-  return db;
-}
-
-// Close database connection
-function closeDatabase() {
-  if (db) {
-    try {
-      db.close();
-      console.log('✅ Database connection closed');
-    } catch (error) {
-      console.error('❌ Error closing database:', error);
-    }
-  }
-}
-
-// Database backup function
-function backupDatabase() {
+// Load SQLite schema (for local development)
+async function loadSQLiteSchema() {
   try {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupPath = path.join(__dirname, `backup-${timestamp}.db`);
-    
-    if (db) {
-      db.backup(backupPath);
-      console.log(`✅ Database backed up to: ${backupPath}`);
-      return backupPath;
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    if (fs.existsSync(schemaPath)) {
+      const schema = fs.readFileSync(schemaPath, 'utf8');
+      db.exec(schema);
+      console.log('✅ SQLite schema loaded');
     }
-    
-    return null;
   } catch (error) {
-    console.error('❌ Database backup failed:', error);
-    return null;
+    console.error('❌ SQLite schema loading failed:', error);
   }
 }
 
-// Get database statistics
-function getDatabaseStats() {
+// Seed PostgreSQL with sample data
+async function seedPostgreSQLData() {
   try {
-    if (!db) {
-      return { error: 'Database not initialized' };
-    }
-
-    const stats = {};
+    console.log('🌱 Seeding PostgreSQL with sample data...');
     
-    // Get table counts
-    const tables = ['products', 'categories', 'brands', 'users'];
-    tables.forEach(table => {
-      try {
-        const result = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get();
-        stats[table] = result.count;
-      } catch (error) {
-        stats[table] = 0;
+    // Sample categories
+    const categories = [
+      { domain: 'movies', name: 'Action', description: 'Action movies' },
+      { domain: 'movies', name: 'Comedy', description: 'Comedy movies' },
+      { domain: 'movies', name: 'Drama', description: 'Drama movies' },
+      { domain: 'books', name: 'Fiction', description: 'Fiction books' },
+      { domain: 'books', name: 'Non-Fiction', description: 'Non-fiction books' },
+      { domain: 'electronics', name: 'Laptops', description: 'Laptop computers' },
+      { domain: 'electronics', name: 'Phones', description: 'Mobile phones' }
+    ];
+    
+    for (const category of categories) {
+      await db.query(
+        'INSERT INTO categories (domain, name, description) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+        [category.domain, category.name, category.description]
+      );
+    }
+    
+    // Sample brands
+    const brands = [
+      { domain: 'movies', name: 'Marvel Studios', description: 'Marvel movie studio' },
+      { domain: 'movies', name: 'Warner Bros', description: 'Warner Brothers studio' },
+      { domain: 'electronics', name: 'Apple', description: 'Apple Inc.' },
+      { domain: 'electronics', name: 'Samsung', description: 'Samsung Electronics' }
+    ];
+    
+    for (const brand of brands) {
+      await db.query(
+        'INSERT INTO brands (domain, name, description) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+        [brand.domain, brand.name, brand.description]
+      );
+    }
+    
+    // Sample products
+    const products = [
+      {
+        domain: 'movies',
+        name: 'Avengers: Endgame',
+        price: 19.99,
+        image_url: 'https://picsum.photos/300/400?random=1',
+        attributes: JSON.stringify({ director: 'Russo Brothers', year: 2019, genre: 'Action' }),
+        category_id: 1,
+        brand_id: 1,
+        rating: 4.8
+      },
+      {
+        domain: 'movies',
+        name: 'The Dark Knight',
+        price: 15.99,
+        image_url: 'https://picsum.photos/300/400?random=2',
+        attributes: JSON.stringify({ director: 'Christopher Nolan', year: 2008, genre: 'Action' }),
+        category_id: 1,
+        brand_id: 2,
+        rating: 4.9
+      },
+      {
+        domain: 'electronics',
+        name: 'iPhone 15 Pro',
+        price: 999.99,
+        image_url: 'https://picsum.photos/300/400?random=3',
+        attributes: JSON.stringify({ storage: '256GB', color: 'Space Black', brand: 'Apple' }),
+        category_id: 7,
+        brand_id: 3,
+        rating: 4.7
       }
-    });
-
-    // Get domain counts
-    try {
-      const domains = db.prepare(`
-        SELECT domain, COUNT(*) as count 
-        FROM products 
-        GROUP BY domain 
-        ORDER BY count DESC
-      `).all();
-      stats.domains = domains;
-    } catch (error) {
-      stats.domains = [];
+    ];
+    
+    for (const product of products) {
+      await db.query(
+        `INSERT INTO products (domain, name, price, image_url, attributes, category_id, brand_id, rating) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING`,
+        [product.domain, product.name, product.price, product.image_url, 
+         product.attributes, product.category_id, product.brand_id, product.rating]
+      );
     }
-
-    // Database size
-    try {
-      const dbStats = fs.statSync(DB_PATH);
-      stats.database_size = `${(dbStats.size / 1024 / 1024).toFixed(2)} MB`;
-    } catch (error) {
-      stats.database_size = 'Unknown';
-    }
-
-    return stats;
-
+    
+    console.log('✅ PostgreSQL data seeding complete');
+    
   } catch (error) {
-    console.error('❌ Error getting database stats:', error);
-    return { error: error.message };
+    console.error('❌ PostgreSQL seeding failed:', error);
   }
 }
 
-// Vacuum database to optimize
-function vacuumDatabase() {
-  try {
-    if (!db) {
-      console.log('❌ Database not initialized');
-      return false;
+// Database query wrapper
+const dbQuery = {
+  // Get all records
+  getAll: async (query, params = []) => {
+    if (isPostgreSQL) {
+      const result = await db.query(query, params);
+      return result.rows;
+    } else {
+      return db.prepare(query).all(...params);
     }
-
-    console.log('🧹 Running database vacuum...');
-    db.exec('VACUUM');
-    console.log('✅ Database vacuum completed');
-    return true;
-
-  } catch (error) {
-    console.error('❌ Database vacuum failed:', error);
-    return false;
+  },
+  
+  // Get one record
+  getOne: async (query, params = []) => {
+    if (isPostgreSQL) {
+      const result = await db.query(query, params);
+      return result.rows[0] || null;
+    } else {
+      return db.prepare(query).get(...params) || null;
+    }
+  },
+  
+  // Run query (INSERT, UPDATE, DELETE)
+  run: async (query, params = []) => {
+    if (isPostgreSQL) {
+      const result = await db.query(query, params);
+      return { 
+        changes: result.rowCount,
+        lastInsertRowid: result.rows[0]?.id || null
+      };
+    } else {
+      return db.prepare(query).run(...params);
+    }
   }
-}
+};
 
-// Export database instance and functions
 module.exports = {
   initializeDatabase,
-  testConnection,
-  getDatabase,
-  closeDatabase,
-  backupDatabase,
-  getDatabaseStats,
-  vacuumDatabase,
-  get db() {
-    return db;
-  }
+  dbConfig: dbQuery,
+  getDb: () => db,
+  isPostgreSQL: () => isPostgreSQL
 };
