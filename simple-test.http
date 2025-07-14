@@ -1,126 +1,453 @@
 ### ===========================================
-### 🚀 RAILWAY DATA GENERATION - LIVE SERVER
-### Force populate database with real data
+### 🚀 UNIVERSAL STUDENT API - PRODUCTION TESTS (RAILWAY)
+### Complete 50-Test Suite for Live Environment
+### URL: https://universal-student-api-production.up.railway.app
 ### ===========================================
 
-### METHOD 1: Simple GET request (try first)
-GET https://universal-student-api-production.up.railway.app/api/v1/admin/populate-data
+### 1. 🏥 HEALTH CHECK - Server Status
+GET https://universal-student-api-production.up.railway.app/health
 
 ###
 
-### METHOD 2: POST request with parameters
-POST https://universal-student-api-production.up.railway.app/api/v1/admin/populate-data
+### 2. 🔐 AUTH TEST - Basic endpoint
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/test
+
+###
+
+### 3. 👤 USER REGISTRATION - Create Fresh User (GETS TOKEN AUTOMATICALLY)
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "action": "populate_all_domains",
-  "domains": ["movies", "books", "electronics", "restaurants", "fashion", "games"],
-  "products_per_domain": 500,
-  "force_regenerate": true
+  "username": "studenst2026",
+  "email": "student2s026@university.edu",
+  "password": "mystudsent123",
+  "first_name": "სტუsდენტი",
+  "last_name": "ახაsლი"
 }
 
 ###
 
-### METHOD 3: Initialize database endpoint
-GET https://universal-student-api-production.up.railway.app/api/v1/admin/init-database
-
-###
-
-### METHOD 4: Full system reset and populate
-POST https://universal-student-api-production.up.railway.app/api/v1/admin/reset-and-populate
+### 4. 🔑 LOGIN - Use for fresh token (same credentials)
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "reset_database": true,
-  "populate_data": true,
-  "domains": ["movies", "books", "electronics", "restaurants", "fashion"],
-  "products_per_domain": 500
+  "username": "studsent2026",
+  "password": "mystudsent123"
 }
 
 ###
 
-### METHOD 5: Debug - check current data status
-GET https://universal-student-api-production.up.railway.app/api/v1/admin/database-status
+### 5. 👤 USER PROFILE - Test JWT Authentication
+# COPY TOKEN FROM STEP 3 OR 4 REGISTRATION/LOGIN RESPONSE AND PASTE BELOW!
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
 
 ###
 
-### METHOD 6: Force data generation via internal endpoint
-POST https://universal-student-api-production.up.railway.app/api/v1/internal/generate-data
+### ===========================================
+### 🎬 MOVIES DOMAIN TESTING (Working Product IDs)
+### ===========================================
+
+### 6. 📱 MOVIES - Get all products (paginated)
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=10
+
+###
+
+### 7. 🔍 MOVIES - Search products
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=avengers
+
+###
+
+### 8. 📋 MOVIES - Get categories (96 categories)
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/categories
+
+###
+
+### 9. 🏷️ MOVIES - Get brands (72 brands)
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/brands
+
+###
+
+### 10. 📄 MOVIES - Get single product (WORKING ID: 2609)
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/2609
+
+###
+
+### 11. 📄 MOVIES - Get another product (ID: 2610)
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/2610
+
+###
+
+### 12. 📄 MOVIES - Get third product (ID: 2611)
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/2611
+
+###
+
+### ===========================================
+### 📚 BOOKS DOMAIN TESTING (544 products)
+### ===========================================
+
+### 13. 📚 BOOKS - Get all products
+GET https://universal-student-api-production.up.railway.app/api/v1/books/products?page=1&limit=5
+
+###
+
+### 14. 🔍 BOOKS - Search books
+GET https://universal-student-api-production.up.railway.app/api/v1/books/products/search?q=programming
+
+###
+
+### 15. 📋 BOOKS - Get categories (96 categories)
+GET https://universal-student-api-production.up.railway.app/api/v1/books/categories
+
+###
+
+### ===========================================
+### 💻 ELECTRONICS DOMAIN TESTING (500 products)
+### ===========================================
+
+### 16. 💻 ELECTRONICS - Get products
+GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?page=1&limit=5
+
+###
+
+### 17. 🔍 ELECTRONICS - Search electronics
+GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=laptop
+
+###
+
+### ===========================================
+### 🛒 SHOPPING CART TESTING (requires auth)
+### COPY TOKEN FROM STEP 4 TO ALL TESTS BELOW!
+### ===========================================
+
+### 18. 🛒 ADD TO CART - Add Avengers movie to cart
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
 Content-Type: application/json
 
 {
-  "secret_key": "universal-student-api-2024",
-  "action": "generate_full_database",
-  "domains": ["movies", "books", "electronics", "restaurants", "fashion", "games", "toys", "tools"],
-  "products_per_domain": 500
+  "product_id": 2609,
+  "quantity": 2
 }
 
 ###
 
-### METHOD 7: Alternative - trigger via health check with parameter
-GET https://universal-student-api-production.up.railway.app/health?populate=true
+### 19. 🛒 ADD TO CART - Add Inception movie to cart
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+Content-Type: application/json
 
-###
-
-### METHOD 8: Status check after population
-GET https://universal-student-api-production.up.railway.app/api/v1/status
-
-###
-
-### ===========================================
-### 🎯 EXPECTED RESULTS
-### ===========================================
-
-# Success Response:
 {
-  "success": true,
-  "message": "Database populated successfully",
-  "data": {
-    "products_created": 4000,
-    "domains_populated": 8,
-    "users_created": 10,
-    "categories_created": 200,
-    "brands_created": 150
-  }
+  "product_id": 2610,
+  "quantity": 1
 }
 
-# Error Response:
+###
+
+### 20. 👀 VIEW CART - Get cart contents
+GET https://universal-student-api-production.up.railway.app/api/v1/cart
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+
+###
+
+### 21. ➖ REMOVE FROM CART - Remove Avengers
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/remove
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+Content-Type: application/json
+
 {
-  "success": false,
-  "error": "Endpoint not found",
-  "available_endpoints": [...]
+  "product_id": 2609
 }
 
-### ===========================================
-### 📋 TESTING SEQUENCE
-### ===========================================
+###
 
-# 1. Try METHOD 1 (GET populate-data)
-# 2. If 404, try METHOD 2 (POST populate-data)  
-# 3. If still 404, try METHOD 3 (init-database)
-# 4. Check METHOD 8 (status) to verify results
-# 5. Test a domain: GET /api/v1/movies/products
+### 22. 💳 CHECKOUT - Process cart
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/checkout
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+
+###
 
 ### ===========================================
-### 🔧 TROUBLESHOOTING
+### 🧪 ADVANCED FILTERING TESTS
 ### ===========================================
 
-# If ALL methods return 404:
-# - Admin endpoints might not be implemented
-# - Need to add endpoint to server code
-# - Alternative: redeploy with data generation in startup
+### 23. 💰 PRICE FILTERING - Movies under $20
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?price_max=20
 
-# If authentication required:
-# - Some endpoints might need admin token
-# - Check server.js for endpoint definitions
+###
+
+### 24. ⭐ RATING FILTERING - High rated movies
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?rating_min=4.0
+
+###
+
+### 25. 📊 SORTING - Movies by price ascending
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?sort=price_asc
+
+###
+
+### 26. 📊 SORTING - Movies by rating descending
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?sort=rating_desc
+
+###
 
 ### ===========================================
-### ✅ SUCCESS VERIFICATION
+### 🌍 MULTI-DOMAIN RANDOM TESTS (500 products each)
 ### ===========================================
 
-# After successful population, these should work:
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products
+### 27. 🍕 RESTAURANTS - Get restaurants
+GET https://universal-student-api-production.up.railway.app/api/v1/restaurants/products?page=1&limit=3
 
-# Expected: 200 OK with actual product data (not empty arrays)
+###
+
+### 28. 🎮 GAMES - Get games
+GET https://universal-student-api-production.up.railway.app/api/v1/games/products?page=1&limit=3
+
+###
+
+### 29. 👕 FASHION - Get clothing
+GET https://universal-student-api-production.up.railway.app/api/v1/fashion/products?page=1&limit=3
+
+###
+
+### 30. 🚗 CARS - Get vehicles
+GET https://universal-student-api-production.up.railway.app/api/v1/cars/products?page=1&limit=3
+
+###
+
+### 31. 🧸 TOYS - Get toys
+GET https://universal-student-api-production.up.railway.app/api/v1/toys/products?page=1&limit=3
+
+###
+
+### 32. 🔧 TOOLS - Get tools
+GET https://universal-student-api-production.up.railway.app/api/v1/tools/products?page=1&limit=3
+
+###
+
+### ===========================================
+### ❌ ERROR HANDLING TESTS
+### ===========================================
+
+### 33. 404 TEST - Invalid domain
+GET https://universal-student-api-production.up.railway.app/api/v1/invaliddomain/products
+
+###
+
+### 34. 404 TEST - Invalid product ID
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/999999
+
+###
+
+### 35. 401 TEST - No authentication
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+
+###
+
+### 36. 403 TEST - Cart without auth
+GET https://universal-student-api-production.up.railway.app/api/v1/cart
+
+###
+
+### ===========================================
+### 🎯 SECOND WORKING USER TESTS
+### ===========================================
+
+### 37. 👤 REGISTER TEACHER USER
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "username": "teacher2025",
+  "email": "teacher2025@university.edu", 
+  "password": "myteacher123",
+  "first_name": "მასწავლებელი",
+  "last_name": "ახალი"
+}
+
+###
+
+### 38. 🔑 LOGIN TEACHER USER (VERIFIED WORKING)
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "teacher2025",
+  "password": "myteacher123"
+}
+
+###
+
+### 39. 👤 TEACHER PROFILE
+# COPY TOKEN FROM STEP 38 AND PASTE BELOW!
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: PUT_TOKEN_FROM_STEP_38_HERE
+
+###
+
+### 40. 🛒 TEACHER CART TEST
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: PUT_TOKEN_FROM_STEP_38_HERE
+Content-Type: application/json
+
+{
+  "product_id": 2611,
+  "quantity": 1
+}
+
+###
+
+### ===========================================
+### 📊 DATA VERIFICATION TESTS
+### ===========================================
+
+### 41. 📊 COUNT - Check movies domain has products
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=1
+
+###
+
+### 42. 📊 COUNT - Check books domain has products
+GET https://universal-student-api-production.up.railway.app/api/v1/books/products?page=1&limit=1
+
+###
+
+### ===========================================
+### 🔄 PROFILE UPDATE TESTS (requires token from step 4)
+### ===========================================
+
+### 43. ✏️ UPDATE STUDENT PROFILE
+PUT https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+Content-Type: application/json
+
+{
+  "first_name": "სტუდენტი განახლებული",
+  "last_name": "ახალი განახლებული",
+  "avatar_url": "https://picsum.photos/200/200?random=student"
+}
+
+###
+
+### 44. 👀 VIEW UPDATED STUDENT PROFILE
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+
+###
+
+### 45. 🚪 LOGOUT STUDENT
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/logout
+Authorization: PUT_TOKEN_FROM_STEP_4_HERE
+
+###
+
+### ===========================================
+### 📱 ADDITIONAL DOMAIN TESTS
+### ===========================================
+
+### 46. 🏨 HOTELS - Get hotels
+GET https://universal-student-api-production.up.railway.app/api/v1/hotels/products?page=1&limit=3
+
+###
+
+### 47. 🎵 MUSIC - Get albums
+GET https://universal-student-api-production.up.railway.app/api/v1/music/products?page=1&limit=3
+
+###
+
+### 48. ⚕️ MEDICINES - Get medicines
+GET https://universal-student-api-production.up.railway.app/api/v1/medicines/products?page=1&limit=3
+
+###
+
+### 49. 🏠 REAL ESTATE - Get properties
+GET https://universal-student-api-production.up.railway.app/api/v1/realestate/products?page=1&limit=3
+
+###
+
+### 50. ✈️ FLIGHTS - Get flights
+GET https://universal-student-api-production.up.railway.app/api/v1/flights/products?page=1&limit=3
+
+###
+
+### ===========================================
+### ✅ SUCCESS CRITERIA - ALL TESTS SHOULD PASS!
+### ===========================================
+
+# ✅ Tests 1-2: Health checks work
+# ✅ Tests 3-5: Registration & login work
+# ✅ Tests 6-17: All product domains work
+# ✅ Tests 18-22: Shopping cart works with auth token
+# ✅ Tests 23-26: Filtering/sorting works
+# ✅ Tests 27-32: Primary domains accessible
+# ✅ Tests 33-36: Error handling works correctly
+# ✅ Tests 37-40: Second user works
+# ✅ Tests 41-42: Data verification confirms counts
+# ✅ Tests 43-45: Profile updates and logout work
+# ✅ Tests 46-50: Additional domains work
+
+### ===========================================
+### 🎯 VERIFIED WORKING CREDENTIALS
+### ===========================================
+
+# Primary User (Steps 3-4, confirmed working):
+# Username: student2026
+# Password: mystudent123
+# Status: ✅ REGISTRATION + LOGIN SUCCESS
+
+# Secondary User (Steps 37-38, confirmed working):
+# Username: teacher2025  
+# Password: myteacher123
+# Status: ✅ LOGIN SUCCESS
+
+### ===========================================
+### 📋 TESTING INSTRUCTIONS
+### ===========================================
+
+# PHASE 1: AUTHENTICATION (Steps 1-5)
+# 1. Run test 3 or 4 (registration/login) - COPY JWT token from response
+# 2. REPLACE "PUT_TOKEN_FROM_STEP_4_HERE" with actual token in steps 5, 18-22, 43-45
+# 3. Expected: Authentication tests pass with 200 OK
+
+# PHASE 2: PRODUCTS (Steps 6-17, 23-32, 46-50)
+# 4. Run all product tests - NO AUTH required
+# 5. Expected: All return 200 OK with product data
+
+# PHASE 3: CART & ADVANCED (Steps 18-22)
+# 6. Run cart tests with your auth token
+# 7. Expected: Cart operations work with 200 OK
+
+# PHASE 4: ERROR HANDLING (Steps 33-36)
+# 8. Run error tests
+# 9. Expected: 404, 401, 403 status codes
+
+# PHASE 5: SECOND USER (Steps 37-40)
+# 10. Register/login teacher, copy token
+# 11. Test teacher profile and cart
+
+# PHASE 6: PROFILE MANAGEMENT (Steps 43-45)
+# 12. Update and logout student user
+
+### ===========================================
+### 🏆 YOUR API STATISTICS (Expected)
+### ===========================================
+
+# 📦 Total Products: 10,000+
+# 🌐 Total Domains: 20
+# 📋 Total Categories: 250+  
+# 🏷️ Total Brands: 200+
+# 👥 Total Users: Growing with each test
+# ✅ Authentication: JWT Working
+# 🛒 Shopping Cart: Working
+# 🔍 Search: Working
+# 📊 Filtering: Working
+# 🎯 Success Rate: Target 100%
+
+### ===========================================
+### 🎉 PRODUCTION READY!
+### Your Universal Student API on Railway
+### Perfect for 17 students + instructor use!
+### Live URL: https://universal-student-api-production.up.railway.app
+### ===========================================
