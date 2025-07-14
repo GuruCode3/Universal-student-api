@@ -1,357 +1,262 @@
-const express = require('express');
-const { initializeDatabase } = require('./database/connection'); // REMOVED testConnection
-const { dbConfig } = require('./utils/database');
+// ===========================================
+// 🔧 HEALTH ENDPOINT FIX - Add to server.js
+// ===========================================
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+// Replace your existing health endpoint in server.js with this:
 
-// Middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Manual CORS headers (instead of cors package)
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
-  }
-});
-
-// Security headers
-app.use((req, res, next) => {
-  res.header('X-Content-Type-Options', 'nosniff');
-  res.header('X-Frame-Options', 'DENY');
-  res.header('X-XSS-Protection', '1; mode=block');
-  next();
-});
-
-// Initialize database and start server
-async function startServer() {
+app.get('/health', (req, res) => {
   try {
-    console.log('🚀 Starting Universal Student API...');
+    const shouldPopulate = req.query.populate === 'true';
     
-    // Step 1: Initialize main database (products, categories, brands)
-    const dbInitialized = await initializeDatabase();
+    // Get current validation before population
+    const validation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : { 
+      isValid: true, 
+      productCount: 0, 
+      userCount: 2, 
+      tables: {} 
+    };
     
-    if (!dbInitialized && dbInitialized !== null) {
-      console.log('❌ Main database setup failed!');
-      process.exit(1);
+    // If populate=true is requested, force populate data
+    if (shouldPopulate) {
+      console.log('🚀 HEALTH CHECK POPULATE TRIGGERED');
+      console.log('💾 Current products before populate:', validation.productCount);
+      
+      // Force populate with comprehensive data
+      populateInMemoryDatabase();
+      
+      console.log('✅ Health populate complete');
     }
     
-    console.log('💾 Main database ready!');
+    // Get updated validation after population
+    const updatedValidation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : validation;
     
-    // Step 2: Initialize users system
-    await setupUsersSystem();
-    
-    // Step 3: Setup routes
-    setupRoutes();
-    
-    // Step 4: Setup error handlers
-    setupErrorHandlers();
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log('🎓 Universal Student API Started Successfully!');
-      console.log(`📍 Server running on: http://localhost:${PORT}`);
-      console.log(`📊 API Status: http://localhost:${PORT}/api/v1/status`);
-      console.log(`🔐 Auth endpoints: http://localhost:${PORT}/api/v1/auth/*`);
-      console.log(`🛒 Cart endpoints: http://localhost:${PORT}/api/v1/cart/*`);
-      console.log(`📖 Health check: http://localhost:${PORT}/health`);
-      console.log(`👥 Demo credentials: demo/demo123, teacher/demo123`);
-      console.log(`🚀 Ready for student projects!`);
+    res.json({
+      status: updatedValidation.isValid ? "healthy" : "degraded",
+      database: updatedValidation.isValid ? "connected" : "error",
+      populated: shouldPopulate,
+      data: {
+        total_products: updatedValidation.productCount || 0,
+        total_users: updatedValidation.userCount || 0,
+        tables: updatedValidation.tables || {}
+      },
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
-  }
-}
-
-// Setup users system
-async function setupUsersSystem() {
-  try {
-    console.log('👥 Setting up users system...');
-    
-    // Initialize users tables
-    const usersInitialized = dbConfig.initializeUsersTable ? dbConfig.initializeUsersTable() : true;
-    if (!usersInitialized) {
-      console.log('⚠️ Users table initialization failed, but continuing...');
-    }
-    
-    // Create demo users
-    const demoUsersCreated = dbConfig.createDemoUsers ? dbConfig.createDemoUsers() : true;
-    if (!demoUsersCreated) {
-      console.log('⚠️ Demo users creation failed, but continuing...');
-    }
-    
-    // Validate database
-    const validation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : { productCount: 0, userCount: 0, tables: {} };
-    console.log('📊 Database validation:', {
-      products: validation.productCount,
-      users: validation.userCount,
-      tables: validation.tables
-    });
-    
-    console.log('✅ Users system setup complete!');
-    
-  } catch (error) {
-    console.log('⚠️ Users setup error:', error.message);
-    console.log('🔄 Continuing with main API functionality...');
-  }
-}
-
-// Setup all routes
-function setupRoutes() {
-  // Root endpoint with comprehensive API info
-  app.get('/', (req, res) => {
-    try {
-      const validation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : { productCount: 12, userCount: 2 };
-      
-      res.json({
-        message: "🎓 Universal Student API",
-        version: "2.0.0",
-        status: "Running ✅",
-        database: "Connected 💾",
-        features: [
-          "✅ 20 Domains with 500+ products each",
-          "✅ User Authentication (JWT)",
-          "✅ Protected Routes",
-          "✅ Shopping Cart functionality",
-          "✅ Student-friendly endpoints",
-          "✅ Rate limiting & Security"
-        ],
-        domains: [
-          "movies", "books", "electronics", "restaurants", "fashion",
-          "cars", "hotels", "games", "music", "food", "sports", "toys",
-          "tools", "medicines", "courses", "events", "apps", "flights",
-          "pets", "realestate"
-        ],
-        auth_endpoints: [
-          "POST /api/v1/auth/register - Create new user",
-          "POST /api/v1/auth/login - User login",
-          "GET /api/v1/auth/profile - Get user profile (protected)",
-          "PUT /api/v1/auth/profile - Update profile (protected)",
-          "POST /api/v1/auth/logout - Logout user",
-          "GET /api/v1/auth/test - Test auth system",
-          "GET /api/v1/auth/users - List all users (admin only)"
-        ],
-        shopping_cart: [
-          "GET /api/v1/cart - Get user's cart (protected)",
-          "POST /api/v1/cart/add - Add item to cart (protected)",
-          "PUT /api/v1/cart/update/:id - Update quantity (protected)",
-          "DELETE /api/v1/cart/remove/:id - Remove item (protected)",
-          "DELETE /api/v1/cart/clear - Clear cart (protected)",
-          "POST /api/v1/cart/checkout - Mock checkout (protected)"
-        ],
-        demo_credentials: [
-          { username: "demo", password: "demo123", role: "user" },
-          { username: "student1", password: "demo123", role: "user" },
-          { username: "teacher", password: "demo123", role: "admin" }
-        ],
-        database_stats: {
-          products: validation.productCount || 0,
-          users: validation.userCount || 0,
-          domains: 20
-        },
-        api_docs: "/api/v1",
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      res.json({
-        message: "🎓 Universal Student API",
-        status: "Running ✅ (Database stats unavailable)",
-        error: error.message
-      });
-    }
-  });
-
-  // Health check endpoint
-  app.get('/health', (req, res) => {
-    try {
-      const validation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : { 
-        isValid: true, 
-        productCount: 12, 
-        userCount: 2, 
-        tables: {} 
-      };
-      
-      res.json({
-        status: validation.isValid ? "healthy" : "degraded",
-        database: validation.isValid ? "connected" : "error",
-        data: {
-          total_products: validation.productCount || 0,
-          total_users: validation.userCount || 0,
-          tables: validation.tables || {}
-        },
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      res.status(500).json({
-        status: "error",
-        database: "connection_failed",
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-
-  // Import route modules
-  try {
-    const authRoutes = require('./routes/auth');
-    const cartRoutes = require('./routes/cart');
-    const productsRoutes = require('./routes/products'); // This now handles all domain routes
-
-    // Mount auth and cart routes first
-    app.use('/api/v1/auth', authRoutes);
-    app.use('/api/v1/cart', cartRoutes);
-
-    // Mount domain-specific routes - ONE ROUTE FILE HANDLES ALL!
-    app.use('/api/v1/:domain', productsRoutes);
-
-    console.log('✅ All routes mounted successfully');
-  } catch (error) {
-    console.error('⚠️ Route mounting error:', error.message);
-    console.log('🔄 Continuing with basic endpoints...');
-  }
-
-  // API Status endpoint
-  app.get('/api/v1/status', (req, res) => {
-    try {
-      const validation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : { 
-        isValid: true, 
-        productCount: 12, 
-        userCount: 2,
-        hasUsers: true
-      };
-      
-      res.json({
-        success: true,
-        message: "Universal Student API Status",
-        status: "healthy",
-        database: validation.isValid ? "connected" : "error",
-        features: {
-          authentication: validation.hasUsers ? "✅ Available" : "⚠️ Setup needed",
-          products: validation.productCount > 0 ? "✅ Ready" : "⚠️ No products",
-          cart: "✅ Available",
-          security: "✅ Headers & Rate limiting"
-        },
-        data: {
-          total_products: validation.productCount || 0,
-          total_users: validation.userCount || 0,
-          available_domains: 20
-        },
-        quick_test: {
-          products: "GET /api/v1/movies/products",
-          login: "POST /api/v1/auth/login",
-          demo_credentials: "demo / demo123"
-        },
-        server_time: new Date().toISOString()
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Status check failed',
-        message: error.message
-      });
-    }
-  });
-
-  // Domains list endpoint
-  app.get('/api/v1/domains', (req, res) => {
-    try {
-      const domains = dbConfig.executeQuery ? 
-        dbConfig.executeQuery('SELECT DISTINCT domain FROM products ORDER BY domain') :
-        [
-          {domain: 'movies'}, {domain: 'books'}, {domain: 'electronics'}, 
-          {domain: 'restaurants'}, {domain: 'fashion'}
-        ];
-      const domainsList = domains.map(row => row.domain);
-      
-      res.json({
-        success: true,
-        data: {
-          domains: domainsList,
-          total: domainsList.length,
-          example_urls: {
-            products: '/api/v1/movies/products',
-            categories: '/api/v1/books/categories',
-            single_product: '/api/v1/electronics/products/1',
-            search: '/api/v1/movies/products/search?q=batman'
-          }
-        }
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: error.message
-      });
-    }
-  });
-}
-
-// Setup error handlers
-function setupErrorHandlers() {
-  // Global error handler
-  app.use((error, req, res, next) => {
-    console.error('Global error:', error);
+    console.error('❌ Health check error:', error);
     res.status(500).json({
-      success: false,
-      error: 'Internal server error',
-      message: 'Something went wrong on the server',
-      ...(process.env.NODE_ENV === 'development' && { details: error.message })
+      status: "error",
+      database: "connection_failed",
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
-  });
-
-  // 404 handler
-  app.use('*', (req, res) => {
-    res.status(404).json({
-      success: false,
-      error: 'Endpoint not found',
-      message: `The endpoint ${req.method} ${req.originalUrl} does not exist`,
-      available_endpoints: [
-        'GET /',
-        'GET /health',
-        'GET /api/v1/status',
-        'GET /api/v1/domains',
-        'POST /api/v1/auth/register',
-        'POST /api/v1/auth/login',
-        'GET /api/v1/auth/profile',
-        'GET /api/v1/cart',
-        'GET /api/v1/{domain}/products',
-        'GET /api/v1/{domain}/products/search?q=term',
-        'GET /api/v1/{domain}/categories',
-        'GET /api/v1/{domain}/brands'
-      ]
-    });
-  });
-}
-
-// Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n👋 Graceful shutdown initiated...');
-  
-  try {
-    if (dbConfig.closeConnection) {
-      dbConfig.closeConnection();
-      console.log('✅ Database connections closed');
-    }
-  } catch (error) {
-    console.error('❌ Error closing database:', error.message);
   }
-  
-  console.log('✅ Server shutdown complete');
-  process.exit(0);
 });
 
-// Start the server
-startServer();
+// ===========================================
+// 🔧 POPULATE FUNCTION - Add to server.js
+// ===========================================
 
-module.exports = app;
+function populateInMemoryDatabase() {
+  try {
+    console.log('📦 FORCE POPULATING IN-MEMORY DATABASE...');
+    
+    // Access the global in-memory database from connection.js
+    const { dbConfig } = require('./utils/database');
+    
+    // Generate comprehensive data for all domains
+    const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion', 'games', 'music', 'food', 'toys', 'hotels'];
+    
+    let totalProducts = 0;
+    const allProducts = [];
+    
+    // Generate products for each domain
+    domains.forEach((domain, domainIndex) => {
+      console.log(`📦 Generating ${domain} products...`);
+      
+      for (let i = 1; i <= 50; i++) { // 50 products per domain = 500 total
+        const product = generateDomainProduct(domain, domainIndex * 100 + i);
+        if (product) {
+          allProducts.push(product);
+          totalProducts++;
+        }
+      }
+    });
+    
+    // Force update the global in-memory database
+    if (global.inMemoryData) {
+      global.inMemoryData.products = allProducts;
+    } else {
+      global.inMemoryData = {
+        products: allProducts,
+        categories: generateCategories(),
+        brands: generateBrands(),
+        users: generateUsers()
+      };
+    }
+    
+    console.log(`✅ IN-MEMORY DATABASE POPULATED!`);
+    console.log(`📊 Total products: ${totalProducts}`);
+    console.log(`📊 Total domains: ${domains.length}`);
+    
+    return { success: true, totalProducts, domains: domains.length };
+    
+  } catch (error) {
+    console.error('❌ Populate error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ===========================================
+// 🔧 GENERATE DOMAIN PRODUCT - Add to server.js
+// ===========================================
+
+function generateDomainProduct(domain, id) {
+  const templates = {
+    movies: {
+      names: ['Avengers', 'Batman', 'Spider-Man', 'Superman', 'Wonder Woman', 'Iron Man', 'Thor', 'Captain America'],
+      attributes: { director: 'Marvel Studios', year: 2023, genre: 'Action', duration: 120 }
+    },
+    books: {
+      names: ['JavaScript Guide', 'Python Basics', 'React Handbook', 'Node.js Essentials', 'Web Development'],
+      attributes: { author: 'Tech Author', pages: 300, language: 'English', isbn: '978-1234567890' }
+    },
+    electronics: {
+      names: ['iPhone 15', 'MacBook Pro', 'iPad Air', 'Samsung Galaxy', 'Dell Laptop', 'HP Printer'],
+      attributes: { brand: 'Apple', model: 'Latest', warranty: '2 years', color: 'Black' }
+    },
+    restaurants: {
+      names: ['Pizza Palace', 'Burger House', 'Sushi Master', 'Taco Bell', 'Pasta Corner'],
+      attributes: { cuisine: 'Italian', location: 'Downtown', phone: '+995-555-1234', delivery: true }
+    },
+    fashion: {
+      names: ['Designer Shirt', 'Casual Jeans', 'Leather Jacket', 'Running Shoes', 'Baseball Cap'],
+      attributes: { size: 'M', color: 'Blue', material: 'Cotton', brand: 'Fashion Co' }
+    },
+    games: {
+      names: ['FIFA 24', 'Call of Duty', 'Minecraft', 'Fortnite', 'Among Us', 'Valorant'],
+      attributes: { platform: 'PC', genre: 'Action', rating: 'T', multiplayer: true }
+    },
+    music: {
+      names: ['Top Hits 2024', 'Rock Classics', 'Jazz Collection', 'Pop Songs', 'Country Music'],
+      attributes: { artist: 'Various Artists', genre: 'Pop', year: 2024, duration: '45:30' }
+    },
+    food: {
+      names: ['Organic Apples', 'Fresh Bread', 'Whole Milk', 'Free Range Eggs', 'Olive Oil'],
+      attributes: { category: 'Fruits', organic: true, weight: '1 kg', expiry: '2024-12-31' }
+    },
+    toys: {
+      names: ['LEGO Set', 'Barbie Doll', 'Hot Wheels', 'Teddy Bear', 'Board Game', 'Action Figure'],
+      attributes: { age_group: '6-12 years', educational: true, safety_certified: true }
+    },
+    hotels: {
+      names: ['Grand Hotel', 'City Center Inn', 'Beach Resort', 'Downtown Marriott', 'Holiday Inn'],
+      attributes: { star_rating: 4, amenities: ['WiFi', 'Pool', 'Gym'], location: 'City Center' }
+    }
+  };
+  
+  const template = templates[domain];
+  if (!template) return null;
+  
+  const nameIndex = (id - 1) % template.names.length;
+  const name = template.names[nameIndex];
+  const price = (Math.random() * 100 + 10).toFixed(2);
+  const rating = (Math.random() * 2 + 3).toFixed(1);
+  
+  return {
+    id: id,
+    domain: domain,
+    name: `${name} #${id}`,
+    price: parseFloat(price),
+    image_url: `https://picsum.photos/300/400?random=${id}`,
+    attributes: template.attributes,
+    category_id: Math.floor(Math.random() * 5) + 1,
+    brand_id: Math.floor(Math.random() * 5) + 1,
+    rating: parseFloat(rating),
+    review_count: Math.floor(Math.random() * 500) + 50,
+    in_stock: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+}
+
+// ===========================================
+// 🔧 GENERATE HELPER DATA - Add to server.js
+// ===========================================
+
+function generateCategories() {
+  const categories = [];
+  const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion', 'games', 'music', 'food', 'toys', 'hotels'];
+  
+  domains.forEach((domain, domainIndex) => {
+    for (let i = 1; i <= 5; i++) {
+      categories.push({
+        id: domainIndex * 5 + i,
+        domain: domain,
+        name: `${domain} Category ${i}`,
+        description: `${domain} category description`,
+        slug: `${domain}-category-${i}`
+      });
+    }
+  });
+  
+  return categories;
+}
+
+function generateBrands() {
+  const brands = [];
+  const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion', 'games', 'music', 'food', 'toys', 'hotels'];
+  
+  domains.forEach((domain, domainIndex) => {
+    for (let i = 1; i <= 5; i++) {
+      brands.push({
+        id: domainIndex * 5 + i,
+        domain: domain,
+        name: `${domain} Brand ${i}`,
+        description: `${domain} brand description`,
+        slug: `${domain}-brand-${i}`
+      });
+    }
+  });
+  
+  return brands;
+}
+
+function generateUsers() {
+  return [
+    {
+      id: 1,
+      username: 'demo',
+      email: 'demo@example.com',
+      password_hash: '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2',
+      first_name: 'Demo',
+      last_name: 'User',
+      role: 'user',
+      is_active: true
+    },
+    {
+      id: 2,
+      username: 'teacher',
+      email: 'teacher@example.com',
+      password_hash: '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2',
+      first_name: 'Teacher',
+      last_name: 'Demo',
+      role: 'admin',
+      is_active: true
+    }
+  ];
+}
+
+// ===========================================
+// 🚀 USAGE INSTRUCTIONS
+// ===========================================
+
+/*
+1. Add all the above functions to your server.js file
+2. Git commit and push to trigger Railway redeploy
+3. Test with: GET /health?populate=true
+4. Verify with: GET /api/v1/movies/products
+5. Expected: 50 products in movies domain, 500 total products
+*/
