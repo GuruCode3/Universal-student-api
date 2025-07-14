@@ -85,7 +85,7 @@ router.get('/products', async (req, res) => {
   try {
     const { domain } = req.params;
     const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100); // Max 100 per page
+    const limit = Math.min(parseInt(req.query.limit) || 20, 500); // Max 500 per page (all products)
     const offset = (page - 1) * limit;
     
     console.log(`🛍️ PRODUCTS REQUEST: ${domain}, page: ${page}, limit: ${limit}`);
@@ -169,7 +169,7 @@ router.get('/products/search', async (req, res) => {
     const { domain } = req.params;
     const { q, category, brand, min_price, max_price } = req.query;
     const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const limit = Math.min(parseInt(req.query.limit) || 20, 500);
     const offset = (page - 1) * limit;
 
     if (!q && !category && !brand) {
