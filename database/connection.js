@@ -16,50 +16,91 @@ let isInitialized = false;
 function generateProductForDomain(domain, id) {
   const templates = {
     movies: {
-      names: ['Avengers Endgame', 'The Dark Knight', 'Spider-Man No Way Home', 'Batman Begins', 'Iron Man', 'Thor Ragnarok', 'Captain America', 'Wonder Woman'],
+      names: ['Avengers Endgame', 'The Dark Knight', 'Spider-Man No Way Home', 'Batman Begins', 'Iron Man', 'Thor Ragnarok', 'Captain America', 'Wonder Woman', 'Joker', 'Inception', 'Interstellar', 'Deadpool', 'Black Panther', 'Guardians of the Galaxy', 'Doctor Strange', 'Ant-Man', 'Captain Marvel', 'Aquaman', 'Superman', 'Justice League'],
       attributes: { director: 'Marvel Studios', year: 2023, genre: 'Action', duration: 120 }
     },
     books: {
-      names: ['JavaScript Complete Guide', 'Python Programming', 'React Development', 'Node.js Handbook', 'Web Development', 'Data Science', 'Machine Learning', 'Clean Code'],
+      names: ['JavaScript Complete Guide', 'Python Programming', 'React Development', 'Node.js Handbook', 'Web Development', 'Data Science', 'Machine Learning', 'Clean Code', 'Design Patterns', 'Algorithms', 'System Design', 'Database Design', 'API Development', 'Mobile Development', 'Cloud Computing', 'DevOps Guide', 'Security Fundamentals', 'UI/UX Design', 'Project Management', 'Software Architecture'],
       attributes: { author: 'Tech Author', pages: 300, language: 'English', isbn: '978-1234567890' }
     },
     electronics: {
-      names: ['iPhone 15 Pro', 'MacBook Pro M3', 'iPad Air', 'Samsung Galaxy S24', 'Dell XPS 13', 'HP Spectre', 'Surface Pro', 'Google Pixel'],
+      names: ['iPhone 15 Pro', 'MacBook Pro M3', 'iPad Air', 'Samsung Galaxy S24', 'Dell XPS 13', 'HP Spectre', 'Surface Pro', 'Google Pixel', 'OnePlus 12', 'Xiaomi Mi 14', 'Sony Xperia', 'Huawei P60', 'Asus ROG Phone', 'Nintendo Switch', 'PlayStation 5', 'Xbox Series X', 'Apple Watch', 'AirPods Pro', 'Samsung Buds', 'Sony WH-1000XM5'],
       attributes: { brand: 'Apple', model: 'Latest', warranty: '2 years', color: 'Space Gray' }
     },
     restaurants: {
-      names: ['Pizza Napoletana', 'Burger Supreme', 'Sushi Zen', 'Taco Fiesta', 'Pasta Milano', 'Steakhouse Prime', 'Cafe Mocha', 'Noodle House'],
+      names: ['Pizza Napoletana', 'Burger Supreme', 'Sushi Zen', 'Taco Fiesta', 'Pasta Milano', 'Steakhouse Prime', 'Cafe Mocha', 'Noodle House', 'BBQ Paradise', 'Thai Garden', 'Indian Spice', 'Greek Taverna', 'French Bistro', 'Chinese Palace', 'Korean BBQ', 'Mexican Cantina', 'Brazilian Grill', 'Vietnamese Pho', 'Lebanese Kitchen', 'Turkish Delight'],
       attributes: { cuisine: 'Italian', location: 'Downtown', phone: '+995-555-1234', delivery: true }
     },
     fashion: {
-      names: ['Designer Suit', 'Casual Jeans', 'Leather Jacket', 'Running Sneakers', 'Baseball Cap', 'Silk Scarf', 'Wool Sweater', 'Cotton T-Shirt'],
+      names: ['Designer Suit', 'Casual Jeans', 'Leather Jacket', 'Running Sneakers', 'Baseball Cap', 'Silk Scarf', 'Wool Sweater', 'Cotton T-Shirt', 'Evening Dress', 'Winter Coat', 'Summer Shorts', 'Denim Jacket', 'Polo Shirt', 'Maxi Dress', 'Blazer', 'Cardigan', 'Hoodie', 'Chinos', 'Skirt', 'Blouse'],
       attributes: { size: 'M', color: 'Navy Blue', material: 'Cotton', brand: 'Fashion Brand' }
     },
     games: {
-      names: ['FIFA 24', 'Call of Duty Modern Warfare', 'Minecraft', 'Fortnite', 'Among Us', 'Valorant', 'Rocket League', 'Apex Legends'],
+      names: ['FIFA 24', 'Call of Duty Modern Warfare', 'Minecraft', 'Fortnite', 'Among Us', 'Valorant', 'Rocket League', 'Apex Legends', 'League of Legends', 'Dota 2', 'Counter-Strike 2', 'Overwatch 2', 'Cyberpunk 2077', 'Grand Theft Auto VI', 'The Witcher 4', 'Assassins Creed', 'Far Cry 7', 'Battlefield 2042', 'Halo Infinite', 'God of War'],
       attributes: { platform: 'PC', genre: 'Action', rating: 'T', multiplayer: true }
     },
     music: {
-      names: ['Greatest Hits 2024', 'Rock Classics', 'Jazz Anthology', 'Pop Favorites', 'Country Roads', 'Hip Hop Beats', 'Electronic Vibes', 'Classical Masters'],
+      names: ['Greatest Hits 2024', 'Rock Classics', 'Jazz Anthology', 'Pop Favorites', 'Country Roads', 'Hip Hop Beats', 'Electronic Vibes', 'Classical Masters', 'R&B Collection', 'Indie Sounds', 'Folk Tales', 'Reggae Rhythms', 'Blues Legacy', 'Metal Mayhem', 'Dance Floor', 'Acoustic Sessions', 'World Music', 'Soundtrack Collection', 'Live Concert', 'Chill Vibes'],
       attributes: { artist: 'Various Artists', genre: 'Pop', year: 2024, duration: '3:45' }
     },
     food: {
-      names: ['Organic Bananas', 'Fresh Sourdough Bread', 'Grass-Fed Milk', 'Free-Range Eggs', 'Extra Virgin Olive Oil', 'Wild Salmon', 'Quinoa Seeds', 'Almond Butter'],
+      names: ['Organic Bananas', 'Fresh Sourdough Bread', 'Grass-Fed Milk', 'Free-Range Eggs', 'Extra Virgin Olive Oil', 'Wild Salmon', 'Quinoa Seeds', 'Almond Butter', 'Greek Yogurt', 'Avocados', 'Blueberries', 'Spinach', 'Sweet Potatoes', 'Brown Rice', 'Chicken Breast', 'Tofu', 'Lentils', 'Oats', 'Honey', 'Dark Chocolate'],
       attributes: { category: 'Organic', organic: true, weight: '1 kg', expiry: '2025-12-31' }
     },
     toys: {
-      names: ['LEGO Architecture', 'Barbie Dreamhouse', 'Hot Wheels Track', 'Teddy Bear Plush', 'Monopoly Board Game', 'Action Figure Set', 'Puzzle 1000pc', 'RC Drone'],
+      names: ['LEGO Architecture', 'Barbie Dreamhouse', 'Hot Wheels Track', 'Teddy Bear Plush', 'Monopoly Board Game', 'Action Figure Set', 'Puzzle 1000pc', 'RC Drone', 'Nintendo Switch', 'PlayStation Controller', 'Building Blocks', 'Art Set', 'Science Kit', 'Musical Keyboard', 'Soccer Ball', 'Basketball', 'Skateboard', 'Bike', 'Scooter', 'Dollhouse'],
       attributes: { age_group: '6-12 years', educational: true, safety_certified: true }
     },
     hotels: {
-      names: ['Grand Plaza Hotel', 'Sunset Beach Resort', 'City Center Inn', 'Mountain View Lodge', 'Downtown Marriott', 'Boutique Hotel', 'Luxury Suites', 'Business Hotel'],
+      names: ['Grand Plaza Hotel', 'Sunset Beach Resort', 'City Center Inn', 'Mountain View Lodge', 'Downtown Marriott', 'Boutique Hotel', 'Luxury Suites', 'Business Hotel', 'Spa Resort', 'Airport Hotel', 'Seaside Villa', 'Urban Loft', 'Country Inn', 'Historic Hotel', 'Modern Tower', 'Garden Hotel', 'Riverside Lodge', 'Ski Resort', 'Desert Oasis', 'Lakeside Retreat'],
       attributes: { star_rating: 4, amenities: ['WiFi', 'Pool', 'Gym', 'Restaurant'], location: 'City Center' }
+    },
+    cars: {
+      names: ['Tesla Model S', 'BMW 3 Series', 'Mercedes C-Class', 'Audi A4', 'Toyota Camry', 'Honda Civic', 'Ford Mustang', 'Chevrolet Corvette', 'Porsche 911', 'Lamborghini Huracan', 'Ferrari F8', 'McLaren 720S', 'Bugatti Chiron', 'Rolls Royce Ghost', 'Bentley Continental', 'Jaguar F-Type', 'Maserati Ghibli', 'Lexus LS', 'Infiniti Q50', 'Cadillac CT5'],
+      attributes: { brand: 'Tesla', model: '2024', fuel_type: 'Electric', transmission: 'Automatic' }
+    },
+    medicines: {
+      names: ['Ibuprofen 400mg', 'Paracetamol 500mg', 'Aspirin 100mg', 'Vitamin D3', 'Vitamin C', 'Multivitamin', 'Omega 3', 'Calcium Tablets', 'Iron Supplements', 'Zinc Capsules', 'Magnesium', 'Probiotic', 'Melatonin', 'Biotin', 'Collagen', 'Glucosamine', 'Turmeric', 'Ginseng', 'Echinacea', 'Garlic Extract'],
+      attributes: { dosage: '400mg', form: 'Tablet', prescription: false, category: 'Pain Relief' }
+    },
+    courses: {
+      names: ['Web Development Bootcamp', 'Data Science Masterclass', 'Machine Learning A-Z', 'React Complete Guide', 'Python Programming', 'JavaScript Fundamentals', 'UI/UX Design', 'Digital Marketing', 'Project Management', 'Business Analytics', 'Cloud Computing', 'Cybersecurity', 'Mobile Development', 'Database Design', 'DevOps Engineering', 'Artificial Intelligence', 'Blockchain Technology', 'Game Development', 'Photography', 'Graphic Design'],
+      attributes: { duration: '12 weeks', level: 'Beginner', certificate: true, instructor: 'Expert Teacher' }
+    },
+    events: {
+      names: ['Tech Conference 2024', 'Music Festival', 'Food & Wine Expo', 'Art Gallery Opening', 'Sports Championship', 'Business Summit', 'Startup Pitch', 'Networking Event', 'Workshop Series', 'Cultural Festival', 'Fashion Show', 'Book Fair', 'Career Fair', 'Health & Wellness Expo', 'Travel Show', 'Auto Show', 'Comedy Night', 'Theatre Performance', 'Dance Competition', 'Film Festival'],
+      attributes: { date: '2024-12-15', location: 'Convention Center', duration: '2 days', capacity: 500 }
+    },
+    apps: {
+      names: ['Instagram', 'TikTok', 'WhatsApp', 'Telegram', 'Discord', 'Slack', 'Zoom', 'Netflix', 'Spotify', 'YouTube', 'Twitter', 'LinkedIn', 'Facebook', 'Snapchat', 'Pinterest', 'Reddit', 'Twitch', 'Uber', 'Airbnb', 'PayPal'],
+      attributes: { platform: 'iOS/Android', category: 'Social', rating: 4.5, downloads: '1M+' }
+    },
+    flights: {
+      names: ['Tbilisi-London', 'New York-Paris', 'Tokyo-Sydney', 'Dubai-Mumbai', 'Berlin-Rome', 'Madrid-Moscow', 'Istanbul-Cairo', 'Bangkok-Singapore', 'Los Angeles-Miami', 'Chicago-Toronto', 'Amsterdam-Vienna', 'Stockholm-Helsinki', 'Oslo-Copenhagen', 'Prague-Budapest', 'Warsaw-Krakow', 'Lisbon-Barcelona', 'Athens-Thessaloniki', 'Zurich-Geneva', 'Milan-Naples', 'Brussels-Luxembourg'],
+      attributes: { airline: 'Georgian Airways', duration: '3h 45m', class: 'Economy', stops: 0 }
+    },
+    pets: {
+      names: ['Golden Retriever', 'German Shepherd', 'Labrador', 'Bulldog', 'Beagle', 'Poodle', 'Rottweiler', 'Siberian Husky', 'Chihuahua', 'Persian Cat', 'Maine Coon', 'Siamese Cat', 'British Shorthair', 'Ragdoll', 'Bengal Cat', 'Russian Blue', 'Parrot', 'Canary', 'Goldfish', 'Rabbit'],
+      attributes: { species: 'Dog', age: '2 years', gender: 'Male', vaccinated: true }
+    },
+    realestate: {
+      names: ['Downtown Apartment', 'Suburban House', 'Luxury Villa', 'Studio Loft', 'Penthouse Suite', 'Country Cottage', 'Townhouse', 'Condo Unit', 'Beachfront Property', 'Mountain Cabin', 'City Duplex', 'Garden Apartment', 'Historic Home', 'Modern Flat', 'Farmhouse', 'Lakeside Retreat', 'Urban Loft', 'Family Home', 'Investment Property', 'Vacation Rental'],
+      attributes: { bedrooms: 3, bathrooms: 2, area: '120 sqm', price_per_sqm: '$1200' }
+    },
+    sports: {
+      names: ['Nike Air Max', 'Adidas Ultraboost', 'Wilson Tennis Racket', 'Spalding Basketball', 'Nike Soccer Ball', 'Yoga Mat', 'Dumbbells Set', 'Resistance Bands', 'Treadmill', 'Exercise Bike', 'Protein Powder', 'Gym Gloves', 'Water Bottle', 'Fitness Tracker', 'Running Shoes', 'Swimming Goggles', 'Baseball Bat', 'Golf Clubs', 'Skateboard', 'Bicycle Helmet'],
+      attributes: { brand: 'Nike', category: 'Footwear', sport: 'Running', size: '42 EU' }
+    },
+    tools: {
+      names: ['Drill Set', 'Hammer', 'Screwdriver Kit', 'Wrench Set', 'Saw', 'Pliers', 'Measuring Tape', 'Level', 'Toolbox', 'Power Drill', 'Circular Saw', 'Jigsaw', 'Angle Grinder', 'Soldering Iron', 'Multimeter', 'Socket Set', 'Chisel Set', 'Sandpaper', 'Safety Glasses', 'Work Gloves'],
+      attributes: { brand: 'Bosch', category: 'Power Tools', warranty: '2 years', voltage: '18V' }
     }
   };
   
   const template = templates[domain];
   if (!template) return null;
   
+  // Use modulo to cycle through names for 500 products
   const nameIndex = (id - 1) % template.names.length;
   const name = template.names[nameIndex];
   const price = (Math.random() * 200 + 10).toFixed(2);
@@ -72,11 +113,11 @@ function generateProductForDomain(domain, id) {
     price: parseFloat(price),
     image_url: `https://picsum.photos/300/400?random=${id}`,
     attributes: JSON.stringify(template.attributes),
-    category_id: Math.floor(Math.random() * 3) + 1,
-    brand_id: Math.floor(Math.random() * 3) + 1,
+    category_id: Math.floor(Math.random() * 4) + 1, // 1-4 categories per domain
+    brand_id: Math.floor(Math.random() * 3) + 1, // 1-3 brands per domain
     rating: parseFloat(rating),
     review_count: Math.floor(Math.random() * 1000) + 50,
-    in_stock: true,
+    in_stock: Math.random() > 0.1, // 90% in stock
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
@@ -130,15 +171,21 @@ async function loadInMemoryData() {
   try {
     console.log('📦 Loading comprehensive sample data into memory...');
     
-    // Generate 500 products across multiple domains
-    const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion', 'games', 'music', 'food', 'toys', 'hotels'];
+    // ALL 20 DOMAINS with 500 products each = 10,000 total
+    const domains = [
+      'movies', 'books', 'electronics', 'restaurants', 'fashion',
+      'games', 'music', 'food', 'toys', 'hotels',
+      'cars', 'medicines', 'courses', 'events', 'apps',
+      'flights', 'pets', 'realestate', 'sports', 'tools'
+    ];
+    
     const allProducts = [];
     
-    // Generate 50 products per domain (500 total)
+    // Generate 500 products per domain (10,000 total)
     domains.forEach((domain, domainIndex) => {
       console.log(`📦 Generating ${domain} products...`);
-      for (let i = 1; i <= 50; i++) {
-        const productId = domainIndex * 50 + i;
+      for (let i = 1; i <= 500; i++) {
+        const productId = domainIndex * 500 + i;
         const product = generateProductForDomain(domain, productId);
         if (product) {
           allProducts.push(product);
@@ -146,55 +193,86 @@ async function loadInMemoryData() {
       }
     });
     
-    // Categories for multiple domains
-    inMemoryData.categories = [
-      { id: 1, domain: 'movies', name: 'Action', description: 'Action movies', slug: 'action' },
-      { id: 2, domain: 'movies', name: 'Comedy', description: 'Comedy movies', slug: 'comedy' },
-      { id: 3, domain: 'movies', name: 'Drama', description: 'Drama movies', slug: 'drama' },
-      { id: 4, domain: 'movies', name: 'Sci-Fi', description: 'Science Fiction movies', slug: 'sci-fi' },
-      { id: 5, domain: 'books', name: 'Fiction', description: 'Fiction books', slug: 'fiction' },
-      { id: 6, domain: 'books', name: 'Non-Fiction', description: 'Non-fiction books', slug: 'non-fiction' },
-      { id: 7, domain: 'books', name: 'Technology', description: 'Technology books', slug: 'technology' },
-      { id: 8, domain: 'electronics', name: 'Laptops', description: 'Laptop computers', slug: 'laptops' },
-      { id: 9, domain: 'electronics', name: 'Phones', description: 'Mobile phones', slug: 'phones' },
-      { id: 10, domain: 'electronics', name: 'Tablets', description: 'Tablet devices', slug: 'tablets' },
-      { id: 11, domain: 'restaurants', name: 'Italian', description: 'Italian cuisine', slug: 'italian' },
-      { id: 12, domain: 'restaurants', name: 'Asian', description: 'Asian cuisine', slug: 'asian' },
-      { id: 13, domain: 'fashion', name: 'Casual', description: 'Casual wear', slug: 'casual' },
-      { id: 14, domain: 'fashion', name: 'Formal', description: 'Formal wear', slug: 'formal' },
-      { id: 15, domain: 'games', name: 'Action', description: 'Action games', slug: 'action' },
-      { id: 16, domain: 'games', name: 'Strategy', description: 'Strategy games', slug: 'strategy' },
-      { id: 17, domain: 'music', name: 'Rock', description: 'Rock music', slug: 'rock' },
-      { id: 18, domain: 'music', name: 'Pop', description: 'Pop music', slug: 'pop' },
-      { id: 19, domain: 'food', name: 'Organic', description: 'Organic food', slug: 'organic' },
-      { id: 20, domain: 'food', name: 'Dairy', description: 'Dairy products', slug: 'dairy' },
-      { id: 21, domain: 'toys', name: 'Educational', description: 'Educational toys', slug: 'educational' },
-      { id: 22, domain: 'toys', name: 'Action', description: 'Action toys', slug: 'action' },
-      { id: 23, domain: 'hotels', name: 'Luxury', description: 'Luxury hotels', slug: 'luxury' },
-      { id: 24, domain: 'hotels', name: 'Budget', description: 'Budget hotels', slug: 'budget' }
-    ];
+    // Categories for all 20 domains (4 categories per domain = 80 total)
+    const allCategories = [];
+    const categoryTemplates = {
+      movies: ['Action', 'Comedy', 'Drama', 'Sci-Fi'],
+      books: ['Fiction', 'Non-Fiction', 'Technology', 'Biography'],
+      electronics: ['Laptops', 'Phones', 'Tablets', 'Accessories'],
+      restaurants: ['Italian', 'Asian', 'American', 'Mediterranean'],
+      fashion: ['Casual', 'Formal', 'Sports', 'Vintage'],
+      games: ['Action', 'Strategy', 'RPG', 'Sports'],
+      music: ['Rock', 'Pop', 'Jazz', 'Classical'],
+      food: ['Organic', 'Dairy', 'Meat', 'Vegetables'],
+      toys: ['Educational', 'Action', 'Creative', 'Electronic'],
+      hotels: ['Luxury', 'Budget', 'Business', 'Resort'],
+      cars: ['Sedan', 'SUV', 'Sports', 'Electric'],
+      medicines: ['Pain Relief', 'Vitamins', 'Supplements', 'Prescription'],
+      courses: ['Programming', 'Design', 'Business', 'Language'],
+      events: ['Conference', 'Festival', 'Workshop', 'Exhibition'],
+      apps: ['Social', 'Productivity', 'Entertainment', 'Education'],
+      flights: ['Domestic', 'International', 'Business', 'Economy'],
+      pets: ['Dogs', 'Cats', 'Birds', 'Fish'],
+      realestate: ['Apartment', 'House', 'Commercial', 'Land'],
+      sports: ['Footwear', 'Equipment', 'Apparel', 'Accessories'],
+      tools: ['Power Tools', 'Hand Tools', 'Measuring', 'Safety']
+    };
     
-    // Brands for multiple domains
-    inMemoryData.brands = [
-      { id: 1, domain: 'movies', name: 'Marvel Studios', description: 'Marvel movie studio', slug: 'marvel-studios' },
-      { id: 2, domain: 'movies', name: 'Warner Bros', description: 'Warner Brothers studio', slug: 'warner-bros' },
-      { id: 3, domain: 'movies', name: 'Disney', description: 'Disney Studios', slug: 'disney' },
-      { id: 4, domain: 'electronics', name: 'Apple', description: 'Apple Inc.', slug: 'apple' },
-      { id: 5, domain: 'electronics', name: 'Samsung', description: 'Samsung Electronics', slug: 'samsung' },
-      { id: 6, domain: 'electronics', name: 'Google', description: 'Google LLC', slug: 'google' },
-      { id: 7, domain: 'books', name: 'Penguin', description: 'Penguin Random House', slug: 'penguin' },
-      { id: 8, domain: 'books', name: 'Harper', description: 'Harper Collins', slug: 'harper' },
-      { id: 9, domain: 'restaurants', name: 'Local Eats', description: 'Local restaurant chain', slug: 'local-eats' },
-      { id: 10, domain: 'fashion', name: 'StyleCo', description: 'Fashion brand', slug: 'styleco' },
-      { id: 11, domain: 'games', name: 'GameStudio', description: 'Game development studio', slug: 'gamestudio' },
-      { id: 12, domain: 'music', name: 'RecordLabel', description: 'Music record label', slug: 'recordlabel' },
-      { id: 13, domain: 'food', name: 'FreshFarms', description: 'Fresh food supplier', slug: 'freshfarms' },
-      { id: 14, domain: 'toys', name: 'ToyMaker', description: 'Toy manufacturer', slug: 'toymaker' },
-      { id: 15, domain: 'hotels', name: 'HotelChain', description: 'Hotel chain', slug: 'hotelchain' }
-    ];
+    let categoryId = 1;
+    domains.forEach(domain => {
+      categoryTemplates[domain].forEach(categoryName => {
+        allCategories.push({
+          id: categoryId++,
+          domain: domain,
+          name: categoryName,
+          description: `${categoryName} in ${domain}`,
+          slug: categoryName.toLowerCase().replace(/\s+/g, '-')
+        });
+      });
+    });
     
-    // Set the generated products
+    // Brands for all 20 domains (3 brands per domain = 60 total)
+    const allBrands = [];
+    const brandTemplates = {
+      movies: ['Marvel Studios', 'Warner Bros', 'Disney'],
+      books: ['Penguin', 'Harper Collins', 'Random House'],
+      electronics: ['Apple', 'Samsung', 'Google'],
+      restaurants: ['Local Eats', 'Fine Dining', 'Quick Bites'],
+      fashion: ['StyleCo', 'FashionPlus', 'TrendyWear'],
+      games: ['GameStudio', 'PlayWorks', 'FunGames'],
+      music: ['RecordLabel', 'SoundWave', 'MusicBox'],
+      food: ['FreshFarms', 'OrganicChoice', 'NaturalGoods'],
+      toys: ['ToyMaker', 'PlayTime', 'FunFactory'],
+      hotels: ['HotelChain', 'Hospitality Plus', 'Luxury Stays'],
+      cars: ['AutoWorks', 'DriveTech', 'CarPlus'],
+      medicines: ['HealthCare', 'MediPlus', 'WellnessLab'],
+      courses: ['EduTech', 'LearnPro', 'SkillUp'],
+      events: ['EventPro', 'Organize It', 'Gather'],
+      apps: ['AppStudio', 'TechSoft', 'DigitalWorks'],
+      flights: ['SkyLine', 'AirTech', 'FlyHigh'],
+      pets: ['PetCare', 'AnimalLove', 'FurryFriends'],
+      realestate: ['PropertyPlus', 'RealEstate Pro', 'HomeFinder'],
+      sports: ['SportsTech', 'ActiveWear', 'FitGear'],
+      tools: ['ToolMaster', 'WorkPro', 'BuildTech']
+    };
+    
+    let brandId = 1;
+    domains.forEach(domain => {
+      brandTemplates[domain].forEach(brandName => {
+        allBrands.push({
+          id: brandId++,
+          domain: domain,
+          name: brandName,
+          description: `${brandName} brand for ${domain}`,
+          slug: brandName.toLowerCase().replace(/\s+/g, '-')
+        });
+      });
+    });
+    
+    // Set the generated data
     inMemoryData.products = allProducts;
+    inMemoryData.categories = allCategories;
+    inMemoryData.brands = allBrands;
     
     // Sample users
     inMemoryData.users = [
@@ -210,11 +288,12 @@ async function loadInMemoryData() {
       }
     ];
     
-    console.log('✅ Comprehensive sample data loaded into memory');
+    console.log('✅ MASSIVE sample data loaded into memory');
     console.log(`📊 Products: ${inMemoryData.products.length}`);
     console.log(`📊 Categories: ${inMemoryData.categories.length}`);
     console.log(`📊 Brands: ${inMemoryData.brands.length}`);
     console.log(`📊 Users: ${inMemoryData.users.length}`);
+    console.log(`🎯 Domains: ${domains.length}`);
     
   } catch (error) {
     console.error('❌ Failed to load in-memory data:', error);
