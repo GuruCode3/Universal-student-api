@@ -378,18 +378,19 @@ const dbQuery = {
     }
   },
   
-  // Get one record - FIXED
+  // Get one record - FIXED WITH PROPER COUNT
   getOne: async (query, params = []) => {
     try {
       console.log('🔍 In-memory getOne:', query.substring(0, 50) + '...');
       console.log('📋 Params:', params);
       
       if (query.includes('FROM products')) {
-        // Handle COUNT queries
+        // Handle COUNT queries - FIXED
         if (query.includes('COUNT(*)')) {
           const domain = params[0];
-          const count = inMemoryData.products.filter(p => p.domain === domain).length;
-          console.log(`📊 Count for domain '${domain}': ${count}`);
+          const domainProducts = inMemoryData.products.filter(p => p.domain === domain);
+          const count = domainProducts.length;
+          console.log(`📊 COUNT for domain '${domain}': ${count} products found`);
           return { total: count };
         }
         
@@ -469,7 +470,7 @@ const dbQuery = {
         return domains.map(domain => ({ domain }));
       }
       
-      // Handle categories with JOIN and COUNT
+      // Handle categories with JOIN and COUNT - FIXED
       if (query.includes('FROM categories c') && query.includes('LEFT JOIN products p')) {
         const domain = params[0];
         const categories = inMemoryData.categories.filter(c => c.domain === domain);
@@ -477,13 +478,14 @@ const dbQuery = {
           const productCount = inMemoryData.products.filter(p => 
             p.domain === domain && p.category_id === category.id
           ).length;
+          console.log(`📂 Category '${category.name}' in '${domain}': ${productCount} products`);
           return { ...category, product_count: productCount };
         });
-        console.log(`📂 Categories with count for '${domain}': ${result.length}`);
+        console.log(`📂 Categories with count for '${domain}': ${result.length} categories total`);
         return result;
       }
       
-      // Handle brands with JOIN and COUNT
+      // Handle brands with JOIN and COUNT - FIXED
       if (query.includes('FROM brands b') && query.includes('LEFT JOIN products p')) {
         const domain = params[0];
         const brands = inMemoryData.brands.filter(b => b.domain === domain);
@@ -491,9 +493,10 @@ const dbQuery = {
           const productCount = inMemoryData.products.filter(p => 
             p.domain === domain && p.brand_id === brand.id
           ).length;
+          console.log(`🏷️ Brand '${brand.name}' in '${domain}': ${productCount} products`);
           return { ...brand, product_count: productCount };
         });
-        console.log(`🏷️ Brands with count for '${domain}': ${result.length}`);
+        console.log(`🏷️ Brands with count for '${domain}': ${result.length} brands total`);
         return result;
       }
       
