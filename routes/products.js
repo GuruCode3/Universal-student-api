@@ -3,7 +3,7 @@ const router = express.Router({ mergeParams: true });
 const { dbConfig } = require('../utils/database');
 
 // GET /api/v1/:domain/categories
-router.get('/categories', (req, res) => {
+router.get('/categories', async (req, res) => {
   try {
     const { domain } = req.params;
     
@@ -42,7 +42,7 @@ router.get('/categories', (req, res) => {
 });
 
 // GET /api/v1/:domain/brands
-router.get('/brands', (req, res) => {
+router.get('/brands', async (req, res) => {
   try {
     const { domain } = req.params;
     
@@ -80,8 +80,8 @@ router.get('/brands', (req, res) => {
   }
 });
 
-// GET /api/v1/:domain/products
-router.get('/products', (req, res) => {
+// GET /api/v1/:domain/products - FIXED PAGINATION COUNT
+router.get('/products', async (req, res) => {
   try {
     const { domain } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -89,6 +89,14 @@ router.get('/products', (req, res) => {
     const offset = (page - 1) * limit;
     
     console.log(`🛍️ PRODUCTS REQUEST: ${domain}, page: ${page}, limit: ${limit}`);
+    
+    // FIXED: Get total count manually
+    const allDomainProducts = await dbConfig.getAll(`
+      SELECT id FROM products WHERE domain = ?
+    `, [domain]);
+    const total = allDomainProducts.length;
+    
+    console.log(`📊 TOTAL PRODUCTS COUNT for '${domain}': ${total}`);
     
     // Get products with category and brand info
     const products = dbConfig.executeQuery(`
@@ -106,13 +114,6 @@ router.get('/products', (req, res) => {
       LIMIT ? OFFSET ?
     `, [domain, limit, offset]);
 
-    // Get total count for pagination
-    const totalResult = dbConfig.getOne(
-      'SELECT COUNT(*) as total FROM products WHERE domain = ?', 
-      [domain]
-    );
-    const total = totalResult?.total || 0;
-
     // Parse JSON attributes for each product
     products.forEach(product => {
       if (product.attributes) {
@@ -124,10 +125,12 @@ router.get('/products', (req, res) => {
       }
     });
 
-    // Pagination info
+    // FIXED: Pagination info with correct total
     const totalPages = Math.ceil(total / limit);
     const hasNext = page < totalPages;
     const hasPrev = page > 1;
+
+    console.log(`📄 PAGINATION INFO: total=${total}, pages=${totalPages}, current=${page}`);
 
     res.json({
       success: true,
@@ -135,7 +138,7 @@ router.get('/products', (req, res) => {
       pagination: {
         current_page: page,
         total_pages: totalPages,
-        total_products: total,
+        total_products: total, // FIXED: Real count
         products_per_page: limit,
         has_next: hasNext,
         has_prev: hasPrev,
@@ -160,8 +163,8 @@ router.get('/products', (req, res) => {
   }
 });
 
-// GET /api/v1/:domain/products/search
-router.get('/products/search', (req, res) => {
+// GET /api/v1/:domain/products/search - FIXED PAGINATION COUNT
+router.get('/products/search', async (req, res) => {
   try {
     const { domain } = req.params;
     const { q, category, brand, min_price, max_price } = req.query;
@@ -193,8 +196,9 @@ router.get('/products/search', (req, res) => {
       WHERE p.domain = ?
     `;
 
+    // FIXED: Manual count for search results
     let countQuery = `
-      SELECT COUNT(*) as total
+      SELECT p.id
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id AND c.domain = p.domain
       LEFT JOIN brands b ON p.brand_id = b.id AND b.domain = p.domain
@@ -245,10 +249,14 @@ router.get('/products/search', (req, res) => {
     searchQuery += ` ORDER BY p.rating DESC, p.id DESC LIMIT ? OFFSET ?`;
     params.push(limit, offset);
 
-    // Execute queries
+    // FIXED: Execute count query manually
+    const countResults = dbConfig.executeQuery(countQuery, countParams);
+    const total = countResults.length;
+
+    // Execute search query
     const products = dbConfig.executeQuery(searchQuery, params);
-    const totalResult = dbConfig.getOne(countQuery, countParams);
-    const total = totalResult?.total || 0;
+
+    console.log(`🔍 SEARCH RESULTS: ${products.length} products, total: ${total}`);
 
     // Parse JSON attributes
     products.forEach(product => {
@@ -261,7 +269,7 @@ router.get('/products/search', (req, res) => {
       }
     });
 
-    // Pagination info
+    // FIXED: Pagination info with correct total
     const totalPages = Math.ceil(total / limit);
 
     res.json({
@@ -273,12 +281,12 @@ router.get('/products/search', (req, res) => {
         brand: brand || null,
         min_price: min_price ? parseFloat(min_price) : null,
         max_price: max_price ? parseFloat(max_price) : null,
-        results_found: total
+        results_found: total // FIXED: Real search count
       },
       pagination: {
         current_page: page,
         total_pages: totalPages,
-        total_results: total,
+        total_results: total, // FIXED: Real count
         results_per_page: limit,
         has_next: page < totalPages,
         has_prev: page > 1
@@ -302,7 +310,7 @@ router.get('/products/search', (req, res) => {
 });
 
 // GET /api/v1/:domain/products/:id
-router.get('/products/:id', (req, res) => {
+router.get('/products/:id', async (req, res) => {
   try {
     const { domain, id } = req.params;
     const productId = parseInt(id);
@@ -318,7 +326,7 @@ router.get('/products/:id', (req, res) => {
     console.log(`🎯 SINGLE PRODUCT REQUEST: ${domain}, ID: ${productId}`);
 
     // Get single product with full details
-    const product = dbConfig.getOne(`
+    const product = await dbConfig.getOne(`
       SELECT 
         p.*,
         c.name as category_name,
@@ -388,7 +396,7 @@ router.get('/products/:id', (req, res) => {
 });
 
 // GET /api/v1/:domain/products/:id/reviews (Mock reviews for educational purposes)
-router.get('/products/:id/reviews', (req, res) => {
+router.get('/products/:id/reviews', async (req, res) => {
   try {
     const { domain, id } = req.params;
     const productId = parseInt(id);
@@ -403,7 +411,7 @@ router.get('/products/:id/reviews', (req, res) => {
     }
 
     // Check if product exists
-    const product = dbConfig.getOne(
+    const product = await dbConfig.getOne(
       'SELECT id, name FROM products WHERE domain = ? AND id = ?',
       [domain, productId]
     );
