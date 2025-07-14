@@ -1,44 +1,8 @@
 // ===========================================
-// 🔧 CORRECT FIX FOR SERVER.JS
+// 🔧 HEALTH ENDPOINT FIX - Add to server.js
 // ===========================================
 
-// STEP 1: Find this section in your server.js (around line 150-200)
-// Replace the existing health endpoint that looks like this:
-
-/*
-  app.get('/health', (req, res) => {
-    try {
-      const validation = dbConfig.validateDatabase ? dbConfig.validateDatabase() : { 
-        isValid: true, 
-        productCount: 12, 
-        userCount: 2, 
-        tables: {} 
-      };
-      
-      res.json({
-        status: validation.isValid ? "healthy" : "degraded",
-        database: validation.isValid ? "connected" : "error",
-        data: {
-          total_products: validation.productCount || 0,
-          total_users: validation.userCount || 0,
-          tables: validation.tables || {}
-        },
-        uptime: process.uptime(),
-        memory: process.memoryUsage(),
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      res.status(500).json({
-        status: "error",
-        database: "connection_failed",
-        error: error.message,
-        timestamp: new Date().toISOString()
-      });
-    }
-  });
-*/
-
-// STEP 2: Replace it with this COMPLETE health endpoint:
+// Replace your existing health endpoint in server.js with this:
 
 app.get('/health', (req, res) => {
   try {
@@ -91,14 +55,15 @@ app.get('/health', (req, res) => {
   }
 });
 
-// STEP 3: Add these helper functions AFTER the setupErrorHandlers() function
-// but BEFORE the startServer() call:
+// ===========================================
+// 🔧 POPULATE FUNCTION - Add to server.js
+// ===========================================
 
 function populateInMemoryDatabase() {
   try {
     console.log('📦 FORCE POPULATING IN-MEMORY DATABASE...');
     
-    // Access the existing database configuration
+    // Access the global in-memory database from connection.js
     const { dbConfig } = require('./utils/database');
     
     // Generate comprehensive data for all domains
@@ -120,33 +85,16 @@ function populateInMemoryDatabase() {
       }
     });
     
-    // Force update the global variables in database connection
-    try {
-      // Try to access the connection module directly
-      const connectionModule = require('./database/connection');
-      
-      // Update the in-memory data if accessible
-      if (connectionModule && connectionModule.inMemoryData) {
-        connectionModule.inMemoryData.products = allProducts;
-        console.log('✅ Updated connection.js inMemoryData');
-      }
-      
-      // Also try global approach
-      if (global.inMemoryData) {
-        global.inMemoryData.products = allProducts;
-        console.log('✅ Updated global inMemoryData');
-      } else {
-        global.inMemoryData = {
-          products: allProducts,
-          categories: generateCategories(),
-          brands: generateBrands(),
-          users: generateUsers()
-        };
-        console.log('✅ Created global inMemoryData');
-      }
-      
-    } catch (updateError) {
-      console.log('⚠️ Could not update connection data:', updateError.message);
+    // Force update the global in-memory database
+    if (global.inMemoryData) {
+      global.inMemoryData.products = allProducts;
+    } else {
+      global.inMemoryData = {
+        products: allProducts,
+        categories: generateCategories(),
+        brands: generateBrands(),
+        users: generateUsers()
+      };
     }
     
     console.log(`✅ IN-MEMORY DATABASE POPULATED!`);
@@ -160,6 +108,10 @@ function populateInMemoryDatabase() {
     return { success: false, error: error.message };
   }
 }
+
+// ===========================================
+// 🔧 GENERATE DOMAIN PRODUCT - Add to server.js
+// ===========================================
 
 function generateDomainProduct(domain, id) {
   const templates = {
@@ -230,6 +182,10 @@ function generateDomainProduct(domain, id) {
   };
 }
 
+// ===========================================
+// 🔧 GENERATE HELPER DATA - Add to server.js
+// ===========================================
+
 function generateCategories() {
   const categories = [];
   const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion', 'games', 'music', 'food', 'toys', 'hotels'];
@@ -294,22 +250,13 @@ function generateUsers() {
 }
 
 // ===========================================
-// 🚀 PLACEMENT GUIDE
+// 🚀 USAGE INSTRUCTIONS
 // ===========================================
 
 /*
-Your server.js structure should look like this:
-
-1. const express = require('express');
-2. const app = express();
-3. ... other setup code ...
-4. function setupRoutes() {
-   - Root endpoint
-   - UPDATED health endpoint (from above)
-   - Other routes
-}
-5. function setupErrorHandlers() { ... }
-6. ADD THE HELPER FUNCTIONS HERE (populateInMemoryDatabase, etc.)
-7. async function startServer() { ... }
-8. startServer();
+1. Add all the above functions to your server.js file
+2. Git commit and push to trigger Railway redeploy
+3. Test with: GET /health?populate=true
+4. Verify with: GET /api/v1/movies/products
+5. Expected: 50 products in movies domain, 500 total products
 */
