@@ -12,6 +12,76 @@ let inMemoryData = {
 
 let isInitialized = false;
 
+// Generate product for specific domain
+function generateProductForDomain(domain, id) {
+  const templates = {
+    movies: {
+      names: ['Avengers Endgame', 'The Dark Knight', 'Spider-Man No Way Home', 'Batman Begins', 'Iron Man', 'Thor Ragnarok', 'Captain America', 'Wonder Woman'],
+      attributes: { director: 'Marvel Studios', year: 2023, genre: 'Action', duration: 120 }
+    },
+    books: {
+      names: ['JavaScript Complete Guide', 'Python Programming', 'React Development', 'Node.js Handbook', 'Web Development', 'Data Science', 'Machine Learning', 'Clean Code'],
+      attributes: { author: 'Tech Author', pages: 300, language: 'English', isbn: '978-1234567890' }
+    },
+    electronics: {
+      names: ['iPhone 15 Pro', 'MacBook Pro M3', 'iPad Air', 'Samsung Galaxy S24', 'Dell XPS 13', 'HP Spectre', 'Surface Pro', 'Google Pixel'],
+      attributes: { brand: 'Apple', model: 'Latest', warranty: '2 years', color: 'Space Gray' }
+    },
+    restaurants: {
+      names: ['Pizza Napoletana', 'Burger Supreme', 'Sushi Zen', 'Taco Fiesta', 'Pasta Milano', 'Steakhouse Prime', 'Cafe Mocha', 'Noodle House'],
+      attributes: { cuisine: 'Italian', location: 'Downtown', phone: '+995-555-1234', delivery: true }
+    },
+    fashion: {
+      names: ['Designer Suit', 'Casual Jeans', 'Leather Jacket', 'Running Sneakers', 'Baseball Cap', 'Silk Scarf', 'Wool Sweater', 'Cotton T-Shirt'],
+      attributes: { size: 'M', color: 'Navy Blue', material: 'Cotton', brand: 'Fashion Brand' }
+    },
+    games: {
+      names: ['FIFA 24', 'Call of Duty Modern Warfare', 'Minecraft', 'Fortnite', 'Among Us', 'Valorant', 'Rocket League', 'Apex Legends'],
+      attributes: { platform: 'PC', genre: 'Action', rating: 'T', multiplayer: true }
+    },
+    music: {
+      names: ['Greatest Hits 2024', 'Rock Classics', 'Jazz Anthology', 'Pop Favorites', 'Country Roads', 'Hip Hop Beats', 'Electronic Vibes', 'Classical Masters'],
+      attributes: { artist: 'Various Artists', genre: 'Pop', year: 2024, duration: '3:45' }
+    },
+    food: {
+      names: ['Organic Bananas', 'Fresh Sourdough Bread', 'Grass-Fed Milk', 'Free-Range Eggs', 'Extra Virgin Olive Oil', 'Wild Salmon', 'Quinoa Seeds', 'Almond Butter'],
+      attributes: { category: 'Organic', organic: true, weight: '1 kg', expiry: '2025-12-31' }
+    },
+    toys: {
+      names: ['LEGO Architecture', 'Barbie Dreamhouse', 'Hot Wheels Track', 'Teddy Bear Plush', 'Monopoly Board Game', 'Action Figure Set', 'Puzzle 1000pc', 'RC Drone'],
+      attributes: { age_group: '6-12 years', educational: true, safety_certified: true }
+    },
+    hotels: {
+      names: ['Grand Plaza Hotel', 'Sunset Beach Resort', 'City Center Inn', 'Mountain View Lodge', 'Downtown Marriott', 'Boutique Hotel', 'Luxury Suites', 'Business Hotel'],
+      attributes: { star_rating: 4, amenities: ['WiFi', 'Pool', 'Gym', 'Restaurant'], location: 'City Center' }
+    }
+  };
+  
+  const template = templates[domain];
+  if (!template) return null;
+  
+  const nameIndex = (id - 1) % template.names.length;
+  const name = template.names[nameIndex];
+  const price = (Math.random() * 200 + 10).toFixed(2);
+  const rating = (Math.random() * 2 + 3).toFixed(1);
+  
+  return {
+    id: id,
+    domain: domain,
+    name: name,
+    price: parseFloat(price),
+    image_url: `https://picsum.photos/300/400?random=${id}`,
+    attributes: template.attributes,
+    category_id: Math.floor(Math.random() * 3) + 1,
+    brand_id: Math.floor(Math.random() * 3) + 1,
+    rating: parseFloat(rating),
+    review_count: Math.floor(Math.random() * 1000) + 50,
+    in_stock: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  };
+}
+
 // Force in-memory database for Railway
 async function initializeDatabase() {
   try {
@@ -60,6 +130,22 @@ async function loadInMemoryData() {
   try {
     console.log('📦 Loading comprehensive sample data into memory...');
     
+    // Generate 500 products across multiple domains
+    const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion', 'games', 'music', 'food', 'toys', 'hotels'];
+    const allProducts = [];
+    
+    // Generate 50 products per domain (500 total)
+    domains.forEach((domain, domainIndex) => {
+      console.log(`📦 Generating ${domain} products...`);
+      for (let i = 1; i <= 50; i++) {
+        const productId = domainIndex * 50 + i;
+        const product = generateProductForDomain(domain, productId);
+        if (product) {
+          allProducts.push(product);
+        }
+      }
+    });
+    
     // Categories for multiple domains
     inMemoryData.categories = [
       { id: 1, domain: 'movies', name: 'Action', description: 'Action movies' },
@@ -75,7 +161,17 @@ async function loadInMemoryData() {
       { id: 11, domain: 'restaurants', name: 'Italian', description: 'Italian cuisine' },
       { id: 12, domain: 'restaurants', name: 'Asian', description: 'Asian cuisine' },
       { id: 13, domain: 'fashion', name: 'Casual', description: 'Casual wear' },
-      { id: 14, domain: 'fashion', name: 'Formal', description: 'Formal wear' }
+      { id: 14, domain: 'fashion', name: 'Formal', description: 'Formal wear' },
+      { id: 15, domain: 'games', name: 'Action', description: 'Action games' },
+      { id: 16, domain: 'games', name: 'Strategy', description: 'Strategy games' },
+      { id: 17, domain: 'music', name: 'Rock', description: 'Rock music' },
+      { id: 18, domain: 'music', name: 'Pop', description: 'Pop music' },
+      { id: 19, domain: 'food', name: 'Organic', description: 'Organic food' },
+      { id: 20, domain: 'food', name: 'Dairy', description: 'Dairy products' },
+      { id: 21, domain: 'toys', name: 'Educational', description: 'Educational toys' },
+      { id: 22, domain: 'toys', name: 'Action', description: 'Action toys' },
+      { id: 23, domain: 'hotels', name: 'Luxury', description: 'Luxury hotels' },
+      { id: 24, domain: 'hotels', name: 'Budget', description: 'Budget hotels' }
     ];
     
     // Brands for multiple domains
@@ -89,93 +185,16 @@ async function loadInMemoryData() {
       { id: 7, domain: 'books', name: 'Penguin', description: 'Penguin Random House' },
       { id: 8, domain: 'books', name: 'Harper', description: 'Harper Collins' },
       { id: 9, domain: 'restaurants', name: 'Local Eats', description: 'Local restaurant chain' },
-      { id: 10, domain: 'fashion', name: 'StyleCo', description: 'Fashion brand' }
+      { id: 10, domain: 'fashion', name: 'StyleCo', description: 'Fashion brand' },
+      { id: 11, domain: 'games', name: 'GameStudio', description: 'Game development studio' },
+      { id: 12, domain: 'music', name: 'RecordLabel', description: 'Music record label' },
+      { id: 13, domain: 'food', name: 'FreshFarms', description: 'Fresh food supplier' },
+      { id: 14, domain: 'toys', name: 'ToyMaker', description: 'Toy manufacturer' },
+      { id: 15, domain: 'hotels', name: 'HotelChain', description: 'Hotel chain' }
     ];
     
-    // Comprehensive products for multiple domains
-    inMemoryData.products = [
-      // Movies
-      {
-        id: 1, domain: 'movies', name: 'Avengers: Endgame', price: 19.99,
-        image_url: 'https://picsum.photos/300/400?random=1',
-        attributes: { director: 'Russo Brothers', year: 2019, genre: 'Action', duration: 181 },
-        category_id: 1, brand_id: 1, rating: 4.8, review_count: 15420, in_stock: true
-      },
-      {
-        id: 2, domain: 'movies', name: 'The Dark Knight', price: 15.99,
-        image_url: 'https://picsum.photos/300/400?random=2',
-        attributes: { director: 'Christopher Nolan', year: 2008, genre: 'Action', duration: 152 },
-        category_id: 1, brand_id: 2, rating: 4.9, review_count: 18750, in_stock: true
-      },
-      {
-        id: 3, domain: 'movies', name: 'Inception', price: 17.99,
-        image_url: 'https://picsum.photos/300/400?random=3',
-        attributes: { director: 'Christopher Nolan', year: 2010, genre: 'Sci-Fi', duration: 148 },
-        category_id: 4, brand_id: 2, rating: 4.7, review_count: 12300, in_stock: true
-      },
-      
-      // Books
-      {
-        id: 4, domain: 'books', name: 'JavaScript: The Good Parts', price: 29.99,
-        image_url: 'https://picsum.photos/300/400?random=4',
-        attributes: { author: 'Douglas Crockford', pages: 176, language: 'English', isbn: '978-0596517748' },
-        category_id: 7, brand_id: 7, rating: 4.5, review_count: 890, in_stock: true
-      },
-      {
-        id: 5, domain: 'books', name: 'Clean Code', price: 34.99,
-        image_url: 'https://picsum.photos/300/400?random=5',
-        attributes: { author: 'Robert Martin', pages: 464, language: 'English', isbn: '978-0132350884' },
-        category_id: 7, brand_id: 8, rating: 4.6, review_count: 1240, in_stock: true
-      },
-      
-      // Electronics
-      {
-        id: 6, domain: 'electronics', name: 'iPhone 15 Pro', price: 999.99,
-        image_url: 'https://picsum.photos/300/400?random=6',
-        attributes: { storage: '256GB', color: 'Space Black', brand: 'Apple', screen: '6.1 inch' },
-        category_id: 9, brand_id: 4, rating: 4.7, review_count: 2340, in_stock: true
-      },
-      {
-        id: 7, domain: 'electronics', name: 'MacBook Air M2', price: 1199.99,
-        image_url: 'https://picsum.photos/300/400?random=7',
-        attributes: { storage: '512GB', color: 'Silver', brand: 'Apple', screen: '13.6 inch' },
-        category_id: 8, brand_id: 4, rating: 4.8, review_count: 1560, in_stock: true
-      },
-      {
-        id: 8, domain: 'electronics', name: 'Samsung Galaxy S24', price: 799.99,
-        image_url: 'https://picsum.photos/300/400?random=8',
-        attributes: { storage: '128GB', color: 'Black', brand: 'Samsung', screen: '6.2 inch' },
-        category_id: 9, brand_id: 5, rating: 4.6, review_count: 980, in_stock: true
-      },
-      
-      // Restaurants
-      {
-        id: 9, domain: 'restaurants', name: 'Mama Mia Italian', price: 25.50,
-        image_url: 'https://picsum.photos/300/400?random=9',
-        attributes: { cuisine: 'Italian', location: 'Downtown', phone: '+995 555 1234', capacity: 50 },
-        category_id: 11, brand_id: 9, rating: 4.4, review_count: 340, in_stock: true
-      },
-      {
-        id: 10, domain: 'restaurants', name: 'Tokyo Sushi Bar', price: 35.00,
-        image_url: 'https://picsum.photos/300/400?random=10',
-        attributes: { cuisine: 'Japanese', location: 'City Center', phone: '+995 555 5678', capacity: 30 },
-        category_id: 12, brand_id: 9, rating: 4.7, review_count: 220, in_stock: true
-      },
-      
-      // Fashion
-      {
-        id: 11, domain: 'fashion', name: 'Classic Denim Jacket', price: 79.99,
-        image_url: 'https://picsum.photos/300/400?random=11',
-        attributes: { size: 'Medium', color: 'Blue', material: 'Cotton', brand: 'StyleCo' },
-        category_id: 13, brand_id: 10, rating: 4.3, review_count: 150, in_stock: true
-      },
-      {
-        id: 12, domain: 'fashion', name: 'Business Suit', price: 299.99,
-        image_url: 'https://picsum.photos/300/400?random=12',
-        attributes: { size: 'Large', color: 'Navy', material: 'Wool', brand: 'StyleCo' },
-        category_id: 14, brand_id: 10, rating: 4.5, review_count: 89, in_stock: true
-      }
-    ];
+    // Set the generated products
+    inMemoryData.products = allProducts;
     
     // Sample users
     inMemoryData.users = [
