@@ -632,7 +632,7 @@ function generateProductForDomain(domain, id) {
     image_url: `https://picsum.photos/300/400?random=${id}`,
     attributes: JSON.stringify(template.attributes),
     category_id: domainIndex * 4 + Math.floor(Math.random() * 4) + 1, // 1-4 categories per domain
-    brand_id: Math.floor(Math.random() * 3) + 1, // 1-3 brands per domain
+    brand_id: domainIndex * 3 + Math.floor(Math.random() * 3) + 1, // 1-3 brands per domain
     rating: parseFloat(rating),
     review_count: Math.floor(Math.random() * 1000) + 50,
     in_stock: Math.random() > 0.1, // 90% in stock
