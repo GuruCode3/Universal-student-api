@@ -1,7 +1,7 @@
 {
   "name": "universal-student-api",
   "version": "2.0.0",
-  "description": "Universal Educational API for student frontend projects with 20 domains",
+  "description": "Universal Educational API for student frontend projects with 20 domains - OPTIMIZED",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -9,12 +9,13 @@
     "test": "node --version && npm --version",
     "build": "echo 'No build step required for this project'",
     "deploy": "echo 'Ready for Railway deployment!'",
-    "postinstall": "echo '✅ Universal Student API dependencies installed successfully!'"
+    "performance-test": "echo 'Testing API performance...' && curl http://localhost:3000/performance",
+    "postinstall": "echo '✅ Universal Student API v2.0 dependencies installed successfully!'"
   },
   "keywords": [
     "api",
     "educational",
-    "students",
+    "students", 
     "frontend",
     "backend",
     "express",
@@ -22,7 +23,10 @@
     "authentication",
     "shopping-cart",
     "multi-domain",
-    "in-memory"
+    "in-memory",
+    "optimized",
+    "rate-limiting",
+    "performance"
   ],
   "author": "Educational Collaboration",
   "license": "MIT",
@@ -34,7 +38,9 @@
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2"
+    "express-rate-limit": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
