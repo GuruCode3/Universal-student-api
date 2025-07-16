@@ -1,340 +1,644 @@
-### ===========================================
-### 🚀 UNIVERSAL STUDENT API - COMPLETE 20 DOMAINS TEST
-### Production Tests for ALL domains (Railway)
-### URL: https://universal-student-api-production.up.railway.app
-### Expected: 500 products per domain = 10,000 total
-### ===========================================
+### 🎓 Universal Student API - Complete Test Collection
+### Use this file with REST Client extension in VS Code
+### Base URL: https://universal-student-api-production.up.railway.app
 
-### 1. 🏥 HEALTH CHECK - Server Status
-GET https://universal-student-api-production.up.railway.app/health
+@baseUrl = https://universal-student-api-production.up.railway.app
+@token = YOUR_JWT_TOKEN_HERE
 
-###
+### ============================================
+### 📊 SYSTEM ENDPOINTS
+### ============================================
 
-### 2. 🌍 DOMAINS LIST - All 20 domains
-GET https://universal-student-api-production.up.railway.app/api/v1/domains
+### 1. Get API Information
+GET {{baseUrl}}/
+Accept: application/json
 
-###
+### 2. Health Check
+GET {{baseUrl}}/health
+Accept: application/json
 
-### ===========================================
-### 🎯 20 DOMAINS COMPLETE TEST - 200 PRODUCTS EACH
-### Each domain should return exactly 500 total products
-### ===========================================
+### 3. API Status
+GET {{baseUrl}}/api/v1/status
+Accept: application/json
 
-### 3. 🎬 MOVIES - 500 movies (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?limit=500
+### 4. Performance Metrics
+GET {{baseUrl}}/performance
+Accept: application/json
 
-###
+### 5. Available Domains
+GET {{baseUrl}}/api/v1/domains
+Accept: application/json
 
-### 4. 📚 BOOKS - 500 books (200 per page)  
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products?limit=500
+### ============================================
+### 🎬 MOVIES DOMAIN EXAMPLES
+### ============================================
 
-###
+### 6. Get Movies (First 10)
+GET {{baseUrl}}/api/v1/movies/products?limit=10
+Accept: application/json
 
-### 5. 💻 ELECTRONICS - 500 electronics (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?limit=500
+### 7. Get Movies (Page 2)
+GET {{baseUrl}}/api/v1/movies/products?page=2&limit=5
+Accept: application/json
 
-###
+### 8. Get Single Movie
+GET {{baseUrl}}/api/v1/movies/products/1
+Accept: application/json
 
-### 6. 🍕 RESTAURANTS - 500 restaurants (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/restaurants/products?limit=500
+### 9. Search Movies by Name
+GET {{baseUrl}}/api/v1/movies/products/search?q=batman
+Accept: application/json
 
-###
+### 10. Get Movie Categories
+GET {{baseUrl}}/api/v1/movies/categories
+Accept: application/json
 
-### 7. 👗 FASHION - 500 fashion items (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/fashion/products?limit=200
+### 11. Get Movie Brands
+GET {{baseUrl}}/api/v1/movies/brands
+Accept: application/json
 
-###
+### 12. Filter Movies by Category
+GET {{baseUrl}}/api/v1/movies/products/search?category=action
+Accept: application/json
 
-### 8. 🎮 GAMES - 500 games (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/games/products?limit=500
+### 13. Filter Movies by Price Range
+GET {{baseUrl}}/api/v1/movies/products/search?min_price=10&max_price=25
+Accept: application/json
 
-###
+### ============================================
+### 📚 BOOKS DOMAIN EXAMPLES
+### ============================================
 
-### 9. 🎵 MUSIC - 500 albums (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/music/products?limit=200
+### 14. Get Books
+GET {{baseUrl}}/api/v1/books/products?limit=10
+Accept: application/json
 
-###
+### 15. Search Books
+GET {{baseUrl}}/api/v1/books/products/search?q=javascript
+Accept: application/json
 
-### 10. 🥑 FOOD - 500 food items (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/food/products?limit=500
+### 16. Get Book Categories
+GET {{baseUrl}}/api/v1/books/categories
+Accept: application/json
 
-###
+### 17. Get Single Book
+GET {{baseUrl}}/api/v1/books/products/501
+Accept: application/json
 
-### 11. 🧸 TOYS - 500 toys (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/toys/products?limit=200
+### ============================================
+### 📱 ELECTRONICS DOMAIN EXAMPLES
+### ============================================
 
-###
+### 18. Get Electronics
+GET {{baseUrl}}/api/v1/electronics/products?limit=10
+Accept: application/json
 
-### 12. 🏨 HOTELS - 500 hotels (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/hotels/products?limit=200
+### 19. Search Electronics
+GET {{baseUrl}}/api/v1/electronics/products/search?q=iphone
+Accept: application/json
 
-###
+### 20. Get Electronics Categories
+GET {{baseUrl}}/api/v1/electronics/categories
+Accept: application/json
 
-### 13. 🚗 CARS - 500 cars (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/cars/products?limit=200
+### 21. Filter Electronics by Brand
+GET {{baseUrl}}/api/v1/electronics/products/search?brand=apple
+Accept: application/json
 
-###
+### ============================================
+### 🍕 RESTAURANTS DOMAIN EXAMPLES
+### ============================================
 
-### 14. 💊 MEDICINES - 500 medicines (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/medicines/products?limit=200
+### 22. Get Restaurants
+GET {{baseUrl}}/api/v1/restaurants/products?limit=10
+Accept: application/json
 
-###
+### 23. Search Restaurants
+GET {{baseUrl}}/api/v1/restaurants/products/search?q=pizza
+Accept: application/json
 
-### 15. 📖 COURSES - 500 courses (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/courses/products?limit=200
+### 24. Get Restaurant Categories
+GET {{baseUrl}}/api/v1/restaurants/categories
+Accept: application/json
 
-###
+### ============================================
+### 👕 FASHION DOMAIN EXAMPLES
+### ============================================
 
-### 16. 🎪 EVENTS - 500 events (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/events/products?limit=200
+### 25. Get Fashion Items
+GET {{baseUrl}}/api/v1/fashion/products?limit=10
+Accept: application/json
 
-###
+### 26. Search Fashion
+GET {{baseUrl}}/api/v1/fashion/products/search?q=jeans
+Accept: application/json
 
-### 17. 📱 APPS - 500 apps (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/apps/products?limit=200
+### 27. Get Fashion Categories
+GET {{baseUrl}}/api/v1/fashion/categories
+Accept: application/json
 
-###
+### ============================================
+### 🎮 GAMES DOMAIN EXAMPLES
+### ============================================
 
-### 18. ✈️ FLIGHTS - 500 flights (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/flights/products?limit=200
+### 28. Get Games
+GET {{baseUrl}}/api/v1/games/products?limit=10
+Accept: application/json
 
-###
+### 29. Search Games
+GET {{baseUrl}}/api/v1/games/products/search?q=fifa
+Accept: application/json
 
-### 19. 🐕 PETS - 500 pets (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/pets/products?limit=200
+### 30. Get Game Categories
+GET {{baseUrl}}/api/v1/games/categories
+Accept: application/json
 
-###
+### ============================================
+### 🔐 AUTHENTICATION FLOW
+### ============================================
 
-### 20. 🏠 REALESTATE - 500 properties (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/realestate/products?limit=200
-
-###
-
-### 21. ⚽ SPORTS - 500 sports items (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/sports/products?limit=200
-
-###
-
-### 22. 🔧 TOOLS - 500 tools (200 per page)
-GET https://universal-student-api-production.up.railway.app/api/v1/tools/products?limit=200
-
-###
-
-### ===========================================
-### 📊 VERIFICATION - ALL 500 PRODUCTS PER DOMAIN
-### Each response should show: "total_products": 500
-### ===========================================
-
-### 23. 🎬 MOVIES - All 500 at once
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?limit=500
-
-###
-
-### 24. 📚 BOOKS - All 500 at once
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products?limit=500
-
-###
-
-### 25. 💻 ELECTRONICS - All 500 at once
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?limit=500
-
-###
-
-### ===========================================
-### 🔐 AUTHENTICATION TESTS
-### ===========================================
-
-### 26. 👤 USER REGISTRATION
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+### 31. Login (Demo User)
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "student20025",
-  "email": "students2025@university.edu",
-  "password": "mystudenst123",
-  "first_name": "სტსსსუდენტი",
-  "last_name": "ახასლი"
+  "username": "demo",
+  "password": "demo123"
 }
 
-###
-
-### 27. 🔑 LOGIN - Get JWT Token
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
+### 32. Login (Teacher)
+POST {{baseUrl}}/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "sdtudent2025",
-  "password": "mystudent123"
+  "username": "teacher",
+  "password": "demo123"
 }
 
-###
+### 33. Register New User
+POST {{baseUrl}}/api/v1/auth/register
+Content-Type: application/json
 
-### 28. 👤 USER PROFILE - Test Authentication
-# COPY TOKEN FROM STEP 27 AND PASTE BELOW!
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
-Authorization: Bearer PUT_TOKEN_FROM_STEP_27_HERE
+{
+  "username": "student2",
+  "email": "student2@example.com",
+  "password": "password123",
+  "first_name": "John",
+  "last_name": "Doe"
+}
 
-###
+### 34. Get User Profile (Requires Token)
+GET {{baseUrl}}/api/v1/auth/profile
+Authorization: Bearer {{token}}
+Accept: application/json
 
-### ===========================================
-### 🛒 SHOPPING CART TESTS
-### ===========================================
+### ============================================
+### 🛒 SHOPPING CART (Protected Routes)
+### ============================================
 
-### 29. 🛒 ADD TO CART - Add movie
-POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
-Authorization: Bearer PUT_TOKEN_FROM_STEP_27_HERE
+### 35. Get Cart
+GET {{baseUrl}}/api/v1/cart
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### 36. Add Movie to Cart
+POST {{baseUrl}}/api/v1/cart/add
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
   "product_id": 1,
+  "domain": "movies",
   "quantity": 2
 }
 
-###
+### 37. Add Book to Cart
+POST {{baseUrl}}/api/v1/cart/add
+Authorization: Bearer {{token}}
+Content-Type: application/json
 
-### 30. 👀 VIEW CART
-GET https://universal-student-api-production.up.railway.app/api/v1/cart
-Authorization: Bearer PUT_TOKEN_FROM_STEP_27_HERE
+{
+  "product_id": 501,
+  "domain": "books",
+  "quantity": 1
+}
 
-###
+### 38. Update Cart Item
+PUT {{baseUrl}}/api/v1/cart/update/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
 
-### ===========================================
-### 📋 CATEGORIES & BRANDS TESTS
-### ===========================================
+{
+  "quantity": 3
+}
 
-### 31. 📋 MOVIES CATEGORIES
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/categories
+### 39. Remove Cart Item
+DELETE {{baseUrl}}/api/v1/cart/remove/1
+Authorization: Bearer {{token}}
 
-###
+### 40. Clear Cart
+DELETE {{baseUrl}}/api/v1/cart/clear
+Authorization: Bearer {{token}}
 
-### 32. 🏷️ MOVIES BRANDS
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/brands
+### 41. Mock Checkout
+POST {{baseUrl}}/api/v1/cart/checkout
+Authorization: Bearer {{token}}
+Content-Type: application/json
 
-###
+{
+  "payment_method": "credit_card",
+  "shipping_address": {
+    "street": "123 Main St",
+    "city": "Tbilisi",
+    "country": "Georgia"
+  }
+}
 
-### 33. 📋 BOOKS CATEGORIES
-GET https://universal-student-api-production.up.railway.app/api/v1/books/categories
+### ============================================
+### 🎵 MUSIC DOMAIN EXAMPLES
+### ============================================
 
-###
+### 42. Get Music Albums
+GET {{baseUrl}}/api/v1/music/products?limit=10
+Accept: application/json
 
-### 34. 🏷️ CARS BRANDS
-GET https://universal-student-api-production.up.railway.app/api/v1/cars/brands
+### 43. Search Music
+GET {{baseUrl}}/api/v1/music/products/search?q=rock
+Accept: application/json
 
-###
+### 44. Get Music Categories
+GET {{baseUrl}}/api/v1/music/categories
+Accept: application/json
 
-### ===========================================
-### 🔍 SEARCH TESTS
-### ===========================================
+### ============================================
+### 🥗 FOOD DOMAIN EXAMPLES
+### ============================================
 
-### 35. 🔍 SEARCH MOVIES
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=avengers
+### 45. Get Food Products
+GET {{baseUrl}}/api/v1/food/products?limit=10
+Accept: application/json
 
-###
+### 46. Search Organic Food
+GET {{baseUrl}}/api/v1/food/products/search?q=organic
+Accept: application/json
 
-### 36. 🔍 SEARCH BOOKS
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products/search?q=javascript
+### 47. Get Food Categories
+GET {{baseUrl}}/api/v1/food/categories
+Accept: application/json
 
-###
+### ============================================
+### 🧸 TOYS DOMAIN EXAMPLES
+### ============================================
 
-### 37. 🔍 SEARCH ELECTRONICS
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=iphone
+### 48. Get Toys
+GET {{baseUrl}}/api/v1/toys/products?limit=10
+Accept: application/json
 
-###
+### 49. Search Toys
+GET {{baseUrl}}/api/v1/toys/products/search?q=lego
+Accept: application/json
 
-### ===========================================
-### 🎯 SINGLE PRODUCT TESTS
-### ===========================================
+### 50. Get Toy Categories
+GET {{baseUrl}}/api/v1/toys/categories
+Accept: application/json
 
-### 38. 📄 SINGLE MOVIE
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/1
+### ============================================
+### 🏨 HOTELS DOMAIN EXAMPLES
+### ============================================
 
-###
+### 51. Get Hotels
+GET {{baseUrl}}/api/v1/hotels/products?limit=10
+Accept: application/json
 
-### 39. 📄 SINGLE BOOK
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products/501
+### 52. Search Hotels
+GET {{baseUrl}}/api/v1/hotels/products/search?q=luxury
+Accept: application/json
 
-###
+### 53. Get Hotel Categories
+GET {{baseUrl}}/api/v1/hotels/categories
+Accept: application/json
 
-### 40. 📄 SINGLE ELECTRONICS
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/1001
+### ============================================
+### 🚗 CARS DOMAIN EXAMPLES
+### ============================================
 
-###
+### 54. Get Cars
+GET {{baseUrl}}/api/v1/cars/products?limit=10
+Accept: application/json
 
-### ===========================================
-### ❌ ERROR HANDLING TESTS
-### ===========================================
+### 55. Search Cars
+GET {{baseUrl}}/api/v1/cars/products/search?q=tesla
+Accept: application/json
 
-### 41. 404 TEST - Invalid domain
-GET https://universal-student-api-production.up.railway.app/api/v1/invaliddomain/products
+### 56. Get Car Categories
+GET {{baseUrl}}/api/v1/cars/categories
+Accept: application/json
 
-###
+### ============================================
+### 💊 MEDICINES DOMAIN EXAMPLES
+### ============================================
 
-### 42. 404 TEST - Invalid product ID
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/999999
+### 57. Get Medicines
+GET {{baseUrl}}/api/v1/medicines/products?limit=10
+Accept: application/json
 
-###
+### 58. Search Medicines
+GET {{baseUrl}}/api/v1/medicines/products/search?q=vitamin
+Accept: application/json
 
-### 43. 401 TEST - No authentication
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+### 59. Get Medicine Categories
+GET {{baseUrl}}/api/v1/medicines/categories
+Accept: application/json
 
-###
+### ============================================
+### 📖 COURSES DOMAIN EXAMPLES
+### ============================================
 
-### ===========================================
-### 📊 SUCCESS CRITERIA CHECKLIST
-### ===========================================
+### 60. Get Courses
+GET {{baseUrl}}/api/v1/courses/products?limit=10
+Accept: application/json
 
-# ✅ Test 2: Should return exactly 20 domains
-# ✅ Tests 3-22: Each domain should return "total_products": 500
-# ✅ Tests 23-25: Verify 500 products can be retrieved at once
-# ✅ Tests 26-28: Authentication should work
-# ✅ Tests 29-30: Shopping cart should work
-# ✅ Tests 31-34: Categories and brands should exist
-# ✅ Tests 35-37: Search should return results
-# ✅ Tests 38-40: Single products should be retrievable
-# ✅ Tests 41-43: Error handling should work
+### 61. Search Courses
+GET {{baseUrl}}/api/v1/courses/products/search?q=programming
+Accept: application/json
 
-### ===========================================
-### 🎯 EXPECTED RESULTS
-### ===========================================
+### 62. Get Course Categories
+GET {{baseUrl}}/api/v1/courses/categories
+Accept: application/json
 
-# 📦 Total Products: 10,000 (500 × 20 domains)
-# 🌐 Total Domains: 20
-# 📋 Categories per domain: 4
-# 🏷️ Brands per domain: 3
-# 👥 Users: Unlimited registration
-# ✅ Authentication: JWT Working
-# 🛒 Shopping Cart: Protected routes working
-# 🔍 Search: Full-text search working
-# 📊 Pagination: 1-500 products per page
+### ============================================
+### 🎪 EVENTS DOMAIN EXAMPLES
+### ============================================
 
-### ===========================================
-### 🏆 DOMAIN VERIFICATION QUICK CHECK
-### Copy these URLs to browser tabs for rapid testing:
-### ===========================================
+### 63. Get Events
+GET {{baseUrl}}/api/v1/events/products?limit=10
+Accept: application/json
 
-# https://universal-student-api-production.up.railway.app/api/v1/movies/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/books/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/electronics/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/restaurants/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/fashion/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/games/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/music/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/food/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/toys/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/hotels/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/cars/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/medicines/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/courses/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/events/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/apps/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/flights/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/pets/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/realestate/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/sports/products?limit=200
-# https://universal-student-api-production.up.railway.app/api/v1/tools/products?limit=200
+### 64. Search Events
+GET {{baseUrl}}/api/v1/events/products/search?q=conference
+Accept: application/json
 
-### ===========================================
-### 🎉 UNIVERSAL STUDENT API - PRODUCTION READY!
-### Perfect for 16 students + instructor
-### All 20 domains × 500 products = 10,000 products total
-### ===========================================
+### 65. Get Event Categories
+GET {{baseUrl}}/api/v1/events/categories
+Accept: application/json
+
+### ============================================
+### 📱 APPS DOMAIN EXAMPLES
+### ============================================
+
+### 66. Get Apps
+GET {{baseUrl}}/api/v1/apps/products?limit=10
+Accept: application/json
+
+### 67. Search Apps
+GET {{baseUrl}}/api/v1/apps/products/search?q=instagram
+Accept: application/json
+
+### 68. Get App Categories
+GET {{baseUrl}}/api/v1/apps/categories
+Accept: application/json
+
+### ============================================
+### ✈️ FLIGHTS DOMAIN EXAMPLES
+### ============================================
+
+### 69. Get Flights
+GET {{baseUrl}}/api/v1/flights/products?limit=10
+Accept: application/json
+
+### 70. Search Flights
+GET {{baseUrl}}/api/v1/flights/products/search?q=london
+Accept: application/json
+
+### 71. Get Flight Categories
+GET {{baseUrl}}/api/v1/flights/categories
+Accept: application/json
+
+### ============================================
+### 🐕 PETS DOMAIN EXAMPLES
+### ============================================
+
+### 72. Get Pets
+GET {{baseUrl}}/api/v1/pets/products?limit=10
+Accept: application/json
+
+### 73. Search Pets
+GET {{baseUrl}}/api/v1/pets/products/search?q=dog
+Accept: application/json
+
+### 74. Get Pet Categories
+GET {{baseUrl}}/api/v1/pets/categories
+Accept: application/json
+
+### ============================================
+### 🏠 REAL ESTATE DOMAIN EXAMPLES
+### ============================================
+
+### 75. Get Real Estate
+GET {{baseUrl}}/api/v1/realestate/products?limit=10
+Accept: application/json
+
+### 76. Search Real Estate
+GET {{baseUrl}}/api/v1/realestate/products/search?q=apartment
+Accept: application/json
+
+### 77. Get Real Estate Categories
+GET {{baseUrl}}/api/v1/realestate/categories
+Accept: application/json
+
+### ============================================
+### ⚽ SPORTS DOMAIN EXAMPLES
+### ============================================
+
+### 78. Get Sports Products
+GET {{baseUrl}}/api/v1/sports/products?limit=10
+Accept: application/json
+
+### 79. Search Sports
+GET {{baseUrl}}/api/v1/sports/products/search?q=nike
+Accept: application/json
+
+### 80. Get Sports Categories
+GET {{baseUrl}}/api/v1/sports/categories
+Accept: application/json
+
+### ============================================
+### 🔧 TOOLS DOMAIN EXAMPLES
+### ============================================
+
+### 81. Get Tools
+GET {{baseUrl}}/api/v1/tools/products?limit=10
+Accept: application/json
+
+### 82. Search Tools
+GET {{baseUrl}}/api/v1/tools/products/search?q=drill
+Accept: application/json
+
+### 83. Get Tool Categories
+GET {{baseUrl}}/api/v1/tools/categories
+Accept: application/json
+
+### ============================================
+### 🧪 ADVANCED TESTING SCENARIOS
+### ============================================
+
+### 84. Test Pagination (Large Page)
+GET {{baseUrl}}/api/v1/movies/products?page=10&limit=50
+Accept: application/json
+
+### 85. Test Maximum Limit
+GET {{baseUrl}}/api/v1/movies/products?limit=500
+Accept: application/json
+
+### 86. Test Combined Filters
+GET {{baseUrl}}/api/v1/electronics/products/search?q=iphone&min_price=500&max_price=1500&category=phones
+Accept: application/json
+
+### 87. Test Invalid Domain (Should Return 404)
+GET {{baseUrl}}/api/v1/invalid-domain/products
+Accept: application/json
+
+### 88. Test Invalid Product ID (Should Return 404)
+GET {{baseUrl}}/api/v1/movies/products/999999
+Accept: application/json
+
+### 89. Test Empty Search (Should Return 400)
+GET {{baseUrl}}/api/v1/movies/products/search
+Accept: application/json
+
+### 90. Test Rate Limiting (Make Multiple Requests)
+GET {{baseUrl}}/api/v1/movies/products
+Accept: application/json
+
+### ============================================
+### 🎯 PERFORMANCE TESTING
+### ============================================
+
+### 91. Test Search Performance
+GET {{baseUrl}}/api/v1/movies/products/search?q=action
+Accept: application/json
+
+### 92. Test Large Dataset Query
+GET {{baseUrl}}/api/v1/movies/products?limit=100
+Accept: application/json
+
+### 93. Test Complex Search Query
+GET {{baseUrl}}/api/v1/books/products/search?q=javascript&category=technology&min_price=10&max_price=100
+Accept: application/json
+
+### ============================================
+### 📊 ANALYTICS & MONITORING
+### ============================================
+
+### 94. Check Database Stats
+GET {{baseUrl}}/api/v1/status
+Accept: application/json
+
+### 95. Monitor Performance
+GET {{baseUrl}}/performance
+Accept: application/json
+
+### 96. Health Check with Details
+GET {{baseUrl}}/health
+Accept: application/json
+
+### ============================================
+### 🚨 ERROR HANDLING TESTS
+### ============================================
+
+### 97. Test Malformed JSON (Should Return 400)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "demo"
+  "password": "demo123"  // Missing comma
+}
+
+### 98. Test Invalid Login (Should Return 401)
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "invalid",
+  "password": "wrong"
+}
+
+### 99. Test Protected Route Without Token (Should Return 401)
+GET {{baseUrl}}/api/v1/auth/profile
+Accept: application/json
+
+### 100. Test Protected Route With Invalid Token (Should Return 401)
+GET {{baseUrl}}/api/v1/auth/profile
+Authorization: Bearer invalid_token_here
+Accept: application/json
+
+### ============================================
+### 🎓 STUDENT LEARNING EXERCISES
+### ============================================
+
+### 📝 Exercise 1: Basic API Consumption
+# Try requests 1-5 to understand API structure
+
+### 📝 Exercise 2: Domain Exploration
+# Pick a domain and try requests 6-13 pattern for your chosen domain
+
+### 📝 Exercise 3: Search Implementation
+# Build a search interface using requests 14, 19, 23, 26, 29
+
+### 📝 Exercise 4: Authentication Flow
+# Implement login using requests 31-34
+
+### 📝 Exercise 5: Shopping Cart
+# Create a shopping cart using requests 35-41
+
+### 📝 Exercise 6: Multi-Domain Store
+# Build a store that uses multiple domains (movies, books, electronics)
+
+### 📝 Exercise 7: Advanced Features
+# Implement pagination, filtering, and complex search
+
+### 📝 Exercise 8: Error Handling
+# Use requests 97-100 to understand error handling
+
+### ============================================
+### 🔍 DEBUGGING TIPS
+### ============================================
+
+# 1. Always check the response status code
+# 2. Look for 'success' field in JSON responses
+# 3. Check 'message' field for error details
+# 4. Use browser developer tools to inspect network requests
+# 5. Test authentication by checking token in localStorage
+# 6. Monitor rate limits - wait if you get 429 errors
+# 7. Check domain spelling - case sensitive!
+# 8. Use pagination for large datasets
+
+### ============================================
+### 📚 LEARNING RESOURCES
+### ============================================
+
+# 1. REST Client Extension: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+# 2. HTTP Status Codes: https://httpstatuses.com/
+# 3. JSON Formatter: https://jsonformatter.curiousconcept.com/
+# 4. JWT Decoder: https://jwt.io/
+# 5. API Testing Guide: https://blog.postman.com/api-testing/
+
+### ============================================
+### 🎯 QUICK REFERENCE
+### ============================================
+
+# Base URL: https://universal-student-api-production.up.railway.app
+# Auth: Bearer token from login response
+# Rate Limits: 100 requests/15min (general), 200 requests/5min (products)
+# Domains: movies, books, electronics, restaurants, fashion, games, music, food, toys, hotels, cars, medicines, courses, events, apps, flights, pets, realestate, sports, tools
+# Demo Users: demo/demo123, teacher/demo123
+
+### ============================================
+### 🚀 HAPPY CODING!
+### ============================================
+
+# This collection covers all major API features
+# Perfect for learning REST API consumption
+# Use with React, Vue, Angular, or vanilla JavaScript
+# Ready for student projects and assignments!
