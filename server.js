@@ -31,12 +31,18 @@ const mockData = {
 function initializeSimpleData() {
   console.log('📦 Initializing simple mock data...');
   
-  const domains = ['movies', 'books', 'electronics', 'restaurants', 'fashion'];
+  // ALL 20 DOMAINS - Full feature set
+  const domains = [
+    'movies', 'books', 'electronics', 'restaurants', 'fashion',
+    'games', 'music', 'food', 'toys', 'hotels',
+    'cars', 'medicines', 'courses', 'events', 'apps',
+    'flights', 'pets', 'realestate', 'sports', 'tools'
+  ];
   
-  // Generate 100 products per domain = 500 total
+  // Generate 500 products per domain = 10,000 total
   domains.forEach((domain, domainIndex) => {
-    for (let i = 1; i <= 100; i++) {
-      const productId = domainIndex * 100 + i;
+    for (let i = 1; i <= 500; i++) {
+      const productId = domainIndex * 500 + i;
       mockData.products.push({
         id: productId,
         domain: domain,
@@ -108,12 +114,17 @@ app.get('/', (req, res) => {
       status: "Running ✅",
       database: "Connected 💾",
       features: [
-        "✅ 5 Domains with 100+ products each",
+        "✅ 20 Domains with 500+ products each",
         "✅ User Authentication (JWT)",
         "✅ Shopping Cart functionality",
         "✅ Student-friendly endpoints"
       ],
-      domains: ["movies", "books", "electronics", "restaurants", "fashion"],
+      domains: [
+        "movies", "books", "electronics", "restaurants", "fashion",
+        "cars", "hotels", "games", "music", "food", "sports", "toys",
+        "tools", "medicines", "courses", "events", "apps", "flights",
+        "pets", "realestate"
+      ],
       demo_credentials: [
         { username: "demo", password: "demo123", role: "user" },
         { username: "teacher", password: "demo123", role: "admin" }
@@ -121,7 +132,7 @@ app.get('/', (req, res) => {
       database_stats: {
         products: mockData.products.length,
         users: mockData.users.length,
-        domains: 5
+        domains: 20
       },
       timestamp: new Date().toISOString()
     });
@@ -253,7 +264,7 @@ app.get('/api/v1/status', (req, res) => {
       data: {
         total_products: mockData.products.length,
         total_users: mockData.users.length,
-        available_domains: 5
+                  available_domains: 20
       },
       quick_test: {
         products: "GET /api/v1/movies/products",
@@ -273,7 +284,12 @@ app.get('/api/v1/status', (req, res) => {
 // Domains endpoint
 app.get('/api/v1/domains', (req, res) => {
   try {
-    const domains = ["movies", "books", "electronics", "restaurants", "fashion"];
+    const domains = [
+      "movies", "books", "electronics", "restaurants", "fashion",
+      "cars", "hotels", "games", "music", "food", "sports", "toys", 
+      "tools", "medicines", "courses", "events", "apps", "flights",
+      "pets", "realestate"
+    ];
     
     res.json({
       success: true,
