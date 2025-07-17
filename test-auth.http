@@ -6,7 +6,6 @@ Content-Type: application/json
 
 ###
 
-### New User Registration Test
 POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 

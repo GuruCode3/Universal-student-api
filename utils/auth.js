@@ -1,4 +1,4 @@
-// utils/auth.js - JWT Authentication Utilities
+// utils/auth.js - JWT Authentication Utilities - DEBUG VERSION
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -11,26 +11,68 @@ class AuthUtils {
   // Hash password with bcrypt
   static async hashPassword(password) {
     try {
-      console.log('🔐 Hashing password...');
+      console.log('🔐 DEBUG: Hashing password...');
       const saltRounds = 10;
       const hashedPassword = await bcrypt.hash(password, saltRounds);
-      console.log('✅ Password hashed successfully');
+      console.log('✅ DEBUG: Password hashed successfully');
+      console.log('🔐 DEBUG: Hash preview:', hashedPassword.substring(0, 20) + '...');
       return hashedPassword;
     } catch (error) {
-      console.error('❌ Password hashing failed:', error);
+      console.error('❌ DEBUG: Password hashing failed:', error);
       throw new Error('Password hashing failed');
     }
   }
   
-  // Compare password with hash
+  // Compare password with hash - ENHANCED DEBUG VERSION
   static async comparePassword(password, hash) {
     try {
-      console.log('🔍 Comparing password...');
+      console.log('🔍 DEBUG: Starting password comparison...');
+      console.log('🔍 DEBUG: Input password:', password);
+      console.log('🔍 DEBUG: Input hash preview:', hash ? hash.substring(0, 30) + '...' : 'NULL/UNDEFINED');
+      console.log('🔍 DEBUG: Input hash length:', hash ? hash.length : 'NULL');
+      console.log('🔍 DEBUG: Hash starts with $2b$:', hash ? hash.startsWith('$2b$') : 'NO HASH');
+      
+      if (!password) {
+        console.log('❌ DEBUG: Password is empty/null');
+        return false;
+      }
+      
+      if (!hash) {
+        console.log('❌ DEBUG: Hash is empty/null');
+        return false;
+      }
+      
+      if (typeof password !== 'string') {
+        console.log('❌ DEBUG: Password is not a string:', typeof password);
+        return false;
+      }
+      
+      if (typeof hash !== 'string') {
+        console.log('❌ DEBUG: Hash is not a string:', typeof hash);
+        return false;
+      }
+      
+      // Test with known demo123 hash
+      const knownHash = '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2';
+      console.log('🔍 DEBUG: Hash matches known demo123 hash:', hash === knownHash);
+      
+      console.log('🔍 DEBUG: Calling bcrypt.compare...');
       const isValid = await bcrypt.compare(password, hash);
-      console.log('🔑 Password comparison result:', isValid ? 'Valid' : 'Invalid');
+      console.log('🔑 DEBUG: Password comparison result:', isValid);
+      
+      // Additional test with known hash
+      if (!isValid && password === 'demo123') {
+        console.log('🔍 DEBUG: Testing with known demo123 hash...');
+        const testResult = await bcrypt.compare('demo123', knownHash);
+        console.log('🔑 DEBUG: Known hash test result:', testResult);
+      }
+      
       return isValid;
+      
     } catch (error) {
-      console.error('❌ Password comparison failed:', error);
+      console.error('❌ DEBUG: Password comparison failed:', error);
+      console.error('❌ DEBUG: Error details:', error.message);
+      console.error('❌ DEBUG: Error stack:', error.stack);
       return false;
     }
   }
@@ -38,7 +80,7 @@ class AuthUtils {
   // Generate JWT token
   static generateToken(user) {
     try {
-      console.log(`🎫 Generating JWT token for user: ${user.username}`);
+      console.log(`🎫 DEBUG: Generating JWT token for user: ${user.username}`);
       
       const payload = {
         id: user.id,
@@ -47,17 +89,20 @@ class AuthUtils {
         role: user.role || 'user'
       };
       
+      console.log('🎫 DEBUG: Token payload:', payload);
+      
       const token = jwt.sign(payload, JWT_SECRET, {
         expiresIn: JWT_EXPIRES_IN,
         issuer: 'universal-student-api',
         audience: 'student-frontend'
       });
       
-      console.log('✅ JWT token generated successfully');
+      console.log('✅ DEBUG: JWT token generated successfully');
+      console.log('🎫 DEBUG: Token preview:', token.substring(0, 50) + '...');
       return token;
       
     } catch (error) {
-      console.error('❌ JWT token generation failed:', error);
+      console.error('❌ DEBUG: JWT token generation failed:', error);
       throw new Error('Token generation failed');
     }
   }
@@ -65,23 +110,25 @@ class AuthUtils {
   // Verify JWT token
   static verifyToken(token) {
     try {
-      console.log('🔓 Verifying JWT token...');
+      console.log('🔓 DEBUG: Verifying JWT token...');
+      console.log('🔓 DEBUG: Token preview:', token ? token.substring(0, 30) + '...' : 'NULL');
       
       const decoded = jwt.verify(token, JWT_SECRET, {
         issuer: 'universal-student-api',
         audience: 'student-frontend'
       });
       
-      console.log('✅ JWT token verified successfully');
+      console.log('✅ DEBUG: JWT token verified successfully');
+      console.log('🔓 DEBUG: Decoded payload:', decoded);
       return decoded;
       
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        console.log('⏰ JWT token expired');
+        console.log('⏰ DEBUG: JWT token expired');
       } else if (error.name === 'JsonWebTokenError') {
-        console.log('❌ JWT token invalid');
+        console.log('❌ DEBUG: JWT token invalid');
       } else {
-        console.error('❌ JWT verification error:', error);
+        console.error('❌ DEBUG: JWT verification error:', error);
       }
       return null;
     }
@@ -90,28 +137,31 @@ class AuthUtils {
   // Extract token from Authorization header
   static extractTokenFromHeader(authHeader) {
     try {
+      console.log('🔍 DEBUG: Extracting token from header...');
+      console.log('🔍 DEBUG: Auth header:', authHeader ? authHeader.substring(0, 30) + '...' : 'NULL');
+      
       if (!authHeader) {
-        console.log('⚠️ No authorization header provided');
+        console.log('⚠️ DEBUG: No authorization header provided');
         return null;
       }
       
       if (!authHeader.startsWith('Bearer ')) {
-        console.log('⚠️ Authorization header format invalid (missing Bearer)');
+        console.log('⚠️ DEBUG: Authorization header format invalid (missing Bearer)');
         return null;
       }
       
       const token = authHeader.slice(7); // Remove 'Bearer ' prefix
       
       if (!token || token.length < 10) {
-        console.log('⚠️ Token too short or empty');
+        console.log('⚠️ DEBUG: Token too short or empty');
         return null;
       }
       
-      console.log('✅ Token extracted from header');
+      console.log('✅ DEBUG: Token extracted from header successfully');
       return token;
       
     } catch (error) {
-      console.error('❌ Token extraction failed:', error);
+      console.error('❌ DEBUG: Token extraction failed:', error);
       return null;
     }
   }
