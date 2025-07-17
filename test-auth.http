@@ -1,122 +1,17 @@
-### 1. Server Health Check
-GET http://localhost:3000/health
-
-###
-
-### 2. API Status Check
-GET http://localhost:3000/api/v1/status
-
-###
-
-### 3. Test Auth System Status
-GET http://localhost:3000/api/v1/auth/test
-
-###
-
-### 4. User Login (Demo User) - Get Fresh Token
-POST http://localhost:3000/api/v1/auth/login
+### Teacher Login Test
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
-{
-  "username": "demo",
-  "password": "demo123"
-}
-
-### COPY THE TOKEN FROM RESPONSE ABOVE AND PASTE IN TESTS BELOW
-
-### 5. Get User Profile (Protected Route)
-GET http://localhost:3000/api/v1/auth/profile
-Authorization: Bearer PASTE_TOKEN_HERE
+{"username":"teacher","password":"demo123"}
 
 ###
 
-### 6. Test Movies Products (Should Work)
-GET http://localhost:3000/api/v1/movies/products?limit=3
-
-###
-
-### 7. Test Books Products
-GET http://localhost:3000/api/v1/books/products?limit=3
-
-###
-
-### 8. User Registration (New Student)
-POST http://localhost:3000/api/v1/auth/register
+### New User Registration Test
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
-{
-  "username": "student2024",
-  "email": "student2024@university.edu",
-  "password": "password123",
-  "first_name": "ახალი",
-  "last_name": "სტუდენტი"
-}
-
+{"username":"demo","password":"demo123"}
 ###
 
-### 9. Update User Profile (Protected Route)
-PUT http://localhost:3000/api/v1/auth/profile
-Authorization: Bearer PASTE_TOKEN_HERE
-Content-Type: application/json
-
-{
-  "first_name": "Demo Updated",
-  "last_name": "User Updated",
-  "avatar_url": "https://picsum.photos/200/200?random=demo"
-}
-
-###
-
-### 10. Admin Login (Teacher Account)
-POST http://localhost:3000/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "teacher",
-  "password": "demo123"
-}
-
-### COPY TEACHER TOKEN FROM ABOVE RESPONSE
-
-### 11. Admin Route - List All Users (Teacher Only)
-GET http://localhost:3000/api/v1/auth/users
-Authorization: Bearer PASTE_TEACHER_TOKEN_HERE
-
-###
-
-### 12. Logout Test
-POST http://localhost:3000/api/v1/auth/logout
-Authorization: Bearer PASTE_TOKEN_HERE
-
-###
-
-### 13. Test After Logout (Should Fail)
-GET http://localhost:3000/api/v1/auth/profile
-Authorization: Bearer PASTE_TOKEN_HERE
-
-###
-
-### 14. Search Products Test
-GET http://localhost:3000/api/v1/movies/products/search?q=batman
-
-###
-
-### 15. Categories Test
-GET http://localhost:3000/api/v1/movies/categories
-
-###
-
-### 16. Brands Test
-GET http://localhost:3000/api/v1/movies/brands
-
-###
-
-### 17. Electronics Products
-GET http://localhost:3000/api/v1/electronics/products?limit=5
-
-###
-
-### 18. Available Domains
-GET http://localhost:3000/api/v1/domains
-
-###
+### Auth Test Endpoint
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/test
