@@ -1,7 +1,16 @@
 ### 🚀 UNIVERSAL STUDENT API - QUICK TEST
 ### გაუშვი server: npm start
 ### შემდეგ VS Code-ში დააკლიკე "Send Request" ღილაკს
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+Content-Type: application/json
 
+{
+  "username": "newstudent2025",
+  "email": "newstudent2025@university.edu",
+  "password": "mystudent123",
+  "first_name": "ახალი",
+  "last_name": "სტუდენტი"
+}
 ### 1. 🏠 Root Endpoint - Basic API Info
 GET http://localhost:3000/
 

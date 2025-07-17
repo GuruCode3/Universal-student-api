@@ -1,4 +1,4 @@
-// OPTIMIZED IN-MEMORY DATABASE WITH PERFORMANCE INDEXES
+// OPTIMIZED IN-MEMORY DATABASE WITH PERFORMANCE INDEXES - FIXED USER REGISTRATION
 const fs = require('fs');
 const path = require('path');
 
@@ -356,12 +356,14 @@ async function loadInMemoryData() {
       {
         id: 1, username: 'demo', email: 'demo@example.com',
         password_hash: '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2', // demo123
-        first_name: 'Demo', last_name: 'User', role: 'user', is_active: true
+        first_name: 'Demo', last_name: 'User', role: 'user', is_active: true,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       },
       {
         id: 2, username: 'teacher', email: 'teacher@example.com',
         password_hash: '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2', // demo123
-        first_name: 'Teacher', last_name: 'Demo', role: 'admin', is_active: true
+        first_name: 'Teacher', last_name: 'Demo', role: 'admin', is_active: true,
+        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }
     ];
     
@@ -377,7 +379,7 @@ async function loadInMemoryData() {
   }
 }
 
-// 🚀 OPTIMIZED Database query wrapper with performance indexes
+// 🚀 OPTIMIZED Database query wrapper with performance indexes - FIXED USER REGISTRATION
 const dbQuery = {
   // Get all records - OPTIMIZED with indexes
   getAll: async (query, params = []) => {
@@ -448,6 +450,7 @@ const dbQuery = {
       }
       
       if (query.includes('FROM users')) {
+        console.log('👥 getAll USERS query - returning', inMemoryData.users.length, 'users');
         return [...inMemoryData.users];
       }
       
@@ -495,15 +498,16 @@ const dbQuery = {
       }
       
       if (query.includes('FROM users')) {
-        if (query.includes('WHERE username =')) {
+        if (query.includes('WHERE username =') || query.includes('WHERE username = ? OR email = ?')) {
           const username = params[0];
-          const result = inMemoryData.users.find(u => u.username === username);
-          console.log(`👤 User '${username}':`, result ? 'Found' : 'Not found');
+          const result = inMemoryData.users.find(u => u.username === username || u.email === username);
+          console.log(`👤 User '${username}':`, result ? `Found (${result.username})` : 'Not found');
           return result || null;
         }
         if (query.includes('WHERE id =')) {
           const id = params[0];
           const result = inMemoryData.users.find(u => u.id == id);
+          console.log(`👤 User ID ${id}:`, result ? `Found (${result.username})` : 'Not found');
           return result || null;
         }
       }
@@ -515,34 +519,136 @@ const dbQuery = {
     }
   },
   
-  // Run query (INSERT, UPDATE, DELETE)
+  // Run query (INSERT, UPDATE, DELETE) - FIXED USER REGISTRATION
   run: async (query, params = []) => {
     try {
-      console.log('✏️ In-memory run:', query.substring(0, 50) + '...');
+      console.log('✏️ FIXED In-memory run:', query.substring(0, 50) + '...');
+      console.log('📋 Run params:', params);
       
-      // Simulate successful operation
+      // Handle user registration - FIXED VERSION
+      if (query.includes('INSERT INTO users')) {
+        console.log('👤 🔧 FIXING USER REGISTRATION...');
+        
+        // Generate new user ID
+        const newId = Math.max(...inMemoryData.users.map(u => u.id), 0) + 1;
+        
+        // Extract user data from params
+        const [username, email, password_hash, first_name, last_name] = params;
+        
+        // Create new user object
+        const newUser = {
+          id: newId,
+          username: username,
+          email: email,
+          password_hash: password_hash,
+          first_name: first_name || null,
+          last_name: last_name || null,
+          role: 'user',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // ✅ ACTUALLY ADD USER TO IN-MEMORY DATA!
+        inMemoryData.users.push(newUser);
+        
+        console.log('✅ USER ADDED TO IN-MEMORY DATABASE:', {
+          id: newId,
+          username: username,
+          email: email,
+          total_users: inMemoryData.users.length
+        });
+        
+        return { 
+          changes: 1, 
+          lastInsertRowid: newId 
+        };
+      }
+      
+      // Handle user updates - FIXED VERSION
+      if (query.includes('UPDATE users')) {
+        console.log('👤 🔧 FIXING USER UPDATE...');
+        
+        // Find user by ID (last parameter is usually the ID)
+        const userId = params[params.length - 1];
+        const userIndex = inMemoryData.users.findIndex(u => u.id == userId);
+        
+        if (userIndex !== -1) {
+          // Update user fields based on query
+          if (query.includes('SET first_name')) {
+            inMemoryData.users[userIndex].first_name = params[0];
+            inMemoryData.users[userIndex].last_name = params[1];
+            inMemoryData.users[userIndex].avatar_url = params[2];
+          }
+          
+          inMemoryData.users[userIndex].updated_at = new Date().toISOString();
+          
+          console.log('✅ USER UPDATED IN IN-MEMORY DATABASE:', {
+            id: userId,
+            username: inMemoryData.users[userIndex].username
+          });
+          
+          return { changes: 1, lastInsertRowid: userId };
+        }
+      }
+      
+      // Simulate successful operation for other queries
       const changes = 1;
       const lastInsertRowid = Date.now();
       
-      // Handle user registration/updates
-      if (query.includes('INSERT INTO users')) {
-        const newId = Math.max(...inMemoryData.users.map(u => u.id), 0) + 1;
-        console.log(`👤 Simulated user insert with ID: ${newId}`);
-        return { changes: 1, lastInsertRowid: newId };
-      }
-      
       return { changes, lastInsertRowid };
+      
     } catch (error) {
-      console.error('❌ In-memory run failed:', error);
+      console.error('❌ Fixed In-memory run failed:', error);
       return { changes: 0, lastInsertRowid: null };
     }
   },
 
-  // 🚀 OPTIMIZED: executeQuery method with performance indexes
+  // 🚀 OPTIMIZED: executeQuery method with performance indexes - FIXED USER REGISTRATION
   executeQuery: (query, params = []) => {
     try {
-      console.log('🚀 OPTIMIZED ExecuteQuery:', query.substring(0, 50) + '...');
+      console.log('🚀 FIXED OPTIMIZED ExecuteQuery:', query.substring(0, 50) + '...');
       console.log('📋 Params:', params);
+      
+      // Handle user registration - FIXED VERSION
+      if (query.includes('INSERT INTO users')) {
+        console.log('👤 🔧 FIXING USER REGISTRATION IN executeQuery...');
+        
+        // Generate new user ID
+        const newId = Math.max(...inMemoryData.users.map(u => u.id), 0) + 1;
+        
+        // Extract user data from params
+        const [username, email, password_hash, first_name, last_name] = params;
+        
+        // Create new user object
+        const newUser = {
+          id: newId,
+          username: username,
+          email: email,
+          password_hash: password_hash,
+          first_name: first_name || null,
+          last_name: last_name || null,
+          role: 'user',
+          is_active: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        
+        // ✅ ACTUALLY ADD USER TO IN-MEMORY DATA!
+        inMemoryData.users.push(newUser);
+        
+        console.log('✅ USER ADDED TO IN-MEMORY DATABASE (executeQuery):', {
+          id: newId,
+          username: username,
+          email: email,
+          total_users: inMemoryData.users.length
+        });
+        
+        return { 
+          changes: 1, 
+          lastInsertRowid: newId 
+        };
+      }
       
       // Handle DISTINCT domain queries
       if (query.includes('SELECT DISTINCT domain FROM products')) {
@@ -629,15 +735,16 @@ const dbQuery = {
         return result;
       }
       
-      // Handle users
+      // Handle users queries - FIXED
       if (query.includes('FROM users')) {
+        console.log('👥 USERS QUERY - returning', inMemoryData.users.length, 'users');
         return [...inMemoryData.users];
       }
       
       console.log('⚠️ Query not matched, returning empty array');
       return [];
     } catch (error) {
-      console.error('❌ Optimized ExecuteQuery failed:', error);
+      console.error('❌ Fixed Optimized ExecuteQuery failed:', error);
       return [];
     }
   },
@@ -659,7 +766,7 @@ const dbQuery = {
         performance: {
           indexed_domains: Object.keys(performanceIndexes.productsByDomain).length,
           search_cache_size: performanceIndexes.searchCache.size,
-          optimization_status: '🚀 OPTIMIZED'
+          optimization_status: '🚀 OPTIMIZED + FIXED USER REGISTRATION'
         }
       };
     } catch (error) {
@@ -696,7 +803,7 @@ const dbQuery = {
 
   closeConnection: () => {
     try {
-      console.log('🔒 Optimized in-memory database connections closed');
+      console.log('🔒 Fixed optimized in-memory database connections closed');
       // Clear cache to free memory
       performanceIndexes.searchCache.clear();
       return true;
