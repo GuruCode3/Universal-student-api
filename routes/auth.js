@@ -1,307 +1,263 @@
-// routes/auth.js - FIXED VERSION
+// routes/index.js - Main Route Aggregator for Universal Student API v2.0
 const express = require('express');
 const router = express.Router();
-const AuthUtils = require('../utils/auth');
-const { authenticateToken } = require('../middleware/auth');
+
+// Import individual route modules
+const authRoutes = require('./auth');
+const productRoutes = require('./products');
 const { dbConfig } = require('../utils/database');
 
-// User Registration
-router.post('/register', async (req, res) => {
+// Root API information endpoint
+router.get('/', (req, res) => {
   try {
-    const { username, email, password, first_name, last_name } = req.body;
-    
-    // Validation
-    if (!username || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing required fields',
-        message: 'Username, email, and password are required'
-      });
-    }
-    
-    // Check if user already exists
-    const existingUser = dbConfig.getOne(
-      'SELECT id FROM users WHERE username = ? OR email = ?', 
-      [username, email]
-    );
-    
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        error: 'User already exists',
-        message: 'Username or email is already registered'
-      });
-    }
-    
-    // Hash password
-    const hashedPassword = await AuthUtils.hashPassword(password);
-    
-    // Insert new user
-    const result = dbConfig.executeQuery(`
-      INSERT INTO users (username, email, password_hash, first_name, last_name) 
-      VALUES (?, ?, ?, ?, ?)
-    `, [username, email, hashedPassword, first_name || null, last_name || null]);
-    
-    // Get created user
-    const newUser = dbConfig.getOne(
-      'SELECT id, username, email, first_name, last_name, role FROM users WHERE id = ?', 
-      [result.lastInsertRowid]
-    );
-    
-    // Generate JWT token
-    const token = AuthUtils.generateToken(newUser);
-    
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      data: {
-        user: newUser,
-        token: token,
-        expires_in: '24h'
-      }
-    });
-    
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Registration failed',
-      message: error.message || 'Internal server error during registration'
-    });
-  }
-});
-
-// User Login - FIXED VERSION
-router.post('/login', async (req, res) => {
-  try {
-    console.log('🔐 LOGIN REQUEST:', { username: req.body.username });
-    
-    const { username, password } = req.body;
-    
-    // Validation
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Missing credentials',
-        message: 'Username and password are required'
-      });
-    }
-    
-    // Find user (can login with username or email) - REMOVED is_active condition
-    const user = dbConfig.getOne(
-      'SELECT * FROM users WHERE username = ? OR email = ?', 
-      [username, username]
-    );
-    
-    console.log('👤 USER FOUND:', user ? `Yes (${user.username})` : 'No');
-    
-    if (!user) {
-      console.log('❌ LOGIN FAILED: User not found');
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials',
-        message: 'Username or password is incorrect'
-      });
-    }
-    
-    // Verify password
-    const isValidPassword = await AuthUtils.comparePassword(password, user.password_hash);
-    console.log('🔑 PASSWORD VALID:', isValidPassword ? 'Yes' : 'No');
-    
-    if (!isValidPassword) {
-      console.log('❌ LOGIN FAILED: Invalid password');
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials',
-        message: 'Username or password is incorrect'
-      });
-    }
-    
-    // Generate JWT token
-    const token = AuthUtils.generateToken(user);
-    console.log('✅ LOGIN SUCCESS: Token generated');
-    
-    // Update last login (optional)
-    try {
-      dbConfig.executeQuery(
-        'UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = ?', 
-        [user.id]
-      );
-    } catch (updateError) {
-      // If updated_at column doesn't exist, just continue
-      console.log('⚠️ Could not update last login time (column may not exist)');
-    }
-    
-    // Return user data (without password)
-    const { password_hash, ...userWithoutPassword } = user;
+    const validation = dbConfig.validateDatabase();
     
     res.json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        user: userWithoutPassword,
-        token: token,
-        expires_in: '24h'
-      }
+      message: "🎓 Universal Student API v2.0 - Main Routes",
+      version: "2.0.0",
+      status: "Running ✅",
+      database: validation.isValid ? "Connected 💾" : "Limited Mode ⚠️",
+      
+      // Route organization
+      routes: {
+        authentication: {
+          base_path: "/api/v1/auth",
+          endpoints: [
+            "POST /api/v1/auth/register - Register new user",
+            "POST /api/v1/auth/login - Login user",
+            "GET /api/v1/auth/profile - Get user profile (protected)",
+            "PUT /api/v1/auth/profile - Update user profile (protected)",
+            "POST /api/v1/auth/logout - Logout user (protected)",
+            "GET /api/v1/auth/users - Get all users (admin only)",
+            "GET /api/v1/auth/test - Test auth system"
+          ]
+        },
+        
+        products: {
+          base_path: "/api/v1/{domain}",
+          endpoints: [
+            "GET /api/v1/{domain}/products - Get products with pagination",
+            "GET /api/v1/{domain}/products/{id} - Get single product",
+            "GET /api/v1/{domain}/products/search - Search products",
+            "GET /api/v1/{domain}/categories - Get categories",
+            "GET /api/v1/{domain}/brands - Get brands",
+            "GET /api/v1/{domain}/products/{id}/reviews - Get product reviews"
+          ]
+        },
+        
+        utility: {
+          base_path: "/api/v1",
+          endpoints: [
+            "GET / - API root information",
+            "GET /health - Health check",
+            "GET /api/v1/status - API status",
+            "GET /api/v1/domains - Available domains",
+            "GET /api/v1/docs - API documentation"
+          ]
+        }
+      },
+      
+      // Available domains
+      supported_domains: [
+        "movies", "books", "electronics", "restaurants", "fashion",
+        "cars", "hotels", "games", "music", "food", "sports", "toys",
+        "tools", "medicines", "courses", "events", "apps", "flights",
+        "pets", "realestate"
+      ],
+      
+      // Quick examples
+      examples: {
+        authentication: {
+          register: "POST /api/v1/auth/register",
+          login: "POST /api/v1/auth/login",
+          profile: "GET /api/v1/auth/profile"
+        },
+        products: {
+          list: "GET /api/v1/movies/products?page=1&limit=20",
+          search: "GET /api/v1/books/products/search?q=javascript",
+          single: "GET /api/v1/electronics/products/1",
+          categories: "GET /api/v1/fashion/categories",
+          brands: "GET /api/v1/games/brands"
+        },
+        demo_credentials: {
+          user: { username: "demo", password: "demo123" },
+          admin: { username: "teacher", password: "demo123" }
+        }
+      },
+      
+      // API features
+      features: [
+        "✅ JWT Authentication System",
+        "✅ Role-based Access Control", 
+        "✅ 20 Product Domains",
+        "✅ Advanced Search & Filtering",
+        "✅ Pagination Support",
+        "✅ Rate Limiting",
+        "✅ In-Memory Database (Optimized)",
+        "✅ Performance Indexes",
+        "✅ Error Handling",
+        "✅ CORS Support",
+        "✅ Request Logging",
+        "✅ Gzip Compression"
+      ],
+      
+      // Database stats
+      data_stats: {
+        total_products: validation.tables?.products || 0,
+        total_users: validation.tables?.users || 0,
+        total_categories: validation.tables?.categories || 0,
+        total_brands: validation.tables?.brands || 0,
+        performance_status: validation.performance?.optimization_status || "Unknown"
+      },
+      
+      // Documentation links
+      documentation: {
+        api_docs: "/api/v1/docs",
+        health_check: "/health",
+        status_check: "/api/v1/status",
+        domain_list: "/api/v1/domains"
+      },
+      
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
-    console.error('❌ LOGIN ERROR:', error);
+    console.error('❌ Routes index error:', error);
     res.status(500).json({
-      success: false,
-      error: 'Login failed',
-      message: error.message || 'Internal server error during login'
+      message: "Routes index error",
+      error: error.message,
+      timestamp: new Date().toISOString()
     });
   }
 });
 
-// Get User Profile (Protected Route)
-router.get('/profile', authenticateToken, (req, res) => {
+// API version info
+router.get('/version', (req, res) => {
   try {
-    // Get fresh user data from database
-    const user = dbConfig.getOne(`
-      SELECT id, username, email, first_name, last_name, avatar_url, role, created_at 
-      FROM users WHERE id = ?
-    `, [req.user.id]);
-    
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        error: 'User not found'
-      });
-    }
-    
     res.json({
       success: true,
       data: {
-        user: user
+        api_name: "Universal Student API",
+        version: "2.0.0",
+        environment: process.env.NODE_ENV || 'development',
+        node_version: process.version,
+        uptime: process.uptime(),
+        memory_usage: {
+          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + ' MB',
+          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + ' MB'
+        }
       }
     });
-    
   } catch (error) {
-    console.error('Profile error:', error);
+    console.error('❌ Version endpoint error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch profile',
-      message: error.message
+      error: error.message
     });
   }
 });
 
-// Update User Profile (Protected Route)
-router.put('/profile', authenticateToken, (req, res) => {
+// Statistics endpoint
+router.get('/stats', (req, res) => {
   try {
-    const { first_name, last_name, avatar_url } = req.body;
+    const validation = dbConfig.validateDatabase();
+    const domains = dbConfig.executeQuery('SELECT DISTINCT domain FROM products');
     
-    // Update user profile - handle case where updated_at column may not exist
-    try {
-      dbConfig.executeQuery(`
-        UPDATE users 
-        SET first_name = ?, last_name = ?, avatar_url = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-      `, [first_name || null, last_name || null, avatar_url || null, req.user.id]);
-    } catch (updateError) {
-      // If updated_at column doesn't exist, update without it
-      dbConfig.executeQuery(`
-        UPDATE users 
-        SET first_name = ?, last_name = ?, avatar_url = ?
-        WHERE id = ?
-      `, [first_name || null, last_name || null, avatar_url || null, req.user.id]);
-    }
-    
-    // Get updated user data
-    const updatedUser = dbConfig.getOne(`
-      SELECT id, username, email, first_name, last_name, avatar_url, role, created_at 
-      FROM users WHERE id = ?
-    `, [req.user.id]);
-    
-    res.json({
+    const stats = {
       success: true,
-      message: 'Profile updated successfully',
       data: {
-        user: updatedUser
+        database: {
+          status: validation.isValid ? 'healthy' : 'limited',
+          products: validation.tables?.products || 0,
+          users: validation.tables?.users || 0,
+          categories: validation.tables?.categories || 0,
+          brands: validation.tables?.brands || 0
+        },
+        domains: {
+          total: domains.length,
+          list: domains.map(d => d.domain),
+          estimated_products_per_domain: Math.round((validation.tables?.products || 0) / domains.length)
+        },
+        performance: validation.performance || {},
+        server: {
+          uptime: process.uptime(),
+          memory_usage: process.memoryUsage(),
+          node_version: process.version,
+          environment: process.env.NODE_ENV || 'development'
+        }
       }
-    });
+    };
+    
+    res.json(stats);
     
   } catch (error) {
-    console.error('Profile update error:', error);
+    console.error('❌ Stats endpoint error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to update profile',
-      message: error.message
+      error: error.message
     });
   }
 });
 
-// Logout (Optional - for token blacklisting)
-router.post('/logout', authenticateToken, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-    note: 'Please remove the token from your client storage'
-  });
-});
-
-// Test endpoint to check auth setup
-router.get('/test', (req, res) => {
+// API health check specific to routes
+router.get('/health', (req, res) => {
   try {
     const validation = dbConfig.validateDatabase();
     
     res.json({
       success: true,
-      message: 'Auth system is working',
+      message: "Routes are healthy",
       data: {
-        database_status: validation,
-        endpoints: [
-          'POST /api/v1/auth/register',
-          'POST /api/v1/auth/login',
-          'GET /api/v1/auth/profile'
-        ]
+        routes_status: "operational",
+        auth_routes: "loaded",
+        product_routes: "loaded",
+        database: validation.isValid ? "connected" : "limited",
+        timestamp: new Date().toISOString()
       }
     });
+    
   } catch (error) {
+    console.error('❌ Routes health check error:', error);
     res.status(500).json({
       success: false,
-      error: 'Database connection failed',
-      message: error.message
+      error: error.message
     });
   }
 });
 
-// Get All Users (Admin Only)
-router.get('/users', authenticateToken, (req, res) => {
+// Test all routes connectivity
+router.get('/test', (req, res) => {
   try {
-    // Check if user is admin
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Admin access required',
-        message: 'This action requires administrator privileges'
-      });
-    }
-    
-    const users = dbConfig.executeQuery(`
-      SELECT id, username, email, first_name, last_name, role, created_at 
-      FROM users 
-      ORDER BY created_at DESC
-    `);
+    const validation = dbConfig.validateDatabase();
+    const domains = dbConfig.executeQuery('SELECT DISTINCT domain FROM products LIMIT 5');
     
     res.json({
       success: true,
+      message: "Route connectivity test",
       data: {
-        users: users,
-        total: users.length
+        routes_loaded: {
+          auth: "✅ Available",
+          products: "✅ Available",
+          main: "✅ Available"
+        },
+        database: validation.isValid ? "✅ Connected" : "⚠️ Limited",
+        sample_domains: domains.map(d => d.domain),
+        test_endpoints: {
+          auth: "/api/v1/auth/test",
+          products: `/api/v1/${domains[0]?.domain || 'movies'}/products`,
+          documentation: "/api/v1/docs"
+        }
       }
     });
     
   } catch (error) {
-    console.error('Users fetch error:', error);
+    console.error('❌ Routes test error:', error);
     res.status(500).json({
       success: false,
-      error: 'Failed to fetch users',
-      message: error.message
+      error: error.message
     });
   }
 });
 
+// Export the router
 module.exports = router;

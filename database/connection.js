@@ -1,823 +1,109 @@
-// OPTIMIZED IN-MEMORY DATABASE WITH PERFORMANCE INDEXES - FIXED USER REGISTRATION
-const fs = require('fs');
-const path = require('path');
+// PRODUCT ID DEBUGGING - Add to database/connection.js
 
-// Global in-memory data storage
-let inMemoryData = {
-  products: [],
-  categories: [],
-  brands: [],
-  users: []
-};
-
-// 🚀 PERFORMANCE INDEXES - NEW!
-let performanceIndexes = {
-  productsByDomain: {},
-  categoriesByDomain: {},
-  brandsByDomain: {},
-  productsByCategory: {},
-  productsByBrand: {},
-  searchCache: new Map()
-};
-
-let isInitialized = false;
-
-// Generate product for specific domain
-function generateProductForDomain(domain, id, domainIndex) {
-  const templates = {
-    movies: {
-      names: ['Avengers Endgame', 'The Dark Knight', 'Spider-Man No Way Home', 'Batman Begins', 'Iron Man', 'Thor Ragnarok', 'Captain America', 'Wonder Woman', 'Joker', 'Inception', 'Interstellar', 'Deadpool', 'Black Panther', 'Guardians of the Galaxy', 'Doctor Strange', 'Ant-Man', 'Captain Marvel', 'Aquaman', 'Superman', 'Justice League'],
-      attributes: { director: 'Marvel Studios', year: 2023, genre: 'Action', duration: 120 }
-    },
-    books: {
-      names: ['JavaScript Complete Guide', 'Python Programming', 'React Development', 'Node.js Handbook', 'Web Development', 'Data Science', 'Machine Learning', 'Clean Code', 'Design Patterns', 'Algorithms', 'System Design', 'Database Design', 'API Development', 'Mobile Development', 'Cloud Computing', 'DevOps Guide', 'Security Fundamentals', 'UI/UX Design', 'Project Management', 'Software Architecture'],
-      attributes: { author: 'Tech Author', pages: 300, language: 'English', isbn: '978-1234567890' }
-    },
-    electronics: {
-      names: ['iPhone 15 Pro', 'MacBook Pro M3', 'iPad Air', 'Samsung Galaxy S24', 'Dell XPS 13', 'HP Spectre', 'Surface Pro', 'Google Pixel', 'OnePlus 12', 'Xiaomi Mi 14', 'Sony Xperia', 'Huawei P60', 'Asus ROG Phone', 'Nintendo Switch', 'PlayStation 5', 'Xbox Series X', 'Apple Watch', 'AirPods Pro', 'Samsung Buds', 'Sony WH-1000XM5'],
-      attributes: { brand: 'Apple', model: 'Latest', warranty: '2 years', color: 'Space Gray' }
-    },
-    restaurants: {
-      names: ['Pizza Napoletana', 'Burger Supreme', 'Sushi Zen', 'Taco Fiesta', 'Pasta Milano', 'Steakhouse Prime', 'Cafe Mocha', 'Noodle House', 'BBQ Paradise', 'Thai Garden', 'Indian Spice', 'Greek Taverna', 'French Bistro', 'Chinese Palace', 'Korean BBQ', 'Mexican Cantina', 'Brazilian Grill', 'Vietnamese Pho', 'Lebanese Kitchen', 'Turkish Delight'],
-      attributes: { cuisine: 'Italian', location: 'Downtown', phone: '+995-555-1234', delivery: true }
-    },
-    fashion: {
-      names: ['Designer Suit', 'Casual Jeans', 'Leather Jacket', 'Running Sneakers', 'Baseball Cap', 'Silk Scarf', 'Wool Sweater', 'Cotton T-Shirt', 'Evening Dress', 'Winter Coat', 'Summer Shorts', 'Denim Jacket', 'Polo Shirt', 'Maxi Dress', 'Blazer', 'Cardigan', 'Hoodie', 'Chinos', 'Skirt', 'Blouse'],
-      attributes: { size: 'M', color: 'Navy Blue', material: 'Cotton', brand: 'Fashion Brand' }
-    },
-    games: {
-      names: ['FIFA 24', 'Call of Duty Modern Warfare', 'Minecraft', 'Fortnite', 'Among Us', 'Valorant', 'Rocket League', 'Apex Legends', 'League of Legends', 'Dota 2', 'Counter-Strike 2', 'Overwatch 2', 'Cyberpunk 2077', 'Grand Theft Auto VI', 'The Witcher 4', 'Assassins Creed', 'Far Cry 7', 'Battlefield 2042', 'Halo Infinite', 'God of War'],
-      attributes: { platform: 'PC', genre: 'Action', rating: 'T', multiplayer: true }
-    },
-    music: {
-      names: ['Greatest Hits 2024', 'Rock Classics', 'Jazz Anthology', 'Pop Favorites', 'Country Roads', 'Hip Hop Beats', 'Electronic Vibes', 'Classical Masters', 'R&B Collection', 'Indie Sounds', 'Folk Tales', 'Reggae Rhythms', 'Blues Legacy', 'Metal Mayhem', 'Dance Floor', 'Acoustic Sessions', 'World Music', 'Soundtrack Collection', 'Live Concert', 'Chill Vibes'],
-      attributes: { artist: 'Various Artists', genre: 'Pop', year: 2024, duration: '3:45' }
-    },
-    food: {
-      names: ['Organic Bananas', 'Fresh Sourdough Bread', 'Grass-Fed Milk', 'Free-Range Eggs', 'Extra Virgin Olive Oil', 'Wild Salmon', 'Quinoa Seeds', 'Almond Butter', 'Greek Yogurt', 'Avocados', 'Blueberries', 'Spinach', 'Sweet Potatoes', 'Brown Rice', 'Chicken Breast', 'Tofu', 'Lentils', 'Oats', 'Honey', 'Dark Chocolate'],
-      attributes: { category: 'Organic', organic: true, weight: '1 kg', expiry: '2025-12-31' }
-    },
-    toys: {
-      names: ['LEGO Architecture', 'Barbie Dreamhouse', 'Hot Wheels Track', 'Teddy Bear Plush', 'Monopoly Board Game', 'Action Figure Set', 'Puzzle 1000pc', 'RC Drone', 'Nintendo Switch', 'PlayStation Controller', 'Building Blocks', 'Art Set', 'Science Kit', 'Musical Keyboard', 'Soccer Ball', 'Basketball', 'Skateboard', 'Bike', 'Scooter', 'Dollhouse'],
-      attributes: { age_group: '6-12 years', educational: true, safety_certified: true }
-    },
-    hotels: {
-      names: ['Grand Plaza Hotel', 'Sunset Beach Resort', 'City Center Inn', 'Mountain View Lodge', 'Downtown Marriott', 'Boutique Hotel', 'Luxury Suites', 'Business Hotel', 'Spa Resort', 'Airport Hotel', 'Seaside Villa', 'Urban Loft', 'Country Inn', 'Historic Hotel', 'Modern Tower', 'Garden Hotel', 'Riverside Lodge', 'Ski Resort', 'Desert Oasis', 'Lakeside Retreat'],
-      attributes: { star_rating: 4, amenities: ['WiFi', 'Pool', 'Gym', 'Restaurant'], location: 'City Center' }
-    },
-    cars: {
-      names: ['Tesla Model S', 'BMW 3 Series', 'Mercedes C-Class', 'Audi A4', 'Toyota Camry', 'Honda Civic', 'Ford Mustang', 'Chevrolet Corvette', 'Porsche 911', 'Lamborghini Huracan', 'Ferrari F8', 'McLaren 720S', 'Bugatti Chiron', 'Rolls Royce Ghost', 'Bentley Continental', 'Jaguar F-Type', 'Maserati Ghibli', 'Lexus LS', 'Infiniti Q50', 'Cadillac CT5'],
-      attributes: { brand: 'Tesla', model: '2024', fuel_type: 'Electric', transmission: 'Automatic' }
-    },
-    medicines: {
-      names: ['Ibuprofen 400mg', 'Paracetamol 500mg', 'Aspirin 100mg', 'Vitamin D3', 'Vitamin C', 'Multivitamin', 'Omega 3', 'Calcium Tablets', 'Iron Supplements', 'Zinc Capsules', 'Magnesium', 'Probiotic', 'Melatonin', 'Biotin', 'Collagen', 'Glucosamine', 'Turmeric', 'Ginseng', 'Echinacea', 'Garlic Extract'],
-      attributes: { dosage: '400mg', form: 'Tablet', prescription: false, category: 'Pain Relief' }
-    },
-    courses: {
-      names: ['Web Development Bootcamp', 'Data Science Masterclass', 'Machine Learning A-Z', 'React Complete Guide', 'Python Programming', 'JavaScript Fundamentals', 'UI/UX Design', 'Digital Marketing', 'Project Management', 'Business Analytics', 'Cloud Computing', 'Cybersecurity', 'Mobile Development', 'Database Design', 'DevOps Engineering', 'Artificial Intelligence', 'Blockchain Technology', 'Game Development', 'Photography', 'Graphic Design'],
-      attributes: { duration: '12 weeks', level: 'Beginner', certificate: true, instructor: 'Expert Teacher' }
-    },
-    events: {
-      names: ['Tech Conference 2024', 'Music Festival', 'Food & Wine Expo', 'Art Gallery Opening', 'Sports Championship', 'Business Summit', 'Startup Pitch', 'Networking Event', 'Workshop Series', 'Cultural Festival', 'Fashion Show', 'Book Fair', 'Career Fair', 'Health & Wellness Expo', 'Travel Show', 'Auto Show', 'Comedy Night', 'Theatre Performance', 'Dance Competition', 'Film Festival'],
-      attributes: { date: '2024-12-15', location: 'Convention Center', duration: '2 days', capacity: 500 }
-    },
-    apps: {
-      names: ['Instagram', 'TikTok', 'WhatsApp', 'Telegram', 'Discord', 'Slack', 'Zoom', 'Netflix', 'Spotify', 'YouTube', 'Twitter', 'LinkedIn', 'Facebook', 'Snapchat', 'Pinterest', 'Reddit', 'Twitch', 'Uber', 'Airbnb', 'PayPal'],
-      attributes: { platform: 'iOS/Android', category: 'Social', rating: 4.5, downloads: '1M+' }
-    },
-    flights: {
-      names: ['Tbilisi-London', 'New York-Paris', 'Tokyo-Sydney', 'Dubai-Mumbai', 'Berlin-Rome', 'Madrid-Moscow', 'Istanbul-Cairo', 'Bangkok-Singapore', 'Los Angeles-Miami', 'Chicago-Toronto', 'Amsterdam-Vienna', 'Stockholm-Helsinki', 'Oslo-Copenhagen', 'Prague-Budapest', 'Warsaw-Krakow', 'Lisbon-Barcelona', 'Athens-Thessaloniki', 'Zurich-Geneva', 'Milan-Naples', 'Brussels-Luxembourg'],
-      attributes: { airline: 'Georgian Airways', duration: '3h 45m', class: 'Economy', stops: 0 }
-    },
-    pets: {
-      names: ['Golden Retriever', 'German Shepherd', 'Labrador', 'Bulldog', 'Beagle', 'Poodle', 'Rottweiler', 'Siberian Husky', 'Chihuahua', 'Persian Cat', 'Maine Coon', 'Siamese Cat', 'British Shorthair', 'Ragdoll', 'Bengal Cat', 'Russian Blue', 'Parrot', 'Canary', 'Goldfish', 'Rabbit'],
-      attributes: { species: 'Dog', age: '2 years', gender: 'Male', vaccinated: true }
-    },
-    realestate: {
-      names: ['Downtown Apartment', 'Suburban House', 'Luxury Villa', 'Studio Loft', 'Penthouse Suite', 'Country Cottage', 'Townhouse', 'Condo Unit', 'Beachfront Property', 'Mountain Cabin', 'City Duplex', 'Garden Apartment', 'Historic Home', 'Modern Flat', 'Farmhouse', 'Lakeside Retreat', 'Urban Loft', 'Family Home', 'Investment Property', 'Vacation Rental'],
-      attributes: { bedrooms: 3, bathrooms: 2, area: '120 sqm', price_per_sqm: '$1200' }
-    },
-    sports: {
-      names: ['Nike Air Max', 'Adidas Ultraboost', 'Wilson Tennis Racket', 'Spalding Basketball', 'Nike Soccer Ball', 'Yoga Mat', 'Dumbbells Set', 'Resistance Bands', 'Treadmill', 'Exercise Bike', 'Protein Powder', 'Gym Gloves', 'Water Bottle', 'Fitness Tracker', 'Running Shoes', 'Swimming Goggles', 'Baseball Bat', 'Golf Clubs', 'Skateboard', 'Bicycle Helmet'],
-      attributes: { brand: 'Nike', category: 'Footwear', sport: 'Running', size: '42 EU' }
-    },
-    tools: {
-      names: ['Drill Set', 'Hammer', 'Screwdriver Kit', 'Wrench Set', 'Saw', 'Pliers', 'Measuring Tape', 'Level', 'Toolbox', 'Power Drill', 'Circular Saw', 'Jigsaw', 'Angle Grinder', 'Soldering Iron', 'Multimeter', 'Socket Set', 'Chisel Set', 'Sandpaper', 'Safety Glasses', 'Work Gloves'],
-      attributes: { brand: 'Bosch', category: 'Power Tools', warranty: '2 years', voltage: '18V' }
-    }
-  };
+// 🔍 DEBUG: Product ID ranges per domain
+function debugProductIds() {
+  console.log('🔍 DEBUGGING PRODUCT ID RANGES PER DOMAIN:');
   
-  const template = templates[domain];
-  if (!template) return null;
+  const domains = [
+    'movies', 'books', 'electronics', 'restaurants', 'fashion',
+    'games', 'music', 'food', 'toys', 'hotels',
+    'cars', 'medicines', 'courses', 'events', 'apps',
+    'flights', 'pets', 'realestate', 'sports', 'tools'
+  ];
   
-  // Use modulo to cycle through names for 500 products
-  const nameIndex = (id - 1) % template.names.length;
-  const name = template.names[nameIndex];
-  const price = (Math.random() * 200 + 10).toFixed(2);
-  const rating = (Math.random() * 2 + 3).toFixed(1);
+  domains.forEach((domain, index) => {
+    const startId = index * 500 + 1;
+    const endId = (index + 1) * 500;
+    
+    console.log(`📋 ${domain.toUpperCase()}: IDs ${startId} - ${endId}`);
+  });
   
+  // Test specific domains
+  console.log('\n🎯 SPECIFIC DOMAIN TESTS:');
+  console.log('Movies: 1-500');
+  console.log('Books: 501-1000'); 
+  console.log('Electronics: 1001-1500');
+  console.log('Restaurants: 1501-2000');
+  console.log('Fashion: 2001-2500');
+  console.log('Games: 2501-3000');
+  console.log('Music: 3001-3500');  // ❌ TEST FAILED: 3501 should be 3001-3500
+  console.log('Food: 3501-4000');   // ❌ TEST FAILED: 4001 should be 3501-4000
+  console.log('Toys: 4001-4500');   // ❌ TEST FAILED: 4501 should be 4001-4500
+  console.log('Hotels: 4501-5000'); // ❌ TEST FAILED: 5001 should be 4501-5000
+  console.log('Cars: 5001-5500');   // ❌ TEST FAILED: 5501 should be 5001-5500
+  console.log('Medicines: 5501-6000'); // ❌ TEST FAILED: 6001 should be 5501-6000
+  console.log('Courses: 6001-6500');   // ❌ TEST FAILED: 6501 should be 6001-6500
+  console.log('Events: 6501-7000');    // ❌ TEST FAILED: 7001 should be 6501-7000
+  console.log('Apps: 7001-7500');      // ❌ TEST FAILED: 7501 should be 7001-7500
+  console.log('Flights: 7501-8000');   // ❌ TEST FAILED: 8001 should be 7501-8000
+  console.log('Pets: 8001-8500');      // ❌ TEST FAILED: 8501 should be 8001-8500
+  console.log('Real Estate: 8501-9000'); // ❌ TEST FAILED: 9001 should be 8501-9000
+  console.log('Sports: 9001-9500');
+  console.log('Tools: 9501-10000');
+}
+
+// 🔧 CORRECTED TEST IDS FOR API TESTING:
+function getCorrectedTestIds() {
   return {
-    id: id,
-    domain: domain,
-    name: name,
-    price: parseFloat(price),
-    image_url: `https://picsum.photos/300/400?random=${id}`,
-    attributes: JSON.stringify(template.attributes),
-    category_id: (domainIndex * 4) + Math.floor(Math.random() * 4) + 1, // Correct category mapping
-    brand_id: (domainIndex * 3) + Math.floor(Math.random() * 3) + 1, // Correct brand mapping
-    rating: parseFloat(rating),
-    review_count: Math.floor(Math.random() * 1000) + 50,
-    in_stock: Math.random() > 0.1, // 90% in stock
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
+    movies: 1,        // ✅ CORRECT
+    books: 501,       // ✅ CORRECT  
+    electronics: 1001, // ✅ CORRECT
+    restaurants: 1501, // ✅ CORRECT
+    fashion: 2001,    // ✅ CORRECT
+    games: 2501,      // ✅ CORRECT (not 3001)
+    music: 3001,      // ✅ CORRECTED (not 3501)
+    food: 3501,       // ✅ CORRECTED (not 4001)
+    toys: 4001,       // ✅ CORRECTED (not 4501)
+    hotels: 4501,     // ✅ CORRECTED (not 5001)
+    cars: 5001,       // ✅ CORRECTED (not 5501)
+    medicines: 5501,  // ✅ CORRECTED (not 6001)
+    courses: 6001,    // ✅ CORRECTED (not 6501)
+    events: 6501,     // ✅ CORRECTED (not 7001)
+    apps: 7001,       // ✅ CORRECTED (not 7501)
+    flights: 7501,    // ✅ CORRECTED (not 8001)
+    pets: 8001,       // ✅ CORRECTED (not 8501)
+    realestate: 8501, // ✅ CORRECTED (not 9001)
+    sports: 9001,     // ✅ CORRECT
+    tools: 9501       // ✅ CORRECT
   };
 }
 
-// 🚀 NEW: Create performance indexes for O(1) lookups instead of O(n) filtering
-function createPerformanceIndexes() {
+// 🧪 VERIFY PRODUCT EXISTS FUNCTION
+function verifyProductExists(domain, productId) {
   try {
-    console.log('🔧 Creating performance indexes...');
+    console.log(`🔍 VERIFYING: ${domain} product ID ${productId}`);
     
-    // Reset indexes
-    performanceIndexes = {
-      productsByDomain: {},
-      categoriesByDomain: {},
-      brandsByDomain: {},
-      productsByCategory: {},
-      productsByBrand: {},
-      searchCache: new Map()
-    };
+    const product = dbConfig.getOne(`
+      SELECT id, domain, name FROM products 
+      WHERE domain = ? AND id = ?
+    `, [domain, productId]);
     
-    // Index products by domain - O(1) domain lookup
-    inMemoryData.products.forEach(product => {
-      if (!performanceIndexes.productsByDomain[product.domain]) {
-        performanceIndexes.productsByDomain[product.domain] = [];
-      }
-      performanceIndexes.productsByDomain[product.domain].push(product);
-      
-      // Index by category for faster filtering
-      const categoryKey = `${product.domain}-${product.category_id}`;
-      if (!performanceIndexes.productsByCategory[categoryKey]) {
-        performanceIndexes.productsByCategory[categoryKey] = [];
-      }
-      performanceIndexes.productsByCategory[categoryKey].push(product);
-      
-      // Index by brand for faster filtering
-      const brandKey = `${product.domain}-${product.brand_id}`;
-      if (!performanceIndexes.productsByBrand[brandKey]) {
-        performanceIndexes.productsByBrand[brandKey] = [];
-      }
-      performanceIndexes.productsByBrand[brandKey].push(product);
-    });
-    
-    // Index categories by domain
-    inMemoryData.categories.forEach(category => {
-      if (!performanceIndexes.categoriesByDomain[category.domain]) {
-        performanceIndexes.categoriesByDomain[category.domain] = [];
-      }
-      performanceIndexes.categoriesByDomain[category.domain].push(category);
-    });
-    
-    // Index brands by domain
-    inMemoryData.brands.forEach(brand => {
-      if (!performanceIndexes.brandsByDomain[brand.domain]) {
-        performanceIndexes.brandsByDomain[brand.domain] = [];
-      }
-      performanceIndexes.brandsByDomain[brand.domain].push(brand);
-    });
-    
-    console.log('✅ Performance indexes created successfully');
-    console.log(`📊 Indexed domains: ${Object.keys(performanceIndexes.productsByDomain).length}`);
-    console.log(`📊 Products per domain: ~${Math.round(inMemoryData.products.length / Object.keys(performanceIndexes.productsByDomain).length)}`);
-    console.log(`🚀 API speed improvement: ~10x faster`);
-    
-  } catch (error) {
-    console.error('❌ Failed to create performance indexes:', error);
-  }
-}
-
-// Force in-memory database for Railway
-async function initializeDatabase() {
-  try {
-    console.log('🗄️ Initializing database...');
-    console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-    console.log('🚂 Railway Environment:', process.env.RAILWAY_ENVIRONMENT || 'false');
-    
-    // FORCE IN-MEMORY DATABASE - NO PostgreSQL/SQLite attempts
-    console.log('💾 USING OPTIMIZED IN-MEMORY DATABASE (Railway)');
-    
-    // Load sample data into memory
-    await loadInMemoryData();
-    
-    // 🚀 NEW: Create performance indexes
-    createPerformanceIndexes();
-    
-    isInitialized = true;
-    
-    console.log('✅ Optimized in-memory database initialized successfully');
-    return true; // Return success indicator
-    
-  } catch (error) {
-    console.error('❌ Database initialization failed:', error);
-    // Even if loading fails, continue with empty data
-    isInitialized = true;
-    console.log('⚠️ Continuing with empty in-memory database');
-    return true; // Still return success to prevent server crash
-  }
-}
-
-// ADDED: Test connection function for compatibility
-async function testConnection() {
-  try {
-    console.log('🔍 Testing database connection...');
-    if (isInitialized && inMemoryData.products.length > 0) {
-      console.log('✅ Database connection test passed');
+    if (product) {
+      console.log(`✅ FOUND: ${domain} product ${productId} - "${product.name}"`);
       return true;
     } else {
-      console.log('⚠️ Database connection test - no data loaded');
-      return true; // Still return true to prevent blocking
+      console.log(`❌ NOT FOUND: ${domain} product ${productId}`);
+      
+      // Find actual products in this domain
+      const actualProducts = dbConfig.executeQuery(`
+        SELECT id, name FROM products 
+        WHERE domain = ? 
+        ORDER BY id ASC 
+        LIMIT 5
+      `, [domain]);
+      
+      console.log(`📋 First 5 products in ${domain}:`, actualProducts);
+      return false;
     }
   } catch (error) {
-    console.error('❌ Database connection test failed:', error);
-    return true; // Return true to prevent server crash
+    console.error(`❌ Error verifying ${domain} product ${productId}:`, error);
+    return false;
   }
 }
 
-// Load comprehensive sample data into memory
-async function loadInMemoryData() {
-  try {
-    console.log('📦 Loading comprehensive sample data into memory...');
-    
-    // ALL 20 DOMAINS with 500 products each = 10,000 total
-    const domains = [
-      'movies', 'books', 'electronics', 'restaurants', 'fashion',
-      'games', 'music', 'food', 'toys', 'hotels',
-      'cars', 'medicines', 'courses', 'events', 'apps',
-      'flights', 'pets', 'realestate', 'sports', 'tools'
-    ];
-    
-    const allProducts = [];
-    
-    // Generate 500 products per domain (10,000 total)
-    domains.forEach((domain, domainIndex) => {
-      console.log(`📦 Generating ${domain} products...`);
-      for (let i = 1; i <= 500; i++) {
-        const productId = domainIndex * 500 + i;
-        const product = generateProductForDomain(domain, productId, domainIndex);
-        if (product) {
-          allProducts.push(product);
-        }
-      }
-    });
-    
-    // Categories for all 20 domains (4 categories per domain = 80 total)
-    const allCategories = [];
-    const categoryTemplates = {
-      movies: ['Action', 'Comedy', 'Drama', 'Sci-Fi'],
-      books: ['Fiction', 'Non-Fiction', 'Technology', 'Biography'],
-      electronics: ['Laptops', 'Phones', 'Tablets', 'Accessories'],
-      restaurants: ['Italian', 'Asian', 'American', 'Mediterranean'],
-      fashion: ['Casual', 'Formal', 'Sports', 'Vintage'],
-      games: ['Action', 'Strategy', 'RPG', 'Sports'],
-      music: ['Rock', 'Pop', 'Jazz', 'Classical'],
-      food: ['Organic', 'Dairy', 'Meat', 'Vegetables'],
-      toys: ['Educational', 'Action', 'Creative', 'Electronic'],
-      hotels: ['Luxury', 'Budget', 'Business', 'Resort'],
-      cars: ['Sedan', 'SUV', 'Sports', 'Electric'],
-      medicines: ['Pain Relief', 'Vitamins', 'Supplements', 'Prescription'],
-      courses: ['Programming', 'Design', 'Business', 'Language'],
-      events: ['Conference', 'Festival', 'Workshop', 'Exhibition'],
-      apps: ['Social', 'Productivity', 'Entertainment', 'Education'],
-      flights: ['Domestic', 'International', 'Business', 'Economy'],
-      pets: ['Dogs', 'Cats', 'Birds', 'Fish'],
-      realestate: ['Apartment', 'House', 'Commercial', 'Land'],
-      sports: ['Footwear', 'Equipment', 'Apparel', 'Accessories'],
-      tools: ['Power Tools', 'Hand Tools', 'Measuring', 'Safety']
-    };
-    
-    let categoryId = 1;
-    domains.forEach(domain => {
-      categoryTemplates[domain].forEach(categoryName => {
-        allCategories.push({
-          id: categoryId++,
-          domain: domain,
-          name: categoryName,
-          description: `${categoryName} in ${domain}`,
-          slug: categoryName.toLowerCase().replace(/\s+/g, '-')
-        });
-      });
-    });
-    
-    // Brands for all 20 domains (3 brands per domain = 60 total)
-    const allBrands = [];
-    const brandTemplates = {
-      movies: ['Marvel Studios', 'Warner Bros', 'Disney'],
-      books: ['Penguin', 'Harper Collins', 'Random House'],
-      electronics: ['Apple', 'Samsung', 'Google'],
-      restaurants: ['Local Eats', 'Fine Dining', 'Quick Bites'],
-      fashion: ['StyleCo', 'FashionPlus', 'TrendyWear'],
-      games: ['GameStudio', 'PlayWorks', 'FunGames'],
-      music: ['RecordLabel', 'SoundWave', 'MusicBox'],
-      food: ['FreshFarms', 'OrganicChoice', 'NaturalGoods'],
-      toys: ['ToyMaker', 'PlayTime', 'FunFactory'],
-      hotels: ['HotelChain', 'Hospitality Plus', 'Luxury Stays'],
-      cars: ['AutoWorks', 'DriveTech', 'CarPlus'],
-      medicines: ['HealthCare', 'MediPlus', 'WellnessLab'],
-      courses: ['EduTech', 'LearnPro', 'SkillUp'],
-      events: ['EventPro', 'Organize It', 'Gather'],
-      apps: ['AppStudio', 'TechSoft', 'DigitalWorks'],
-      flights: ['SkyLine', 'AirTech', 'FlyHigh'],
-      pets: ['PetCare', 'AnimalLove', 'FurryFriends'],
-      realestate: ['PropertyPlus', 'RealEstate Pro', 'HomeFinder'],
-      sports: ['SportsTech', 'ActiveWear', 'FitGear'],
-      tools: ['ToolMaster', 'WorkPro', 'BuildTech']
-    };
-    
-    let brandId = 1;
-    domains.forEach(domain => {
-      brandTemplates[domain].forEach(brandName => {
-        allBrands.push({
-          id: brandId++,
-          domain: domain,
-          name: brandName,
-          description: `${brandName} brand for ${domain}`,
-          slug: brandName.toLowerCase().replace(/\s+/g, '-')
-        });
-      });
-    });
-    
-    // Set the generated data
-    inMemoryData.products = allProducts;
-    inMemoryData.categories = allCategories;
-    inMemoryData.brands = allBrands;
-    
-    // Sample users
-    inMemoryData.users = [
-      {
-        id: 1, username: 'demo', email: 'demo@example.com',
-        password_hash: '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2', // demo123
-        first_name: 'Demo', last_name: 'User', role: 'user', is_active: true,
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
-      },
-      {
-        id: 2, username: 'teacher', email: 'teacher@example.com',
-        password_hash: '$2b$10$N9qo8uLOickgx2ZMRZoMye/hgcAlQe7GUJl7G6iEWpKXpMLOG3.h2', // demo123
-        first_name: 'Teacher', last_name: 'Demo', role: 'admin', is_active: true,
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString()
-      }
-    ];
-    
-    console.log('✅ MASSIVE sample data loaded into memory');
-    console.log(`📊 Products: ${inMemoryData.products.length}`);
-    console.log(`📊 Categories: ${inMemoryData.categories.length}`);
-    console.log(`📊 Brands: ${inMemoryData.brands.length}`);
-    console.log(`📊 Users: ${inMemoryData.users.length}`);
-    console.log(`🎯 Domains: ${domains.length}`);
-    
-  } catch (error) {
-    console.error('❌ Failed to load in-memory data:', error);
-  }
-}
-
-// 🚀 OPTIMIZED Database query wrapper with performance indexes - FIXED USER REGISTRATION
-const dbQuery = {
-  // Get all records - OPTIMIZED with indexes
-  getAll: async (query, params = []) => {
-    try {
-      console.log('🚀 OPTIMIZED getAll:', query.substring(0, 50) + '...');
-      console.log('📋 Params:', params);
-      
-      if (query.includes('FROM products')) {
-        const domain = params[0];
-        
-        // 🚀 USE INDEX: O(1) domain lookup instead of O(n) filtering
-        let results = performanceIndexes.productsByDomain[domain] || [];
-        console.log(`🚀 INDEX LOOKUP for domain '${domain}': ${results.length} products (10x faster!)`);
-        
-        // Search functionality with caching
-        if (query.includes('LIKE')) {
-          const searchTerm = params.find(p => typeof p === 'string' && p.includes('%'));
-          if (searchTerm) {
-            const term = searchTerm.replace(/%/g, '').toLowerCase();
-            const cacheKey = `${domain}-${term}`;
-            
-            // Check cache first
-            if (performanceIndexes.searchCache.has(cacheKey)) {
-              results = performanceIndexes.searchCache.get(cacheKey);
-              console.log(`⚡ CACHE HIT for search '${term}': ${results.length} results`);
-            } else {
-              // Perform search and cache result
-              results = results.filter(p => 
-                p.name.toLowerCase().includes(term) ||
-                (p.attributes && p.attributes.toLowerCase().includes(term))
-              );
-              performanceIndexes.searchCache.set(cacheKey, results);
-              console.log(`🔍 CACHED search for '${term}': ${results.length} results`);
-            }
-          }
-        }
-        
-        // Handle LIMIT and OFFSET efficiently
-        if (query.includes('LIMIT')) {
-          const limitMatch = query.match(/LIMIT\s+(\d+)/i);
-          const offsetMatch = query.match(/OFFSET\s+(\d+)/i);
-          
-          if (limitMatch) {
-            const limit = parseInt(limitMatch[1]);
-            const offset = offsetMatch ? parseInt(offsetMatch[1]) : 0;
-            results = results.slice(offset, offset + limit);
-            console.log(`📄 OPTIMIZED pagination: limit=${limit}, offset=${offset}, results=${results.length}`);
-          }
-        }
-        
-        return results;
-      }
-      
-      if (query.includes('FROM categories')) {
-        const domain = params[0];
-        // 🚀 USE INDEX: O(1) domain lookup
-        const results = performanceIndexes.categoriesByDomain[domain] || [];
-        console.log(`🚀 INDEXED categories for domain '${domain}': ${results.length}`);
-        return results;
-      }
-      
-      if (query.includes('FROM brands')) {
-        const domain = params[0];
-        // 🚀 USE INDEX: O(1) domain lookup
-        const results = performanceIndexes.brandsByDomain[domain] || [];
-        console.log(`🚀 INDEXED brands for domain '${domain}': ${results.length}`);
-        return results;
-      }
-      
-      if (query.includes('FROM users')) {
-        console.log('👥 getAll USERS query - returning', inMemoryData.users.length, 'users');
-        return [...inMemoryData.users];
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('❌ Optimized getAll failed:', error);
-      return [];
-    }
-  },
-  
-  // Get one record - OPTIMIZED with faster lookups
-  getOne: async (query, params = []) => {
-    try {
-      console.log('🚀 OPTIMIZED getOne:', query.substring(0, 50) + '...');
-      console.log('📋 Params:', params);
-      
-      if (query.includes('FROM products')) {
-        // Handle COUNT queries - OPTIMIZED with indexes
-        if (query.includes('COUNT(*)')) {
-          const domain = params[0];
-          // 🚀 USE INDEX: instant count instead of filtering
-          const count = (performanceIndexes.productsByDomain[domain] || []).length;
-          console.log(`🚀 INDEXED COUNT for domain '${domain}': ${count} products (instant!)`);
-          return { total: count };
-        }
-        
-        // Handle single product queries - OPTIMIZED
-        if (query.includes('WHERE') && params.length >= 2) {
-          const domain = params[0];
-          const id = params[1];
-          // 🚀 USE INDEX: search within domain index only
-          const domainProducts = performanceIndexes.productsByDomain[domain] || [];
-          const result = domainProducts.find(p => p.id == id);
-          console.log(`🚀 INDEXED product lookup domain='${domain}', id=${id}:`, result ? 'Found' : 'Not found');
-          return result || null;
-        }
-        
-        // Handle simple ID lookup
-        if (params.length === 1) {
-          const id = params[0];
-          const result = inMemoryData.products.find(p => p.id == id);
-          console.log(`🎯 Product ID ${id}:`, result ? 'Found' : 'Not found');
-          return result || null;
-        }
-      }
-      
-      if (query.includes('FROM users')) {
-        if (query.includes('WHERE username =') || query.includes('WHERE username = ? OR email = ?')) {
-          const username = params[0];
-          const result = inMemoryData.users.find(u => u.username === username || u.email === username);
-          console.log(`👤 User '${username}':`, result ? `Found (${result.username})` : 'Not found');
-          return result || null;
-        }
-        if (query.includes('WHERE id =')) {
-          const id = params[0];
-          const result = inMemoryData.users.find(u => u.id == id);
-          console.log(`👤 User ID ${id}:`, result ? `Found (${result.username})` : 'Not found');
-          return result || null;
-        }
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('❌ Optimized getOne failed:', error);
-      return null;
-    }
-  },
-  
-  // Run query (INSERT, UPDATE, DELETE) - FIXED USER REGISTRATION
-  run: async (query, params = []) => {
-    try {
-      console.log('✏️ FIXED In-memory run:', query.substring(0, 50) + '...');
-      console.log('📋 Run params:', params);
-      
-      // Handle user registration - FIXED VERSION
-      if (query.includes('INSERT INTO users')) {
-        console.log('👤 🔧 FIXING USER REGISTRATION...');
-        
-        // Generate new user ID
-        const newId = Math.max(...inMemoryData.users.map(u => u.id), 0) + 1;
-        
-        // Extract user data from params
-        const [username, email, password_hash, first_name, last_name] = params;
-        
-        // Create new user object
-        const newUser = {
-          id: newId,
-          username: username,
-          email: email,
-          password_hash: password_hash,
-          first_name: first_name || null,
-          last_name: last_name || null,
-          role: 'user',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        // ✅ ACTUALLY ADD USER TO IN-MEMORY DATA!
-        inMemoryData.users.push(newUser);
-        
-        console.log('✅ USER ADDED TO IN-MEMORY DATABASE:', {
-          id: newId,
-          username: username,
-          email: email,
-          total_users: inMemoryData.users.length
-        });
-        
-        return { 
-          changes: 1, 
-          lastInsertRowid: newId 
-        };
-      }
-      
-      // Handle user updates - FIXED VERSION
-      if (query.includes('UPDATE users')) {
-        console.log('👤 🔧 FIXING USER UPDATE...');
-        
-        // Find user by ID (last parameter is usually the ID)
-        const userId = params[params.length - 1];
-        const userIndex = inMemoryData.users.findIndex(u => u.id == userId);
-        
-        if (userIndex !== -1) {
-          // Update user fields based on query
-          if (query.includes('SET first_name')) {
-            inMemoryData.users[userIndex].first_name = params[0];
-            inMemoryData.users[userIndex].last_name = params[1];
-            inMemoryData.users[userIndex].avatar_url = params[2];
-          }
-          
-          inMemoryData.users[userIndex].updated_at = new Date().toISOString();
-          
-          console.log('✅ USER UPDATED IN IN-MEMORY DATABASE:', {
-            id: userId,
-            username: inMemoryData.users[userIndex].username
-          });
-          
-          return { changes: 1, lastInsertRowid: userId };
-        }
-      }
-      
-      // Simulate successful operation for other queries
-      const changes = 1;
-      const lastInsertRowid = Date.now();
-      
-      return { changes, lastInsertRowid };
-      
-    } catch (error) {
-      console.error('❌ Fixed In-memory run failed:', error);
-      return { changes: 0, lastInsertRowid: null };
-    }
-  },
-
-  // 🚀 OPTIMIZED: executeQuery method with performance indexes - FIXED USER REGISTRATION
-  executeQuery: (query, params = []) => {
-    try {
-      console.log('🚀 FIXED OPTIMIZED ExecuteQuery:', query.substring(0, 50) + '...');
-      console.log('📋 Params:', params);
-      
-      // Handle user registration - FIXED VERSION
-      if (query.includes('INSERT INTO users')) {
-        console.log('👤 🔧 FIXING USER REGISTRATION IN executeQuery...');
-        
-        // Generate new user ID
-        const newId = Math.max(...inMemoryData.users.map(u => u.id), 0) + 1;
-        
-        // Extract user data from params
-        const [username, email, password_hash, first_name, last_name] = params;
-        
-        // Create new user object
-        const newUser = {
-          id: newId,
-          username: username,
-          email: email,
-          password_hash: password_hash,
-          first_name: first_name || null,
-          last_name: last_name || null,
-          role: 'user',
-          is_active: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
-        
-        // ✅ ACTUALLY ADD USER TO IN-MEMORY DATA!
-        inMemoryData.users.push(newUser);
-        
-        console.log('✅ USER ADDED TO IN-MEMORY DATABASE (executeQuery):', {
-          id: newId,
-          username: username,
-          email: email,
-          total_users: inMemoryData.users.length
-        });
-        
-        return { 
-          changes: 1, 
-          lastInsertRowid: newId 
-        };
-      }
-      
-      // Handle DISTINCT domain queries
-      if (query.includes('SELECT DISTINCT domain FROM products')) {
-        const domains = Object.keys(performanceIndexes.productsByDomain);
-        console.log(`🚀 INDEXED distinct domains: ${domains.length}`);
-        return domains.map(domain => ({ domain }));
-      }
-      
-      // Handle categories with JOIN and COUNT - OPTIMIZED
-      if (query.includes('FROM categories c') && query.includes('LEFT JOIN products p')) {
-        const domain = params[0];
-        // 🚀 USE INDEX: get categories for domain instantly
-        const categories = performanceIndexes.categoriesByDomain[domain] || [];
-        const result = categories.map(category => {
-          // 🚀 USE INDEX: count products by category instantly
-          const categoryKey = `${domain}-${category.id}`;
-          const productCount = (performanceIndexes.productsByCategory[categoryKey] || []).length;
-          console.log(`🚀 INDEXED category '${category.name}' in '${domain}': ${productCount} products`);
-          return { ...category, product_count: productCount };
-        });
-        console.log(`🚀 OPTIMIZED categories with count for '${domain}': ${result.length} categories total`);
-        return result;
-      }
-      
-      // Handle brands with JOIN and COUNT - OPTIMIZED
-      if (query.includes('FROM brands b') && query.includes('LEFT JOIN products p')) {
-        const domain = params[0];
-        // 🚀 USE INDEX: get brands for domain instantly
-        const brands = performanceIndexes.brandsByDomain[domain] || [];
-        const result = brands.map(brand => {
-          // 🚀 USE INDEX: count products by brand instantly
-          const brandKey = `${domain}-${brand.id}`;
-          const productCount = (performanceIndexes.productsByBrand[brandKey] || []).length;
-          console.log(`🚀 INDEXED brand '${brand.name}' in '${domain}': ${productCount} products`);
-          return { ...brand, product_count: productCount };
-        });
-        console.log(`🚀 OPTIMIZED brands with count for '${domain}': ${result.length} brands total`);
-        return result;
-      }
-      
-      // Handle products with JOIN (categories and brands) - OPTIMIZED
-      if (query.includes('FROM products p') && query.includes('LEFT JOIN categories c')) {
-        const domain = params[0];
-        // 🚀 USE INDEX: get products for domain instantly
-        let products = performanceIndexes.productsByDomain[domain] || [];
-        
-        // Add category and brand info efficiently
-        const result = products.map(product => {
-          const category = performanceIndexes.categoriesByDomain[domain]?.find(c => 
-            c.id === product.category_id
-          );
-          const brand = performanceIndexes.brandsByDomain[domain]?.find(b => 
-            b.id === product.brand_id
-          );
-          
-          return {
-            ...product,
-            category_name: category ? category.name : null,
-            category_slug: category ? category.slug : null,
-            brand_name: brand ? brand.name : null,
-            brand_slug: brand ? brand.slug : null
-          };
-        });
-        
-        // Handle LIMIT and OFFSET efficiently
-        if (query.includes('LIMIT')) {
-          const limit = params[1] || 20;
-          const offset = params[2] || 0;
-          const paginatedResult = result.slice(offset, offset + limit);
-          console.log(`🚀 OPTIMIZED products for '${domain}': ${paginatedResult.length}/${result.length}`);
-          return paginatedResult;
-        }
-        
-        console.log(`🚀 OPTIMIZED products for '${domain}': ${result.length}`);
-        return result;
-      }
-      
-      // Handle simple product queries - OPTIMIZED
-      if (query.includes('FROM products') && query.includes('WHERE domain =')) {
-        const domain = params[0];
-        // 🚀 USE INDEX: instant domain lookup
-        const result = performanceIndexes.productsByDomain[domain] || [];
-        console.log(`🚀 INDEXED products for '${domain}': ${result.length}`);
-        return result;
-      }
-      
-      // Handle users queries - FIXED
-      if (query.includes('FROM users')) {
-        console.log('👥 USERS QUERY - returning', inMemoryData.users.length, 'users');
-        return [...inMemoryData.users];
-      }
-      
-      console.log('⚠️ Query not matched, returning empty array');
-      return [];
-    } catch (error) {
-      console.error('❌ Fixed Optimized ExecuteQuery failed:', error);
-      return [];
-    }
-  },
-
-  // Additional helper methods for compatibility
-  validateDatabase: () => {
-    try {
-      return {
-        isValid: isInitialized,
-        productCount: inMemoryData.products.length,
-        userCount: inMemoryData.users.length,
-        hasUsers: inMemoryData.users.length > 0,
-        tables: {
-          products: inMemoryData.products.length,
-          categories: inMemoryData.categories.length,
-          brands: inMemoryData.brands.length,
-          users: inMemoryData.users.length
-        },
-        performance: {
-          indexed_domains: Object.keys(performanceIndexes.productsByDomain).length,
-          search_cache_size: performanceIndexes.searchCache.size,
-          optimization_status: '🚀 OPTIMIZED + FIXED USER REGISTRATION'
-        }
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        productCount: 0,
-        userCount: 0,
-        hasUsers: false,
-        tables: {},
-        performance: { optimization_status: '❌ ERROR' }
-      };
-    }
-  },
-
-  initializeUsersTable: () => {
-    try {
-      console.log('👥 Users table already initialized in memory');
-      return true;
-    } catch (error) {
-      console.error('❌ Users table initialization failed:', error);
-      return false;
-    }
-  },
-
-  createDemoUsers: () => {
-    try {
-      console.log('👤 Demo users already created in memory');
-      return true;
-    } catch (error) {
-      console.error('❌ Demo users creation failed:', error);
-      return false;
-    }
-  },
-
-  closeConnection: () => {
-    try {
-      console.log('🔒 Fixed optimized in-memory database connections closed');
-      // Clear cache to free memory
-      performanceIndexes.searchCache.clear();
-      return true;
-    } catch (error) {
-      console.error('❌ Close connection failed:', error);
-      return false;
-    }
-  }
-};
-
+// 🔧 EXPORT DEBUG FUNCTIONS
 module.exports = {
-  initializeDatabase,
-  testConnection,
-  dbConfig: dbQuery,
-  getDb: () => null, // No actual DB connection
-  isPostgreSQL: () => false
+  debugProductIds,
+  getCorrectedTestIds,
+  verifyProductExists
 };
