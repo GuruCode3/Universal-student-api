@@ -2,8 +2,45 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { dbConfig } = require('../utils/database');
 
+// 🛡️ DOMAIN VALIDATION MIDDLEWARE - FIX FOR 404 BUG
+const VALID_DOMAINS = [
+  'movies', 'books', 'electronics', 'restaurants', 'fashion',
+  'cars', 'hotels', 'games', 'music', 'food', 'sports',
+  'toys', 'tools', 'medicines', 'courses', 'events',
+  'apps', 'flights', 'pets', 'realestate'
+];
+
+function validateDomain(req, res, next) {
+  const domain = req.params.domain;
+  
+  console.log('🔍 DOMAIN VALIDATION CHECK:', domain);
+  
+  if (!domain) {
+    return res.status(400).json({
+      success: false,
+      error: 'bad_request',
+      message: 'Domain parameter is required'
+    });
+  }
+  
+  if (!VALID_DOMAINS.includes(domain.toLowerCase())) {
+    console.log('❌ DOMAIN VALIDATION FAILED:', domain);
+    return res.status(404).json({
+      success: false,
+      error: 'domain_not_found',
+      message: `Domain '${domain}' not found`,
+      available_domains: VALID_DOMAINS,
+      suggestion: 'Use one of the available domains listed above',
+      timestamp: new Date().toISOString()
+    });
+  }
+  
+  console.log('✅ DOMAIN VALIDATION PASSED:', domain);
+  next();
+}
+
 // GET /api/v1/:domain/categories
-router.get('/categories', async (req, res) => {
+router.get('/categories', validateDomain, async (req, res) => {
   try {
     const { domain } = req.params;
     
@@ -42,7 +79,7 @@ router.get('/categories', async (req, res) => {
 });
 
 // GET /api/v1/:domain/brands
-router.get('/brands', async (req, res) => {
+router.get('/brands', validateDomain, async (req, res) => {
   try {
     const { domain } = req.params;
     
@@ -80,8 +117,8 @@ router.get('/brands', async (req, res) => {
   }
 });
 
-// GET /api/v1/:domain/products - FIXED PAGINATION COUNT
-router.get('/products', async (req, res) => {
+// GET /api/v1/:domain/products - FIXED PAGINATION COUNT + DOMAIN VALIDATION
+router.get('/products', validateDomain, async (req, res) => {
   try {
     const { domain } = req.params;
     const page = parseInt(req.query.page) || 1;
@@ -163,8 +200,8 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// GET /api/v1/:domain/products/search - FIXED PAGINATION COUNT
-router.get('/products/search', async (req, res) => {
+// GET /api/v1/:domain/products/search - FIXED PAGINATION COUNT + DOMAIN VALIDATION
+router.get('/products/search', validateDomain, async (req, res) => {
   try {
     const { domain } = req.params;
     const { q, category, brand, min_price, max_price } = req.query;
@@ -310,7 +347,7 @@ router.get('/products/search', async (req, res) => {
 });
 
 // GET /api/v1/:domain/products/:id
-router.get('/products/:id', async (req, res) => {
+router.get('/products/:id', validateDomain, async (req, res) => {
   try {
     const { domain, id } = req.params;
     const productId = parseInt(id);
@@ -396,7 +433,7 @@ router.get('/products/:id', async (req, res) => {
 });
 
 // GET /api/v1/:domain/products/:id/reviews (Mock reviews for educational purposes)
-router.get('/products/:id/reviews', async (req, res) => {
+router.get('/products/:id/reviews', validateDomain, async (req, res) => {
   try {
     const { domain, id } = req.params;
     const productId = parseInt(id);
@@ -482,5 +519,7 @@ router.get('/products/:id/reviews', async (req, res) => {
     });
   }
 });
+
+console.log('✅ Products routes loaded with DOMAIN VALIDATION - 404 bug fixed!');
 
 module.exports = router;
