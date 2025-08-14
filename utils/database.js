@@ -1,28 +1,79 @@
-// utils/database.js - Database Wrapper for Universal Student API
+// utils/database.js - FIXED DATABASE UTILITIES
 const { dbConfig } = require('../database/connection');
 
-// Re-export all database functions for compatibility
-module.exports = {
-  // Main database configuration object
-  dbConfig: dbConfig,
+console.log('🗄️ Loading database utilities...');
+
+// Validate dbConfig is available
+if (!dbConfig) {
+  console.error('❌ CRITICAL: dbConfig is undefined in utils/database.js');
+  throw new Error('Database configuration not available');
+}
+
+console.log('✅ dbConfig loaded, checking methods...');
+console.log('📋 dbConfig methods available:', {
+  executeQuery: typeof dbConfig.executeQuery,
+  getAll: typeof dbConfig.getAll,
+  getOne: typeof dbConfig.getOne,
+  run: typeof dbConfig.run,
+  validateDatabase: typeof dbConfig.validateDatabase
+});
+
+// FIXED: Direct method implementations with error handling
+const DatabaseUtils = {
+  // Execute query and return all results
+  executeQuery: (query, params = []) => {
+    if (!dbConfig || !dbConfig.executeQuery) {
+      console.error('❌ dbConfig.executeQuery not available');
+      return [];
+    }
+    return dbConfig.executeQuery(query, params);
+  },
   
-  // Direct access to database functions
-  getAll: dbConfig.getAll,
-  getOne: dbConfig.getOne,
-  run: dbConfig.run,
-  executeQuery: dbConfig.executeQuery,
+  // Get all rows
+  getAll: (query, params = []) => {
+    if (!dbConfig || !dbConfig.getAll) {
+      console.error('❌ dbConfig.getAll not available');
+      return [];
+    }
+    return dbConfig.getAll(query, params);
+  },
+  
+  // Get single row
+  getOne: (query, params = []) => {
+    if (!dbConfig || !dbConfig.getOne) {
+      console.error('❌ dbConfig.getOne not available');
+      return null;
+    }
+    return dbConfig.getOne(query, params);
+  },
+  
+  // Run query (INSERT, UPDATE, DELETE)
+  run: (query, params = []) => {
+    if (!dbConfig || !dbConfig.run) {
+      console.error('❌ dbConfig.run not available');
+      return { changes: 0, lastInsertRowid: null };
+    }
+    return dbConfig.run(query, params);
+  },
   
   // Validation and health check functions
-  validateDatabase: dbConfig.validateDatabase,
-  initializeUsersTable: dbConfig.initializeUsersTable,
-  createDemoUsers: dbConfig.createDemoUsers,
-  closeConnection: dbConfig.closeConnection,
+  validateDatabase: () => {
+    if (!dbConfig || !dbConfig.validateDatabase) {
+      console.error('❌ dbConfig.validateDatabase not available');
+      return {
+        isValid: false,
+        tables: {},
+        performance: {}
+      };
+    }
+    return dbConfig.validateDatabase();
+  },
   
-  // Additional utility functions
+  // FIXED: User management functions with proper error handling
   getAllUsers: () => {
     try {
       console.log('👥 Getting all users...');
-      const users = dbConfig.executeQuery('SELECT * FROM users');
+      const users = DatabaseUtils.executeQuery('SELECT * FROM users');
       console.log(`👥 Found ${users.length} users`);
       return users;
     } catch (error) {
@@ -31,11 +82,25 @@ module.exports = {
     }
   },
   
-  // Get user by username or email
+  // FIXED: Get user by username or email
   getUserByCredentials: (usernameOrEmail) => {
     try {
       console.log(`🔍 Looking for user: ${usernameOrEmail}`);
-      const user = dbConfig.getOne(
+      
+      // Try direct database query first
+      if (DatabaseUtils.executeQuery) {
+        const users = DatabaseUtils.executeQuery(
+          'SELECT * FROM users WHERE username = ? OR email = ?',
+          [usernameOrEmail, usernameOrEmail]
+        );
+        
+        const user = users.length > 0 ? users[0] : null;
+        console.log(`👤 User found: ${user ? user.username : 'Not found'}`);
+        return user;
+      }
+      
+      // Fallback to getOne method
+      const user = DatabaseUtils.getOne(
         'SELECT * FROM users WHERE username = ? OR email = ?',
         [usernameOrEmail, usernameOrEmail]
       );
@@ -47,11 +112,21 @@ module.exports = {
     }
   },
   
-  // Get user by ID
+  // FIXED: Get user by ID
   getUserById: (id) => {
     try {
       console.log(`🔍 Looking for user ID: ${id}`);
-      const user = dbConfig.getOne('SELECT * FROM users WHERE id = ?', [id]);
+      
+      // Try direct database query first
+      if (DatabaseUtils.executeQuery) {
+        const users = DatabaseUtils.executeQuery('SELECT * FROM users WHERE id = ?', [id]);
+        const user = users.length > 0 ? users[0] : null;
+        console.log(`👤 User found: ${user ? user.username : 'Not found'}`);
+        return user;
+      }
+      
+      // Fallback to getOne method
+      const user = DatabaseUtils.getOne('SELECT * FROM users WHERE id = ?', [id]);
       console.log(`👤 User found: ${user ? user.username : 'Not found'}`);
       return user;
     } catch (error) {
@@ -60,11 +135,12 @@ module.exports = {
     }
   },
   
-  // Create new user
+  // FIXED: Create new user
   createUser: (userData) => {
     try {
       console.log(`👤 Creating user: ${userData.username}`);
-      const result = dbConfig.run(`
+      
+      const result = DatabaseUtils.run(`
         INSERT INTO users (username, email, password_hash, first_name, last_name, role)
         VALUES (?, ?, ?, ?, ?, ?)
       `, [
@@ -93,11 +169,12 @@ module.exports = {
     }
   },
   
-  // Update user
+  // FIXED: Update user
   updateUser: (userId, updates) => {
     try {
       console.log(`👤 Updating user ID: ${userId}`);
-      const result = dbConfig.run(`
+      
+      const result = DatabaseUtils.run(`
         UPDATE users 
         SET first_name = ?, last_name = ?, email = ?, updated_at = CURRENT_TIMESTAMP
         WHERE id = ?
@@ -121,13 +198,13 @@ module.exports = {
     }
   },
   
-  // Get products for domain with pagination
+  // Product-related functions
   getProductsByDomain: (domain, page = 1, limit = 20) => {
     try {
       console.log(`🛍️ Getting products for domain: ${domain}, page: ${page}, limit: ${limit}`);
       const offset = (page - 1) * limit;
       
-      const products = dbConfig.executeQuery(`
+      const products = DatabaseUtils.executeQuery(`
         SELECT 
           p.*,
           c.name as category_name,
@@ -154,8 +231,8 @@ module.exports = {
   getProductsCountByDomain: (domain) => {
     try {
       console.log(`📊 Counting products for domain: ${domain}`);
-      const result = dbConfig.getOne('SELECT COUNT(*) as total FROM products WHERE domain = ?', [domain]);
-      const count = result ? result.total : 0;
+      const results = DatabaseUtils.executeQuery('SELECT COUNT(*) as total FROM products WHERE domain = ?', [domain]);
+      const count = results.length > 0 ? results[0].total : 0;
       console.log(`📊 Total products in ${domain}: ${count}`);
       return count;
     } catch (error) {
@@ -168,7 +245,8 @@ module.exports = {
   getProductById: (domain, productId) => {
     try {
       console.log(`🎯 Getting product: ${domain}/${productId}`);
-      const product = dbConfig.getOne(`
+      
+      const products = DatabaseUtils.executeQuery(`
         SELECT 
           p.*,
           c.name as category_name,
@@ -180,6 +258,8 @@ module.exports = {
         LEFT JOIN brands b ON p.brand_id = b.id AND b.domain = p.domain
         WHERE p.domain = ? AND p.id = ?
       `, [domain, productId]);
+      
+      const product = products.length > 0 ? products[0] : null;
       
       if (product) {
         console.log(`🎯 Product found: ${product.name}`);
@@ -207,7 +287,8 @@ module.exports = {
   getCategoriesByDomain: (domain) => {
     try {
       console.log(`📋 Getting categories for domain: ${domain}`);
-      const categories = dbConfig.executeQuery(`
+      
+      const categories = DatabaseUtils.executeQuery(`
         SELECT 
           c.*,
           COUNT(p.id) as product_count
@@ -230,7 +311,8 @@ module.exports = {
   getBrandsByDomain: (domain) => {
     try {
       console.log(`🏷️ Getting brands for domain: ${domain}`);
-      const brands = dbConfig.executeQuery(`
+      
+      const brands = DatabaseUtils.executeQuery(`
         SELECT 
           b.*,
           COUNT(p.id) as product_count
@@ -307,7 +389,7 @@ module.exports = {
         }
       }
       
-      const products = dbConfig.executeQuery(query, params);
+      const products = DatabaseUtils.executeQuery(query, params);
       console.log(`🔍 Search results: ${products.length} products found`);
       return products;
     } catch (error) {
@@ -320,7 +402,7 @@ module.exports = {
   getAvailableDomains: () => {
     try {
       console.log('🌐 Getting available domains...');
-      const domains = dbConfig.executeQuery('SELECT DISTINCT domain FROM products ORDER BY domain');
+      const domains = DatabaseUtils.executeQuery('SELECT DISTINCT domain FROM products ORDER BY domain');
       const domainNames = domains.map(d => d.domain);
       console.log(`🌐 Available domains: ${domainNames.join(', ')}`);
       return domainNames;
@@ -333,7 +415,7 @@ module.exports = {
   // Health check
   healthCheck: () => {
     try {
-      const validation = dbConfig.validateDatabase();
+      const validation = DatabaseUtils.validateDatabase();
       const health = {
         status: validation.isValid ? 'healthy' : 'unhealthy',
         database: validation.isValid ? 'connected' : 'disconnected',
@@ -353,5 +435,24 @@ module.exports = {
         timestamp: new Date().toISOString()
       };
     }
-  }
+  },
+  
+  // Close connection
+  closeConnection: () => {
+    if (!dbConfig || !dbConfig.closeConnection) {
+      console.error('❌ dbConfig.closeConnection not available');
+      return false;
+    }
+    return dbConfig.closeConnection();
+  },
+  
+  // Direct access to dbConfig for backward compatibility
+  dbConfig: dbConfig
 };
+
+// Log available methods
+console.log('✅ Database utilities loaded successfully');
+console.log('📋 Available methods:', Object.keys(DatabaseUtils).filter(key => typeof DatabaseUtils[key] === 'function'));
+
+// Export database utilities
+module.exports = DatabaseUtils;
