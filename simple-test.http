@@ -427,7 +427,7 @@ Content-Type: application/json
 # Expected: 200 OK, user profile data
 # Watch for: Token validation, user data return
 GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJ0ZWFjaGVyIiwiZW1haWwiOiJ0ZWFjaGVyQGV4YW1wbGUuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzU1MTc1NDM2LCJleHAiOjE3NTUyNjE4MzYsImF1ZCI6InN0dWRlbnQtZnJvbnRlbmQtYXBwcyIsImlzcyI6InVuaXZlcnNhbC1zdHVkZW50LWFwaSJ9.y181cV1ma0eyII95IBQypuFkvwztcTqiPG5DUMXW7gs
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTc1NTM0MTgzMzUwNiwidXNlcm5hbWUiOiJidWd0ZXN0NCIsImVtYWlsIjoiYnVndGVzdDRAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc1NTM0MTgzMywiZXhwIjoxNzU1NDI4MjMzLCJhdWQiOiJzdHVkZW50LWZyb250ZW5kLWFwcHMiLCJpc3MiOiJ1bml2ZXJzYWwtc3R1ZGVudC1hcGkifQ.RvZ2avyQJUJr6nCiZNB7veu94EaI3xtjDZ4kK6L1Px8
 
 ### ❌ TEST 2.15: Get User Profile - Invalid Token
 # Expected: 403 Forbidden, "Invalid token"
