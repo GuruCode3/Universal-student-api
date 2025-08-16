@@ -1,294 +1,51 @@
-### 🔍 COMPREHENSIVE BUG DETECTION TEST SUITE
-### Universal Student API v2.0 - Complete System Testing
-### 🎯 Target: Find ALL potential bugs, edge cases, and issues
-### 🌐 Base URL: https://universal-student-api-production.up.railway.app
+# 🔍 UNIVERSAL STUDENT API v2.0 - სრული ტესტის სუიტი
+## 🎯 მთლიანი სისტემის ტესტირება ყველა ფუნქციონალით
+# 🌐 Base URL: https://universal-student-api-production.up.railway.app
+# URL: https://universal-student-api-production.up.railway.app
+---
 
-###############################################
-# 🧪 PHASE 1: BASIC FUNCTIONALITY VERIFICATION
-###############################################
+## 📋 **ტესტირების მიზნები:**
+- ✅ ყველა ძირითადი ფუნქციონალი
+- 🛒 კალათის მთელი lifecycle
+- 👤 Authentication & Authorization
+- 🔒 Security & Error Handling
+- ⚡ Performance & Rate Limiting
+
+---
+
+## 🧪 **PHASE 1: BASIC SYSTEM HEALTH**
 
 ### ✅ TEST 1.1: API Root - Basic Response
-# Expected: 200 OK, Welcome message or API info
-# Watch for: Server availability, basic routing
+```http
 GET https://universal-student-api-production.up.railway.app/
+```
+**Expected:** 200 OK, Welcome message  
+**Watch for:** Server availability
 
-### ✅ TEST 1.2: Health Check - System Status  
-# Expected: 200 OK, {"status": "healthy"} or similar
-# Watch for: API health status, uptime info
+### ✅ TEST 1.2: Health Check
+```http
 GET https://universal-student-api-production.up.railway.app/health
+```
+**Expected:** 200 OK, {"status": "healthy"}
 
-### ✅ TEST 1.3: API Status - Detailed Information
-# Expected: 200 OK, API version, stats, domains count
-# Watch for: Complete API metadata and statistics
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
-
-###############################################
-# 💾 PHASE 9: DATA CONSISTENCY TESTING
-###############################################
-
-### ✅ TEST 9.1: Product Count Consistency
-# Expected: 200 OK, total count should match pagination math
-# Watch for: Accurate total count, pagination metadata
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=1
-
-### ✅ TEST 9.2: Categories Count Consistency
-# Expected: 200 OK, reasonable number of categories
-# Watch for: Category structure, count consistency
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/categories
-
-### ✅ TEST 9.3: Brands Count Consistency
-# Expected: 200 OK, reasonable number of brands
-# Watch for: Brand structure, naming consistency
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/brands
-
-### ✅ TEST 9.4: Search Results Consistency
-# Expected: 200 OK, should find "Product 1" if it exists
-# Watch for: Search accuracy, result relevance
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=Product%201
-
-### ✅ TEST 9.5: Domain Statistics Verification
-# Expected: 200 OK, statistics for all 20 domains
-# Watch for: Complete domain coverage, accurate counts
-GET https://universal-student-api-production.up.railway.app/api/v1/status
-
-###############################################
-# 🔒 PHASE 10: SECURITY TESTING
-###############################################
-
-### ❌ TEST 10.1: XSS Attempt in Query
-# Expected: 200 OK with sanitized results OR 400 Bad Request
-# Watch for: Script tag removal, XSS prevention
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%3Cscript%3Ealert%28%27XSS%27%29%3C%2Fscript%3E
-
-### ❌ TEST 10.2: SQL Injection in Search
-# Expected: 200 OK with safe results OR 400 Bad Request
-# Watch for: No database errors, injection prevention
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%27%3B%20DROP%20TABLE%20products%3B%20--%20
-
-### ❌ TEST 10.3: Directory Traversal Attempt
-# Expected: 404 Not Found OR 400 Bad Request
-# Watch for: Path traversal prevention, no file access
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/../../../etc/passwd
-
-### ❌ TEST 10.4: Command Injection Attempt
-# Expected: 200 OK with sanitized query OR 400 Bad Request
-# Watch for: Command injection prevention
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%26%26%20ls%20-la
-
-### ❌ TEST 10.5: LDAP Injection Attempt
-# Expected: 200 OK with sanitized query OR 400 Bad Request
-# Watch for: LDAP injection prevention, input sanitization
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%2A%29%28%7C%28objectClass%3D%2A
-
-###############################################
-# 📊 PHASE 11: PERFORMANCE TESTING
-###############################################
-
-### ⚡ TEST 11.1: Large Result Set
-# Expected: 200 OK, 500 products (if available), reasonable response time
-# Watch for: Performance with large datasets, < 2 seconds response
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=500
-
-### ⚡ TEST 11.2: Complex Search Query
-# Expected: 200 OK, filtered results, good performance
-# Watch for: Complex query handling, response time < 1 second
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=smartphone&min_price=100&max_price=1000&page=1&limit=100
-
-### ⚡ TEST 11.3: Deep Pagination
-# Expected: 200 OK, products from page 100 OR empty results
-# Watch for: Deep pagination performance, offset calculation
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=100&limit=5
-
-### ⚡ TEST 11.4: Concurrent Domain Requests
-# Expected: All return 200 OK, good parallel performance
-# Watch for: Concurrent request handling, no blocking
-# Execute these simultaneously if possible
-
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=10
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products?page=1&limit=10
-
-###
-
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?page=1&limit=10
-
-###############################################
-# 🎯 FINAL VERIFICATION TESTS
-###############################################
-
-### ✅ FINAL TEST 1: API Still Responsive
-# Expected: 200 OK, health status healthy
-# Watch for: System stability after all tests
-GET https://universal-student-api-production.up.railway.app/health
-
-### ✅ FINAL TEST 2: Authentication Still Working
-# Expected: 200 OK, JWT token generated
-# Watch for: Auth system stability, no degradation
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "demo",
-  "password": "demo123"
-}
-
-### ✅ FINAL TEST 3: Products Still Loading
-# Expected: 200 OK, 5 movie products
-# Watch for: Core functionality preserved
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=5
-
-### ✅ FINAL TEST 4: Search Still Working
-# Expected: 200 OK, search results for "Product"
-# Watch for: Search functionality stability
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products/search?q=Product&page=1&limit=3
-
-### ✅ FINAL TEST 5: System Status Check
-# Expected: 200 OK, complete system statistics
-# Watch for: System health, all domains active
-GET https://universal-student-api-production.up.railway.app/api/v1/status
-
-###############################################
-# 📋 BUG DETECTION CHECKLIST
-###############################################
-
-### 🔍 EXPECTED BEHAVIORS TO VERIFY:
-### 
-### ✅ Authentication:
-### - Valid logins return JWT tokens (200)
-### - Invalid logins return 401 errors
-### - Protected routes require valid tokens
-### - Expired/invalid tokens return 403
-### 
-### ✅ Products API:
-### - All 20 domains return products (200)
-### - Pagination works correctly
-### - Page numbers and limits are validated (400 for invalid)
-### - Invalid domains return 404 errors
-### - Product IDs are validated properly
-### 
-### ✅ Search Functionality:
-### - Text search returns relevant results (200)
-### - Price filtering works correctly
-### - Empty searches handled gracefully (400 or empty results)
-### - Special characters are sanitized
-### - SQL injection attempts are blocked
-### 
-### ✅ Error Handling:
-### - 404 for non-existent resources
-### - 400 for invalid parameters
-### - 401 for authentication issues
-### - 403 for forbidden access
-### - 405 for wrong HTTP methods
-### - 429 for rate limit exceeded
-### - 500 for server errors (should be rare)
-### 
-### ✅ Security:
-### - XSS attempts are sanitized
-### - SQL injection is prevented
-### - Rate limiting is enforced
-### - Invalid HTTP methods are rejected
-### - Input validation is working
-### 
-### ✅ Performance:
-### - Responses are fast (<1 second typical)
-### - Large result sets load properly
-### - Deep pagination works
-### - API remains stable under load
-### 
-### 🎯 SUCCESS CRITERIA:
-### - All valid requests return 200 OK
-### - All invalid requests return appropriate error codes
-### - No server crashes or unexpected 500 errors
-### - Rate limiting activates at proper thresholds
-### - Security measures block malicious attempts
-### - Data consistency is maintained
-### - Performance remains acceptable
-###
-### 🐛 COMMON BUGS TO WATCH FOR:
-### - Pagination count errors
-### - Authentication token issues
-### - Search result inconsistencies
-### - Invalid parameter handling
-### - Missing error responses
-### - Security vulnerabilities
-### - Performance degradation
-### - Data corruption
-### - CORS issues
-### - Memory leaks
-### - Timeout errors
-### - Incomplete error messages
-### 
-### 🏆 EXECUTE ALL TESTS ABOVE TO VERIFY API STABILITY
-### 
-### 📊 TEST SUMMARY FORMAT:
-### For each test, note:
-### - Status Code (200, 400, 401, 403, 404, 405, 429, 500)
-### - Response Time
-### - Error Messages (if any)
-### - Data Completeness
-### - Security Behavior
-### - Performance Impact1/status
-
-### ✅ TEST 1.4: Available Domains - Complete List
-# Expected: 200 OK, array of 20 domains
-# Watch for: All domains present [movies, books, electronics, etc.]
+### ✅ TEST 1.3: Available Domains
+```http
 GET https://universal-student-api-production.up.railway.app/api/v1/domains
+```
+**Expected:** 200 OK, array of 20 domains
 
-### ✅ TEST 1.5: API Documentation - Endpoint Info
-# Expected: 200 OK, API documentation or endpoints list
-# Watch for: Complete API documentation structure
-GET https://universal-student-api-production.up.railway.app/api/v1/docs
+### ✅ TEST 1.4: API Status & Statistics
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/status
+```
+**Expected:** 200 OK, API metadata and stats
 
-###############################################
-# 🔐 PHASE 2: AUTHENTICATION SYSTEM TESTING
-###############################################
+---
 
-### ✅ TEST 2.1: Auth Test Endpoint
-# Expected: 200 OK, system status message
-# Watch for: Authentication system availability
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/test
+## 🔐 **PHASE 2: AUTHENTICATION COMPREHENSIVE TESTING**
 
-### ✅ TEST 2.2: Valid User Login (Demo Account)
-# Expected: 200 OK, JWT token in response.data.token
-# Watch for: Token generation, user data, expires_in field
+### ✅ TEST 2.1: Valid Demo Login
+```http
 POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
@@ -296,10 +53,12 @@ Content-Type: application/json
   "username": "demo",
   "password": "demo123"
 }
+```
+**Expected:** 200 OK, JWT token  
+**Save Token for Later Tests:** `DEMO_TOKEN`
 
-### ✅ TEST 2.3: Valid Admin Login (Teacher Account)
-# Expected: 200 OK, JWT token, role: "admin"
-# Watch for: Admin role in user data, token generation
+### ✅ TEST 2.2: Valid Teacher Login (Admin)
+```http
 POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
@@ -307,10 +66,12 @@ Content-Type: application/json
   "username": "teacher",
   "password": "demo123"
 }
+```
+**Expected:** 200 OK, JWT token with admin role  
+**Save Token for Later Tests:** `ADMIN_TOKEN`
 
-### ❌ TEST 2.4: Invalid Login - Wrong Password
-# Expected: 401 Unauthorized, error message
-# Watch for: Security - no user info leaked, proper error handling
+### ❌ TEST 2.3: Invalid Login - Wrong Password
+```http
 POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
@@ -318,554 +79,498 @@ Content-Type: application/json
   "username": "demo",
   "password": "wrongpassword"
 }
+```
+**Expected:** 401 Unauthorized
 
-### ❌ TEST 2.5: Invalid Login - Wrong Username
-# Expected: 401 Unauthorized, "Invalid credentials" message
-# Watch for: No user enumeration, consistent error messages
+### ❌ TEST 2.4: Security Fix Verification - Invalid Username
+```http
 POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
 {
-  "username": "nonexistentuser",
+  "username": "hacker123",
   "password": "demo123"
 }
+```
+**Expected:** 401 Unauthorized (CRITICAL - Must be fixed!)
 
-### ❌ TEST 2.6: Invalid Login - Empty Credentials
-# Expected: 400 Bad Request, "Username and password required"
-# Watch for: Input validation, clear error messages
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "",
-  "password": ""
-}
-
-### ❌ TEST 2.7: Invalid Login - Missing Fields
-# Expected: 400 Bad Request, missing field error
-# Watch for: Required field validation
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": "demo"
-}
-
-### ❌ TEST 2.8: Invalid Login - Null Values
-# Expected: 400 Bad Request, validation error
-# Watch for: Null value handling, type validation
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
-Content-Type: application/json
-
-{
-  "username": null,
-  "password": null
-}
-
-### ✅ TEST 2.9: User Registration - Valid Data
-# Expected: 201 Created, user created successfully
-# Watch for: User creation, password hashing, proper response
+### ✅ TEST 2.5: User Registration
+```http
 POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
 Content-Type: application/json
 
 {
-  "username": "bugtest4",
-  "email": "bugtest4@example.com",
-  "password": "testpass123",
-  "first_name": "Bug",
-  "last_name": "Tester"
+  "username": "testuser001",
+  "email": "testuser001@example.com",
+  "password": "test123456",
+  "first_name": "Test",
+  "last_name": "User"
 }
+```
+**Expected:** 201 Created, user created
 
-### ❌ TEST 2.10: User Registration - Duplicate Username
-# Expected: 409 Conflict, "Username already exists"
-# Watch for: Duplicate prevention, clear error message
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+### ✅ TEST 2.6: Get User Profile (with token)
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: Bearer {DEMO_TOKEN}
+```
+**Expected:** 200 OK, user profile data
+
+### ✅ TEST 2.7: Update User Profile
+```http
+PUT https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: Bearer {DEMO_TOKEN}
+Content-Type: application/json
+
+{
+  "first_name": "Updated",
+  "last_name": "Name",
+  "email": "updated@example.com"
+}
+```
+**Expected:** 200 OK, updated profile
+
+### ✅ TEST 2.8: Change Password
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/change-password
+Authorization: Bearer {DEMO_TOKEN}
+Content-Type: application/json
+
+{
+  "current_password": "demo123",
+  "new_password": "newdemo123"
+}
+```
+**Expected:** 200 OK, password changed
+
+### ✅ TEST 2.9: Logout
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/logout
+Authorization: Bearer {DEMO_TOKEN}
+```
+**Expected:** 200 OK, session terminated
+
+### ❌ TEST 2.10: Access Profile After Logout
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+Authorization: Bearer {DEMO_TOKEN}
+```
+**Expected:** 401/403, access denied
+
+---
+
+## 🛍️ **PHASE 3: PRODUCTS API TESTING**
+
+### ✅ TEST 3.1: Get Movies Products
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=10
+```
+**Expected:** 200 OK, 10 products
+
+### ✅ TEST 3.2: Get Single Product Details
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/1
+```
+**Expected:** 200 OK, detailed product info  
+**Save Product ID for Cart Tests:** `PRODUCT_ID_1 = 1`
+
+### ✅ TEST 3.3: Get Electronics Products
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?page=1&limit=5
+```
+**Expected:** 200 OK, electronics products  
+**Save Product ID:** `PRODUCT_ID_2 = 1`
+
+### ❌ TEST 3.4: Invalid Domain (Should be FIXED)
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/invaliddomainname/products
+```
+**Expected:** 404 Not Found (CRITICAL - Domain validation bug!)
+
+### ✅ TEST 3.5: Product Search
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=action&page=1&limit=5
+```
+**Expected:** 200 OK, search results
+
+---
+
+## 🛒 **PHASE 4: SHOPPING CART COMPREHENSIVE TESTING**
+
+### 🔑 Login for Cart Tests
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
 Content-Type: application/json
 
 {
   "username": "demo",
-  "email": "newemail@example.com",
-  "password": "testpass123"
+  "password": "demo123"
 }
+```
+**Save New Token:** `CART_TOKEN`
 
-### ❌ TEST 2.11: User Registration - Duplicate Email
-# Expected: 409 Conflict, "Email already exists"
-# Watch for: Email uniqueness validation
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+### ✅ TEST 4.1: View Empty Cart
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/cart
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, empty cart
+
+### ✅ TEST 4.2: Add First Product to Cart
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: Bearer {CART_TOKEN}
 Content-Type: application/json
 
 {
-  "username": "newuser123",
-  "email": "demo@example.com",
-  "password": "testpass123"
+  "domain": "movies",
+  "product_id": 1,
+  "quantity": 2
 }
+```
+**Expected:** 200 OK, product added
 
-### ❌ TEST 2.12: User Registration - Invalid Email Format
-# Expected: 400 Bad Request, "Invalid email format"
-# Watch for: Email format validation
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+### ✅ TEST 4.3: Add Second Product to Cart
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: Bearer {CART_TOKEN}
 Content-Type: application/json
 
 {
-  "username": "bugtest5",
-  "email": "invalid-email-format",
-  "password": "testpass123"
+  "domain": "electronics",
+  "product_id": 1,
+  "quantity": 1
 }
+```
+**Expected:** 200 OK, second product added
 
-### ❌ TEST 2.13: User Registration - Weak Password
-# Expected: 400 Bad Request, password requirements error
-# Watch for: Password strength validation
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/register
+### ✅ TEST 4.4: View Cart with Products
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/cart
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, 2 products in cart
+
+### ✅ TEST 4.5: Update Product Quantity in Cart
+```http
+PUT https://universal-student-api-production.up.railway.app/api/v1/cart/update
+Authorization: Bearer {CART_TOKEN}
 Content-Type: application/json
 
 {
-  "username": "bugtest6",
-  "email": "bugtest6@example.com",
-  "password": "123"
+  "domain": "movies",
+  "product_id": 1,
+  "quantity": 3
 }
-### ✅ TEST 2.14: Get User Profile (with valid token)
-# Expected: 200 OK, user profile data
-# Watch for: Token validation, user data return
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
-Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTc1NTM0MTgzMzUwNiwidXNlcm5hbWUiOiJidWd0ZXN0NCIsImVtYWlsIjoiYnVndGVzdDRAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc1NTM0MTgzMywiZXhwIjoxNzU1NDI4MjMzLCJhdWQiOiJzdHVkZW50LWZyb250ZW5kLWFwcHMiLCJpc3MiOiJ1bml2ZXJzYWwtc3R1ZGVudC1hcGkifQ.RvZ2avyQJUJr6nCiZNB7veu94EaI3xtjDZ4kK6L1Px8
+```
+**Expected:** 200 OK, quantity updated
 
-### ❌ TEST 2.15: Get User Profile - Invalid Token
-# Expected: 403 Forbidden, "Invalid token"
-# Watch for: Token validation, security
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
-Authorization: Bearer invalid.jwt.token
+### ✅ TEST 4.6: Remove Product from Cart
+```http
+DELETE https://universal-student-api-production.up.railway.app/api/v1/cart/remove
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-### ❌ TEST 2.16: Get User Profile - Expired Token
-# Expected: 403 Forbidden, "Token expired"
-# Watch for: Token expiration handling
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZXhwIjoxfQ.expired
+{
+  "domain": "electronics",
+  "product_id": 1
+}
+```
+**Expected:** 200 OK, product removed
 
-### ❌ TEST 2.17: Get User Profile - No Authorization Header
-# Expected: 401 Unauthorized, "Access token required"
-# Watch for: Missing auth header handling
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/profile
+### ✅ TEST 4.7: Clear Entire Cart
+```http
+DELETE https://universal-student-api-production.up.railway.app/api/v1/cart/clear
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, cart cleared
 
-###############################################
-# 🛍️ PHASE 3: PRODUCTS API COMPREHENSIVE TESTING
-###############################################
+### ❌ TEST 4.8: Add to Cart - Invalid Product
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-## 3.1: VALID PRODUCTS REQUESTS ##
+{
+  "domain": "movies",
+  "product_id": 99999,
+  "quantity": 1
+}
+```
+**Expected:** 404 Not Found, product doesn't exist
 
-### ✅ TEST 3.1: Movies - Default Pagination
-# Expected: 200 OK, products array, pagination metadata
-# Watch for: Default limit (20), page 1, total count, data structure
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products
+### ❌ TEST 4.9: Add to Cart - Invalid Quantity
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/cart/add
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-### ✅ TEST 3.2: Movies - Custom Pagination
-# Expected: 200 OK, 10 products, page info
-# Watch for: Correct limit application, page number
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=10
+{
+  "domain": "movies",
+  "product_id": 1,
+  "quantity": -1
+}
+```
+**Expected:** 400 Bad Request, invalid quantity
 
-### ✅ TEST 3.3: Books - Large Page Size
-# Expected: 200 OK, up to 100 products
-# Watch for: Large result handling, performance
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products?page=1&limit=100
+### ❌ TEST 4.10: Cart Access Without Auth
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/cart
+```
+**Expected:** 401 Unauthorized, auth required
 
-### ✅ TEST 3.4: Electronics - Later Page
-# Expected: 200 OK, products from page 5
-# Watch for: Pagination calculation, offset correctness
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?page=5&limit=10
+---
 
-## 3.2: EDGE CASES AND BOUNDARY TESTING ##
+## 💝 **PHASE 5: WISHLIST TESTING**
 
-### ❌ TEST 3.5: Invalid Domain
-# Expected: 404 Not Found, "Domain not found"
-# Watch for: Domain validation, proper error handling
-GET https://universal-student-api-production.up.railway.app/api/v1/invaliddomainname/products
+### ✅ TEST 5.1: View Empty Wishlist
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/wishlist
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, empty wishlist
 
-### ❌ TEST 3.6: Negative Page Number
-# Expected: 400 Bad Request, "Invalid page number"
-# Watch for: Parameter validation, error message
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=-1&limit=10
+### ✅ TEST 5.2: Add Product to Wishlist
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/wishlist/add
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-### ❌ TEST 3.7: Zero Page Number
-# Expected: 400 Bad Request, "Page must be >= 1"
-# Watch for: Minimum page validation
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=0&limit=10
+{
+  "domain": "books",
+  "product_id": 1
+}
+```
+**Expected:** 200 OK, product added to wishlist
 
-### ❌ TEST 3.8: Extremely Large Page Number
-# Expected: 200 OK with empty results OR 400 Bad Request
-# Watch for: Large number handling, empty result handling
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=999999&limit=10
+### ✅ TEST 5.3: View Wishlist with Products
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/wishlist
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, 1 product in wishlist
 
-### ❌ TEST 3.9: Negative Limit
-# Expected: 400 Bad Request, "Invalid limit"
-# Watch for: Limit parameter validation
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=-5
+### ✅ TEST 5.4: Move from Wishlist to Cart
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/wishlist/move-to-cart
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-### ❌ TEST 3.10: Zero Limit
-# Expected: 400 Bad Request, "Limit must be > 0"
-# Watch for: Minimum limit validation
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=0
+{
+  "domain": "books",
+  "product_id": 1,
+  "quantity": 1
+}
+```
+**Expected:** 200 OK, moved to cart
 
-### ❌ TEST 3.11: Extremely Large Limit
-# Expected: 400 Bad Request, "Limit too large" OR capped limit
-# Watch for: Maximum limit enforcement, performance protection
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=999999
+### ✅ TEST 5.5: Remove from Wishlist
+```http
+DELETE https://universal-student-api-production.up.railway.app/api/v1/wishlist/remove
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-### ❌ TEST 3.12: Non-numeric Page
-# Expected: 400 Bad Request, "Page must be a number"
-# Watch for: Type validation, parameter parsing
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=abc&limit=10
+{
+  "domain": "books",
+  "product_id": 1
+}
+```
+**Expected:** 200 OK, removed from wishlist
 
-### ❌ TEST 3.13: Non-numeric Limit
-# Expected: 400 Bad Request, "Limit must be a number"
-# Watch for: Type validation for limit parameter
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=xyz
+---
 
-### ❌ TEST 3.14: Special Characters in Parameters
-# Expected: 400 Bad Request OR sanitized parameters
-# Watch for: XSS prevention, parameter sanitization
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=10&special=%3Cscript%3E
+## 📦 **PHASE 6: ORDER MANAGEMENT**
 
-## 3.3: SINGLE PRODUCT TESTING ##
+### ✅ TEST 6.1: Create Order from Cart
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/orders/create
+Authorization: Bearer {CART_TOKEN}
+Content-Type: application/json
 
-### ✅ TEST 3.15: Valid Product ID - Movies
-# Expected: 200 OK, single product with details, related products
-# Watch for: Product structure, related items, complete data
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/1
+{
+  "shipping_address": {
+    "street": "123 Test Street",
+    "city": "Tbilisi",
+    "country": "Georgia",
+    "postal_code": "0100"
+  },
+  "payment_method": "credit_card"
+}
+```
+**Expected:** 201 Created, order created  
+**Save Order ID:** `ORDER_ID`
 
-### ✅ TEST 3.16: Valid Product ID - Books
-# Expected: 200 OK, book product details
-# Watch for: Domain-specific fields, consistent structure
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products/1
+### ✅ TEST 6.2: View Order History
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/orders
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, list of user orders
 
-### ✅ TEST 3.17: Valid Product ID - Electronics
-# Expected: 200 OK, electronics product with specifications
-# Watch for: Technical specifications, pricing, availability
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/1
+### ✅ TEST 6.3: Get Specific Order Details
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/orders/{ORDER_ID}
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, detailed order info
 
-### ❌ TEST 3.18: Non-existent Product ID
-# Expected: 404 Not Found, "Product not found"
-# Watch for: ID validation, clear error message
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/999999
+### ✅ TEST 6.4: Cancel Order (if allowed)
+```http
+POST https://universal-student-api-production.up.railway.app/api/v1/orders/{ORDER_ID}/cancel
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 200 OK, order cancelled
 
-### ❌ TEST 3.19: Negative Product ID
-# Expected: 400 Bad Request, "Invalid product ID"
-# Watch for: ID validation, negative number handling
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/-1
+---
 
-### ❌ TEST 3.20: Zero Product ID
-# Expected: 400 Bad Request, "Invalid product ID"
-# Watch for: Zero ID handling
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/0
+## 🔍 **PHASE 7: SEARCH & FILTERING ADVANCED**
 
-### ❌ TEST 3.21: Non-numeric Product ID
-# Expected: 400 Bad Request, "Product ID must be a number"
-# Watch for: Type validation for product ID
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/abc
-
-### ❌ TEST 3.22: Special Characters in Product ID
-# Expected: 400 Bad Request OR 404 Not Found
-# Watch for: XSS prevention, parameter sanitization
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/%3Cscript%3E
-
-### ❌ TEST 3.23: Float Product ID
-# Expected: 400 Bad Request OR rounded to integer
-# Watch for: Decimal number handling
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/1.5
-
-###############################################
-# 🔍 PHASE 4: SEARCH FUNCTIONALITY TESTING
-###############################################
-
-## 4.1: VALID SEARCH QUERIES ##
-
-### ✅ TEST 4.1: Simple Text Search
-# Expected: 200 OK, relevant products, search metadata
-# Watch for: Search results relevance, pagination in search
+### ✅ TEST 7.1: Basic Search
+```http
 GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=action
+```
+**Expected:** 200 OK, search results
 
-### ✅ TEST 4.2: Multi-word Search
-# Expected: 200 OK, products matching multiple terms
-# Watch for: Multi-word handling, relevance scoring
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products/search?q=programming%20guide
-
-### ✅ TEST 4.3: Search with Price Range
-# Expected: 200 OK, products within price range
-# Watch for: Price filtering accuracy, range validation
+### ✅ TEST 7.2: Search with Price Filter
+```http
 GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=phone&min_price=100&max_price=500
+```
+**Expected:** 200 OK, filtered results
 
-### ✅ TEST 4.4: Search with Category Filter
-# Expected: 200 OK, products from specific category
-# Watch for: Category filtering, valid category names
-GET https://universal-student-api-production.up.railway.app/api/v1/fashion/products/search?category=clothing
+### ✅ TEST 7.3: Search with Category Filter
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/fashion/products/search?category=clothing&q=shirt
+```
+**Expected:** 200 OK, category-filtered results
 
-### ✅ TEST 4.5: Search with Brand Filter
-# Expected: 200 OK, products from specific brand
-# Watch for: Brand filtering, case sensitivity
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?brand=apple
-
-## 4.2: EDGE CASES AND INVALID SEARCHES ##
-
-### ❌ TEST 4.6: Empty Search Query
-# Expected: 400 Bad Request, "Search query required" OR all products
-# Watch for: Empty query handling, default behavior
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=
-
-### ❌ TEST 4.7: No Search Parameters
-# Expected: 400 Bad Request, "Search parameters required"
-# Watch for: Missing parameter handling
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search
-
-### ❌ TEST 4.8: Special Characters in Search
-# Expected: 200 OK with sanitized query OR 400 Bad Request
-# Watch for: XSS prevention, input sanitization
+### ❌ TEST 7.4: XSS Attempt in Search
+```http
 GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%3Cscript%3Ealert%28%27XSS%27%29%3C%2Fscript%3E
+```
+**Expected:** 200 OK with sanitized query OR 400 Bad Request
 
-### ❌ TEST 4.9: SQL Injection Attempt
-# Expected: 200 OK with safe results OR 400 Bad Request
-# Watch for: SQL injection prevention, query sanitization
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%27%20OR%20%271%27%3D%271
+---
 
-### ❌ TEST 4.10: Very Long Search Query
-# Expected: 400 Bad Request, "Query too long" OR truncated query
-# Watch for: Query length limits, performance protection
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=verylongsearchquerythatexceedsnormallimitsandcouldcauseissuesverylongsearchquerythatexceedsnormallimitsandcouldcauseissues
+## 🌐 **PHASE 8: ALL DOMAINS VERIFICATION**
 
-### ❌ TEST 4.11: Invalid Price Range (min > max)
-# Expected: 400 Bad Request, "Invalid price range"
-# Watch for: Price range validation, logical validation
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=phone&min_price=500&max_price=100
+### ✅ TEST 8.1-8.20: All 20 Domains
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/books/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/restaurants/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/fashion/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/cars/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/hotels/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/games/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/music/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/food/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/sports/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/toys/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/tools/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/medicines/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/courses/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/events/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/apps/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/flights/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/pets/products?limit=3
+GET https://universal-student-api-production.up.railway.app/api/v1/realestate/products?limit=3
+```
+**Expected:** All return 200 OK with 3 products each
 
-### ❌ TEST 4.12: Negative Price Values
-# Expected: 400 Bad Request, "Price cannot be negative"
-# Watch for: Price validation, negative number handling
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=phone&min_price=-100&max_price=-50
+---
 
-### ❌ TEST 4.13: Non-numeric Price Values
-# Expected: 400 Bad Request, "Price must be a number"
-# Watch for: Type validation for price parameters
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?q=phone&min_price=abc&max_price=xyz
+## 🚫 **PHASE 9: HTTP METHODS & SECURITY**
 
-### ❌ TEST 4.14: Invalid Category
-# Expected: 200 OK with empty results OR 400 Bad Request
-# Watch for: Category validation, empty result handling
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?category=nonexistentcategory
-
-### ❌ TEST 4.15: Invalid Brand
-# Expected: 200 OK with empty results OR 400 Bad Request
-# Watch for: Brand validation, case sensitivity
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products/search?brand=nonexistentbrand
-
-###############################################
-# 📋 PHASE 5: CATEGORIES AND BRANDS TESTING
-###############################################
-
-## 5.1: VALID CATEGORIES REQUESTS ##
-
-### ✅ TEST 5.1: Movies Categories
-# Expected: 200 OK, array of movie categories
-# Watch for: Category structure, count, names
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/categories
-
-### ✅ TEST 5.2: Books Categories
-# Expected: 200 OK, book-specific categories
-# Watch for: Domain-appropriate categories
-GET https://universal-student-api-production.up.railway.app/api/v1/books/categories
-
-### ✅ TEST 5.3: Electronics Categories
-# Expected: 200 OK, electronics categories
-# Watch for: Technical categories, proper naming
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/categories
-
-## 5.2: VALID BRANDS REQUESTS ##
-
-### ✅ TEST 5.4: Movies Brands (Studios)
-# Expected: 200 OK, movie studios/distributors
-# Watch for: Brand structure, studio names
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/brands
-
-### ✅ TEST 5.5: Fashion Brands
-# Expected: 200 OK, fashion brand names
-# Watch for: Fashion-specific brands
-GET https://universal-student-api-production.up.railway.app/api/v1/fashion/brands
-
-### ✅ TEST 5.6: Electronics Brands
-# Expected: 200 OK, technology brands
-# Watch for: Tech company brands, proper names
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/brands
-
-## 5.3: INVALID DOMAIN TESTING ##
-
-### ❌ TEST 5.7: Invalid Domain Categories
-# Expected: 404 Not Found, "Domain not found"
-# Watch for: Domain validation in categories endpoint
-GET https://universal-student-api-production.up.railway.app/api/v1/invaliddomainname/categories
-
-### ❌ TEST 5.8: Invalid Domain Brands
-# Expected: 404 Not Found, "Domain not found"
-# Watch for: Domain validation in brands endpoint
-GET https://universal-student-api-production.up.railway.app/api/v1/invaliddomainname/brands
-
-### ❌ TEST 5.9: Empty Domain Categories
-# Expected: 404 Not Found OR 400 Bad Request
-# Watch for: Empty domain parameter handling
-GET https://universal-student-api-production.up.railway.app/api/v1//categories
-
-### ❌ TEST 5.10: Empty Domain Brands
-# Expected: 404 Not Found OR 400 Bad Request
-# Watch for: Empty domain parameter handling
-GET https://universal-student-api-production.up.railway.app/api/v1//brands
-
-###############################################
-# 🌐 PHASE 6: ALL DOMAINS COMPREHENSIVE TEST
-###############################################
-
-### ✅ TEST 6.1: Movies Domain
-# Expected: 200 OK, 3 movie products
-# Watch for: Movie-specific fields, ratings, genres
-GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=3
-
-### ✅ TEST 6.2: Books Domain
-# Expected: 200 OK, 3 book products
-# Watch for: Book-specific fields, authors, ISBN
-GET https://universal-student-api-production.up.railway.app/api/v1/books/products?page=1&limit=3
-
-### ✅ TEST 6.3: Electronics Domain
-# Expected: 200 OK, 3 electronics products
-# Watch for: Tech specs, warranty, compatibility
-GET https://universal-student-api-production.up.railway.app/api/v1/electronics/products?page=1&limit=3
-
-### ✅ TEST 6.4: Restaurants Domain
-# Expected: 200 OK, 3 restaurant listings
-# Watch for: Location, cuisine type, ratings
-GET https://universal-student-api-production.up.railway.app/api/v1/restaurants/products?page=1&limit=3
-
-### ✅ TEST 6.5: Fashion Domain
-# Expected: 200 OK, 3 fashion products
-# Watch for: Sizes, colors, materials, styles
-GET https://universal-student-api-production.up.railway.app/api/v1/fashion/products?page=1&limit=3
-
-### ✅ TEST 6.6: Cars Domain
-# Expected: 200 OK, 3 car listings
-# Watch for: Make, model, year, engine specs
-GET https://universal-student-api-production.up.railway.app/api/v1/cars/products?page=1&limit=3
-
-### ✅ TEST 6.7: Hotels Domain
-# Expected: 200 OK, 3 hotel listings
-# Watch for: Location, amenities, room types
-GET https://universal-student-api-production.up.railway.app/api/v1/hotels/products?page=1&limit=3
-
-### ✅ TEST 6.8: Games Domain
-# Expected: 200 OK, 3 game products
-# Watch for: Platform, genre, ratings, multiplayer
-GET https://universal-student-api-production.up.railway.app/api/v1/games/products?page=1&limit=3
-
-### ✅ TEST 6.9: Music Domain
-# Expected: 200 OK, 3 music products
-# Watch for: Artists, albums, genres, duration
-GET https://universal-student-api-production.up.railway.app/api/v1/music/products?page=1&limit=3
-
-### ✅ TEST 6.10: Food Domain
-# Expected: 200 OK, 3 food products
-# Watch for: Nutrition, ingredients, dietary info
-GET https://universal-student-api-production.up.railway.app/api/v1/food/products?page=1&limit=3
-
-### ✅ TEST 6.11: Sports Domain
-# Expected: 200 OK, 3 sports products
-# Watch for: Sports category, equipment specs
-GET https://universal-student-api-production.up.railway.app/api/v1/sports/products?page=1&limit=3
-
-### ✅ TEST 6.12: Toys Domain
-# Expected: 200 OK, 3 toy products
-# Watch for: Age range, safety ratings, materials
-GET https://universal-student-api-production.up.railway.app/api/v1/toys/products?page=1&limit=3
-
-### ✅ TEST 6.13: Tools Domain
-# Expected: 200 OK, 3 tool products
-# Watch for: Tool type, specifications, usage
-GET https://universal-student-api-production.up.railway.app/api/v1/tools/products?page=1&limit=3
-
-### ✅ TEST 6.14: Medicines Domain
-# Expected: 200 OK, 3 medicine products
-# Watch for: Active ingredients, dosage, warnings
-GET https://universal-student-api-production.up.railway.app/api/v1/medicines/products?page=1&limit=3
-
-### ✅ TEST 6.15: Courses Domain
-# Expected: 200 OK, 3 course listings
-# Watch for: Duration, difficulty, instructor info
-GET https://universal-student-api-production.up.railway.app/api/v1/courses/products?page=1&limit=3
-
-### ✅ TEST 6.16: Events Domain
-# Expected: 200 OK, 3 event listings
-# Watch for: Date, location, ticket info
-GET https://universal-student-api-production.up.railway.app/api/v1/events/products?page=1&limit=3
-
-### ✅ TEST 6.17: Apps Domain
-# Expected: 200 OK, 3 app listings
-# Watch for: Platform, version, features
-GET https://universal-student-api-production.up.railway.app/api/v1/apps/products?page=1&limit=3
-
-### ✅ TEST 6.18: Flights Domain
-# Expected: 200 OK, 3 flight listings
-# Watch for: Airlines, routes, dates, prices
-GET https://universal-student-api-production.up.railway.app/api/v1/flights/products?page=1&limit=3
-
-### ✅ TEST 6.19: Pets Domain
-# Expected: 200 OK, 3 pet-related products
-# Watch for: Pet type, age, breed info
-GET https://universal-student-api-production.up.railway.app/api/v1/pets/products?page=1&limit=3
-
-### ✅ TEST 6.20: Real Estate Domain
-# Expected: 200 OK, 3 property listings
-# Watch for: Location, price, square footage
-GET https://universal-student-api-production.up.railway.app/api/v1/realestate/products?page=1&limit=3
-
-###############################################
-# 🚫 PHASE 7: HTTP METHODS TESTING
-###############################################
-
-### ❌ TEST 7.1: DELETE on Products (Should not be allowed)
-# Expected: 405 Method Not Allowed OR 403 Forbidden
-# Watch for: HTTP method restriction, security
+### ❌ TEST 9.1: Unauthorized Product Deletion
+```http
 DELETE https://universal-student-api-production.up.railway.app/api/v1/movies/products/1
+Authorization: Bearer {CART_TOKEN}
+```
+**Expected:** 405 Method Not Allowed OR 403 Forbidden
 
-### ❌ TEST 7.2: PUT on Products (Should not be allowed)
-# Expected: 405 Method Not Allowed OR 403 Forbidden
-# Watch for: HTTP method restriction, read-only API
-PUT https://universal-student-api-production.up.railway.app/api/v1/movies/products/1
-Content-Type: application/json
+### ❌ TEST 9.2: SQL Injection Attempt
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products/search?q=%27%3B%20DROP%20TABLE%20products%3B%20--%20
+```
+**Expected:** 200 OK with safe results OR 400 Bad Request
 
-{
-  "name": "Updated Product",
-  "price": 99.99
-}
+---
 
-### ❌ TEST 7.3: POST on Products (Should not be allowed for students)
-# Expected: 405 Method Not Allowed OR 403 Forbidden
-# Watch for: Creation prevention, student-only API
-POST https://universal-student-api-production.up.railway.app/api/v1/movies/products
-Content-Type: application/json
+## ⚡ **PHASE 10: PERFORMANCE & RATE LIMITING**
 
-{
-  "name": "New Product",
-  "price": 29.99
-}
+### ⚡ TEST 10.1: Large Result Set
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=1&limit=100
+```
+**Expected:** 200 OK, good performance (<2 seconds)
 
-### ❌ TEST 7.4: PATCH on Products (Should not be allowed)
-# Expected: 405 Method Not Allowed OR 403 Forbidden
-# Watch for: Partial update prevention
-PATCH https://universal-student-api-production.up.railway.app/api/v1/movies/products/1
-Content-Type: application/json
+### ⚡ TEST 10.2: Deep Pagination
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/movies/products?page=50&limit=10
+```
+**Expected:** 200 OK or empty results
 
-{
-  "price": 19.99
-}
+---
 
-###############################################
-# 🌊 PHASE 8: RATE LIMITING TESTING
-###############################################
+## 🎯 **FINAL VERIFICATION TESTS**
 
-### ⚡ TEST 8.1-8.10: Multiple Rapid Requests (Rate Limit Test)
-# Expected: First requests 200 OK, then 429 Too Many Requests
-# Watch for: Rate limit enforcement (1000 req/15min), proper headers
-# Execute these quickly to test rate limiting
+### ✅ FINAL TEST 1: System Health After All Tests
+```http
+GET https://universal-student-api-production.up.railway.app/health
+```
+**Expected:** 200 OK, system stable
 
-GET https://universal-student-api-production.up.railway.app/api/v
+### ✅ FINAL TEST 2: API Still Responsive
+```http
+GET https://universal-student-api-production.up.railway.app/api/v1/status
+```
+**Expected:** 200 OK, all systems operational
+
+---
+
+## 📊 **ტესტირების ჩექლისტი**
+
+### 🔴 **CRITICAL BUGS TO VERIFY:**
+- [ ] Authentication bypass fix (`hacker123` + `demo123` → should return 401)
+- [ ] Domain validation fix (invalid domains → should return 404)
+
+### 🟢 **CORE FUNCTIONALITIES:**
+- [ ] User Authentication (Login/Register/Logout)
+- [ ] Products API (All 20 domains)
+- [ ] Shopping Cart (Add/Remove/Update/Clear)
+- [ ] Wishlist Management
+- [ ] Order Creation & History
+- [ ] Search & Filtering
+- [ ] Profile Management
+
+### 🔒 **SECURITY CHECKS:**
+- [ ] XSS Prevention
+- [ ] SQL Injection Protection
+- [ ] Authorization Validation
+- [ ] Rate Limiting
+- [ ] Input Sanitization
+
+### ⚡ **PERFORMANCE:**
+- [ ] Response Times (<1-2 seconds)
+- [ ] Large Dataset Handling
+- [ ] Concurrent Request Support
+- [ ] System Stability Under Load
+
+---
+
+## 🎯 **SUCCESS CRITERIA:**
+✅ All valid requests return appropriate 2xx codes  
+✅ All invalid requests return proper error codes  
+✅ No unexpected 500 server errors  
+✅ Security measures block malicious attempts  
+✅ Cart operations work end-to-end  
+✅ Authentication flow is secure  
+✅ All 20 domains operational  
+✅ API remains stable throughout testing
+
+---
+
+## 🚀 **დავიწყოთ ტესტირება!**
+
+**ინსტრუქცია:** გაუშვით ყველა ტესტი თანმიმდევრობით და ჩაიწერეთ შედეგები. ყურადღება მიაქციეთ CRITICAL bugs-ს და დარწმუნდით, რომ ყველა ახალი ფუნქციონალი მუშაობს სწორად.

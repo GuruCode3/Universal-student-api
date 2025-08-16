@@ -1,4 +1,4 @@
-// server.js - INTEGRATED Universal Student API v2.0
+// server.js - INTEGRATED Universal Student API v2.0 WITH CART
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const { initializeDatabase } = require('./database/connection');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
+const cartRoutes = require('./routes/cart'); // 🛒 ახალი cart routes import
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,7 +68,7 @@ async function startServer() {
     
     // 🛣️ ROUTES CONFIGURATION
     
-    // Root endpoint with comprehensive API info
+    // Root endpoint with comprehensive API info (updated with cart)
     app.get('/', (req, res) => {
       try {
         res.json({
@@ -79,6 +80,7 @@ async function startServer() {
             "✅ 20 Domains with 500+ products each",
             "✅ Advanced JWT Authentication", 
             "✅ Role-based Access Control",
+            "✅ Shopping Cart System", // 🛒 ახალი!
             "✅ Search & Filtering",
             "✅ Pagination & Performance Optimized",
             "✅ Rate Limiting & Security",
@@ -107,6 +109,15 @@ async function startServer() {
               "GET /api/v1/{domain}/categories",
               "GET /api/v1/{domain}/brands"
             ],
+            cart: [ // 🛒 ახალი cart endpoints!
+              "GET /api/v1/cart",
+              "POST /api/v1/cart/add",
+              "PUT /api/v1/cart/update/:item_id",
+              "DELETE /api/v1/cart/remove/:item_id",
+              "DELETE /api/v1/cart/clear",
+              "GET /api/v1/cart/count",
+              "POST /api/v1/cart/checkout"
+            ],
             utility: [
               "GET /health",
               "GET /api/v1/status", 
@@ -124,7 +135,9 @@ async function startServer() {
             search: "GET /api/v1/books/products/search?q=javascript",
             single_product: "GET /api/v1/electronics/products/1",
             login: "POST /api/v1/auth/login",
-            categories: "GET /api/v1/fashion/categories"
+            categories: "GET /api/v1/fashion/categories",
+            cart: "GET /api/v1/cart", // 🛒 ახალი მაგალითი!
+            add_to_cart: "POST /api/v1/cart/add" // 🛒 ახალი მაგალითი!
           },
           timestamp: new Date().toISOString()
         });
@@ -168,7 +181,7 @@ async function startServer() {
       }
     });
 
-    // Status endpoint
+    // Status endpoint (updated with cart info)
     app.get('/api/v1/status', (req, res) => {
       try {
         const { getAvailableDomains, healthCheck } = require('./utils/database');
@@ -183,6 +196,7 @@ async function startServer() {
           features: {
             authentication: databaseReady ? "✅ Available" : "⚠️ Limited",
             products: health.tables.products > 0 ? "✅ Ready" : "⚠️ No products",
+            cart: "✅ Available", // 🛒 ახალი!
             search: "✅ Available",
             pagination: "✅ Available",
             rate_limiting: "✅ Active",
@@ -199,6 +213,7 @@ async function startServer() {
             products: "GET /api/v1/movies/products",
             search: "GET /api/v1/books/products/search?q=javascript", 
             authentication: "POST /api/v1/auth/login",
+            cart: "GET /api/v1/cart", // 🛒 ახალი ტესტი!
             demo_credentials: "demo / demo123"
           },
           performance: health.performance || {},
@@ -238,7 +253,8 @@ async function startServer() {
               "Categories with product counts",
               "Brands with product counts",
               "Single product details",
-              "Related products"
+              "Related products",
+              "Shopping cart functionality" // 🛒 ახალი!
             ]
           },
           meta: {
@@ -260,10 +276,13 @@ async function startServer() {
     // 🔐 AUTHENTICATION ROUTES
     app.use('/api/v1/auth', authRoutes);
 
+    // 🛒 CART ROUTES (ახალი! - authentication-ს შემდეგ უნდა იყოს)
+    app.use('/api/v1/cart', cartRoutes);
+
     // 🛍️ PRODUCT ROUTES (with domain parameter)
     app.use('/api/v1/:domain', productRoutes);
 
-    // 📚 API DOCUMENTATION ENDPOINT
+    // 📚 API DOCUMENTATION ENDPOINT (updated with cart)
     app.get('/api/v1/docs', (req, res) => {
       res.json({
         success: true,
@@ -312,6 +331,65 @@ async function startServer() {
                 "Authorization": "Bearer <token>"
               },
               response: "User profile object"
+            }
+          },
+          cart: { // 🛒 ახალი cart documentation!
+            "GET /api/v1/cart": {
+              description: "Get user's shopping cart (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Cart items with product details and totals"
+            },
+            "POST /api/v1/cart/add": {
+              description: "Add product to cart (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              body: {
+                domain: "string (e.g., 'movies', 'books')",
+                product_id: "number",
+                quantity: "number (optional, default: 1)"
+              },
+              response: "Updated cart summary"
+            },
+            "PUT /api/v1/cart/update/:item_id": {
+              description: "Update cart item quantity (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              body: {
+                quantity: "number (0 to remove)"
+              },
+              response: "Updated cart item"
+            },
+            "DELETE /api/v1/cart/remove/:item_id": {
+              description: "Remove item from cart (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Removed item confirmation"
+            },
+            "DELETE /api/v1/cart/clear": {
+              description: "Clear entire cart (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Clear confirmation"
+            },
+            "GET /api/v1/cart/count": {
+              description: "Get cart items count (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Cart items count"
+            },
+            "POST /api/v1/cart/checkout": {
+              description: "Mock checkout process (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Order details and confirmation"
             }
           },
           products: {
@@ -377,7 +455,13 @@ async function startServer() {
             products: `curl "${req.protocol}://${req.get('host')}/api/v1/movies/products?page=1&limit=10"`,
             search: `curl "${req.protocol}://${req.get('host')}/api/v1/books/products/search?q=javascript&page=1"`,
             profile: `curl -H "Authorization: Bearer <your-token>" \\
-  "${req.protocol}://${req.get('host')}/api/v1/auth/profile"`
+  "${req.protocol}://${req.get('host')}/api/v1/auth/profile"`,
+            cart: `curl -H "Authorization: Bearer <your-token>" \\
+  "${req.protocol}://${req.get('host')}/api/v1/cart"`, // 🛒 ახალი!
+            add_to_cart: `curl -X POST -H "Authorization: Bearer <your-token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"domain":"movies","product_id":1,"quantity":2}' \\
+  "${req.protocol}://${req.get('host')}/api/v1/cart/add"` // 🛒 ახალი!
           }
         },
         supported_domains: [
@@ -402,7 +486,7 @@ async function startServer() {
       });
     });
 
-    // 🚫 404 HANDLER
+    // 🚫 404 HANDLER (updated with cart endpoints)
     app.use('*', (req, res) => {
       res.status(404).json({
         success: false,
@@ -416,6 +500,8 @@ async function startServer() {
           'GET /api/v1/docs',
           'POST /api/v1/auth/login',
           'POST /api/v1/auth/register',
+          'GET /api/v1/cart', // 🛒 ახალი!
+          'POST /api/v1/cart/add', // 🛒 ახალი!
           'GET /api/v1/{domain}/products',
           'GET /api/v1/{domain}/products/{id}',
           'GET /api/v1/{domain}/products/search',
@@ -470,10 +556,11 @@ async function startServer() {
       console.log(`📚 Documentation: http://localhost:${PORT}/api/v1/docs`);
       console.log(`🔐 Demo Login: POST http://localhost:${PORT}/api/v1/auth/login`);
       console.log(`🛍️ Products Example: http://localhost:${PORT}/api/v1/movies/products`);
+      console.log(`🛒 Cart Example: GET http://localhost:${PORT}/api/v1/cart`); // 🛒 ახალი!
       console.log(`🔍 Search Example: http://localhost:${PORT}/api/v1/books/products/search?q=javascript`);
       console.log(`🏥 Database: ${databaseReady ? 'Connected' : 'Limited Mode'}`);
       console.log(`🚀 Ready for student projects!`);
-      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains' : 'Basic functionality available'}`);
+      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Shopping Cart' : 'Basic functionality available'}`); // 🛒 updated!
     });
 
   } catch (error) {
