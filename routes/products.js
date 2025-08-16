@@ -39,7 +39,7 @@ function validateDomain(req, res, next) {
   next();
 }
 
-// 🔢 PAGINATION VALIDATION MIDDLEWARE - FIXED VERSION
+// 🔢 PAGINATION VALIDATION MIDDLEWARE - FIXED FOR LARGE PAGES
 function validatePagination(req, res, next) {
   const pageStr = req.query.page;
   const limitStr = req.query.limit;
@@ -75,16 +75,11 @@ function validatePagination(req, res, next) {
       });
     }
     
-    // Check extremely large
-    if (page > 10000) {
-      console.log('❌ PAGINATION: Page too large:', page);
-      return res.status(400).json({
-        success: false,
-        error: 'invalid_page_number',
-        message: 'Page number too large',
-        provided: page,
-        max_allowed: 10000
-      });
+    // 🔧 BUG FIX: Allow extremely large pages but handle gracefully
+    // Don't reject large pages - let them through and handle empty results
+    if (page > 1000000) {
+      console.log('⚠️ PAGINATION: Very large page number:', page);
+      // Let it continue but log for monitoring
     }
   }
   
@@ -313,7 +308,7 @@ router.get('/brands', validateDomain, async (req, res) => {
   }
 });
 
-// GET /api/v1/:domain/products - WITH STRICT VALIDATION AND SECURITY
+// GET /api/v1/:domain/products - WITH FIXED LARGE PAGE HANDLING
 router.get('/products', validateDomain, validateAndSanitizeParameters, validatePagination, async (req, res) => {
   try {
     const { domain } = req.params;
@@ -334,15 +329,29 @@ router.get('/products', validateDomain, validateAndSanitizeParameters, validateP
     // Calculate pagination info
     const totalPages = Math.ceil(total / limit);
     
-    // Check if page number is too high
+    // 🔧 BUG FIX: For extremely large page numbers, return empty results with 200 OK
+    // Don't return 400 error - just empty results
     if (page > totalPages && total > 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'page_out_of_range',
-        message: `Page ${page} does not exist`,
-        total_pages: totalPages,
-        provided_page: page,
-        suggestion: `Use page 1-${totalPages}`
+      console.log(`📄 LARGE PAGE: Page ${page} > totalPages ${totalPages}, returning empty results`);
+      return res.json({
+        success: true,
+        data: [], // Empty results for large page numbers
+        pagination: {
+          current_page: page,
+          total_pages: totalPages,
+          total_products: total,
+          products_per_page: limit,
+          has_next: false,
+          has_prev: true,
+          next_page: null,
+          prev_page: totalPages > 0 ? totalPages : null
+        },
+        meta: {
+          domain: domain,
+          products_count: 0,
+          request_time: new Date().toISOString(),
+          note: `Page ${page} exceeds available pages (${totalPages}). Showing empty results.`
+        }
       });
     }
     
@@ -550,19 +559,60 @@ router.get('/products/search', validateDomain, validateAndSanitizeParameters, va
   }
 });
 
-// GET /api/v1/:domain/products/:id - EXISTING CODE UNCHANGED
-router.get('/products/:id', validateDomain, async (req, res) => {
-  try {
-    const { domain, id } = req.params;
-    const productId = parseInt(id);
+// 🔧 BUG FIX: Product ID validation middleware
+function validateProductId(req, res, next) {
+  const { id } = req.params;
+  
+  console.log('🔍 PRODUCT ID VALIDATION:', id);
+  
+  // Check for float numbers (like 1.5)
+  if (id.includes('.')) {
+    console.log('❌ PRODUCT ID: Float number detected:', id);
+    return res.status(400).json({
+      success: false,
+      error: 'invalid_product_id_format',
+      message: 'Product ID must be a whole number (integer)',
+      provided: id,
+      expected: 'integer value (e.g., 1, 2, 3)'
+    });
+  }
+  
+  const productId = parseInt(id);
+  
+  // Check if it's a valid number
+  if (isNaN(productId) || productId !== parseFloat(id)) {
+    console.log('❌ PRODUCT ID: Invalid number:', id);
+    return res.status(400).json({
+      success: false,
+      error: 'invalid_product_id',
+      message: 'Product ID must be a valid number',
+      provided: id,
+      expected: 'positive integer'
+    });
+  }
+  
+  // Check if it's positive
+  if (productId < 1) {
+    console.log('❌ PRODUCT ID: Non-positive number:', productId);
+    return res.status(400).json({
+      success: false,
+      error: 'invalid_product_id',
+      message: 'Product ID must be a positive number',
+      provided: productId,
+      expected: 'number >= 1'
+    });
+  }
+  
+  console.log('✅ PRODUCT ID VALIDATION PASSED:', productId);
+  req.validatedProductId = productId;
+  next();
+}
 
-    if (!productId || productId < 1) {
-      return res.status(400).json({
-        success: false,
-        error: 'invalid_product_id',
-        message: 'Product ID must be a positive number'
-      });
-    }
+// GET /api/v1/:domain/products/:id - WITH PROPER ID VALIDATION AND 404 HANDLING
+router.get('/products/:id', validateDomain, validateProductId, async (req, res) => {
+  try {
+    const { domain } = req.params;
+    const productId = req.validatedProductId;
 
     console.log(`🎯 SINGLE PRODUCT REQUEST: ${domain}, ID: ${productId}`);
 
@@ -579,11 +629,16 @@ router.get('/products/:id', validateDomain, async (req, res) => {
       WHERE p.domain = ? AND p.id = ?
     `, [domain, productId]);
 
+    // 🔧 BUG FIX: Proper 404 handling for non-existent products
     if (!product) {
+      console.log(`❌ PRODUCT NOT FOUND: domain=${domain}, id=${productId}`);
       return res.status(404).json({
         success: false,
         error: 'product_not_found',
-        message: `Product with ID ${productId} not found in ${domain} domain`
+        message: `Product with ID ${productId} not found in ${domain} domain`,
+        domain: domain,
+        product_id: productId,
+        suggestion: 'Check if the product ID exists or try browsing products list'
       });
     }
 
@@ -610,6 +665,8 @@ router.get('/products/:id', validateDomain, async (req, res) => {
       LIMIT 4
     `, [domain, product.category_id, productId]);
 
+    console.log(`✅ PRODUCT FOUND: ${product.name} (ID: ${productId})`);
+
     res.json({
       success: true,
       data: {
@@ -633,20 +690,15 @@ router.get('/products/:id', validateDomain, async (req, res) => {
   }
 });
 
-// GET /api/v1/:domain/products/:id/reviews (Mock reviews for educational purposes)
-router.get('/products/:id/reviews', validateDomain, async (req, res) => {
+// GET /api/v1/:domain/products/:id/reviews - WITH PROPER ID VALIDATION
+router.get('/products/:id/reviews', validateDomain, validateProductId, async (req, res) => {
   try {
-    const { domain, id } = req.params;
-    const productId = parseInt(id);
+    const { domain } = req.params;
+    const productId = req.validatedProductId;
     const page = parseInt(req.query.page) || 1;
     const limit = Math.min(parseInt(req.query.limit) || 10, 50);
 
-    if (!productId || productId < 1) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid product ID'
-      });
-    }
+    console.log(`💬 REVIEWS REQUEST: ${domain}, product ID: ${productId}`);
 
     // Check if product exists
     const product = await dbConfig.getOne(
@@ -655,9 +707,13 @@ router.get('/products/:id/reviews', validateDomain, async (req, res) => {
     );
 
     if (!product) {
+      console.log(`❌ PRODUCT NOT FOUND FOR REVIEWS: domain=${domain}, id=${productId}`);
       return res.status(404).json({
         success: false,
-        error: 'Product not found'
+        error: 'product_not_found',
+        message: `Product with ID ${productId} not found in ${domain} domain`,
+        domain: domain,
+        product_id: productId
       });
     }
 
@@ -721,6 +777,10 @@ router.get('/products/:id/reviews', validateDomain, async (req, res) => {
   }
 });
 
-console.log('✅ Products routes loaded with COMPLETE VALIDATION AND SECURITY - All bugs fixed!');
+console.log('✅ Products routes loaded with ALL BUGS FIXED!');
+console.log('🔧 Fixed bugs:');
+console.log('   1. Large page numbers now return 200 OK with empty results');
+console.log('   2. Non-existent product IDs now return proper 404 Not Found');
+console.log('   3. Float product IDs now return 400 Bad Request');
 
 module.exports = router;
