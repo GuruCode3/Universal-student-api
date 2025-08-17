@@ -1,15 +1,11 @@
-### Teacher Login Test
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
-Content-Type: application/json
 
-{"username":"teacher","password":"demo123"}
-
-###
-POST https://universal-student-api-production.up.railway.app/api/v1/auth/login
-Content-Type: application/json
-
-{"username":"demo","password":"demo123"}
-###
-
-### Auth Test Endpoint
-GET https://universal-student-api-production.up.railway.app/api/v1/auth/test
+curl -X POST "https://universal-student-api-production.up.railway.app/api/v1/cart/add" \
+  -H "Authorization: Bearer თქვენი_token" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "domain": "movies",
+    "product_id": 1,
+    "name": "Test Movie", 
+    "price": 12.99,
+    "quantity": 2
+  }'

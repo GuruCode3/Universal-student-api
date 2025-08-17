@@ -1,4 +1,4 @@
-// server.js - INTEGRATED Universal Student API v2.0 WITH CART
+// server.js - INTEGRATED Universal Student API v2.0 WITH CART (CORS FIXED)
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -33,13 +33,22 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// 🌐 CORS CONFIGURATION
+// 🌐 CORS CONFIGURATION (FIXED!)
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.com'] 
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001', 
+    'http://localhost:5173',
+    'http://localhost:5500',      // ✅ Live Server default
+    'http://127.0.0.1:5500',      // ✅ Live Server alternative
+    'http://localhost:8000',
+    'http://localhost:8080',
+    'https://your-frontend-domain.com'
+  ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
 // 📋 BASIC MIDDLEWARE
@@ -84,7 +93,8 @@ async function startServer() {
             "✅ Search & Filtering",
             "✅ Pagination & Performance Optimized",
             "✅ Rate Limiting & Security",
-            "✅ Comprehensive API Documentation"
+            "✅ Comprehensive API Documentation",
+            "✅ CORS Enabled for Frontend Testing" // 🆕 ახალი!
           ],
           domains: [
             "movies", "books", "electronics", "restaurants", "fashion",
@@ -139,6 +149,12 @@ async function startServer() {
             cart: "GET /api/v1/cart", // 🛒 ახალი მაგალითი!
             add_to_cart: "POST /api/v1/cart/add" // 🛒 ახალი მაგალითი!
           },
+          cors_enabled: [
+            "http://localhost:5500",
+            "http://127.0.0.1:5500",
+            "http://localhost:3000",
+            "http://localhost:8000"
+          ], // 🆕 CORS info!
           timestamp: new Date().toISOString()
         });
       } catch (error) {
@@ -169,7 +185,8 @@ async function startServer() {
             node_version: process.version,
             platform: process.platform,
             railway: !!process.env.RAILWAY_ENVIRONMENT
-          }
+          },
+          cors_status: "✅ Enabled for frontend testing" // 🆕 CORS status!
         });
       } catch (error) {
         console.error('❌ Health check error:', error);
@@ -200,6 +217,7 @@ async function startServer() {
             search: "✅ Available",
             pagination: "✅ Available",
             rate_limiting: "✅ Active",
+            cors: "✅ Enabled", // 🆕 CORS feature!
             performance: health.performance.optimization_status || "✅ Optimized"
           },
           data: {
@@ -349,6 +367,8 @@ async function startServer() {
               body: {
                 domain: "string (e.g., 'movies', 'books')",
                 product_id: "number",
+                name: "string (product name)",
+                price: "number (product price)",
                 quantity: "number (optional, default: 1)"
               },
               response: "Updated cart summary"
@@ -460,7 +480,7 @@ async function startServer() {
   "${req.protocol}://${req.get('host')}/api/v1/cart"`, // 🛒 ახალი!
             add_to_cart: `curl -X POST -H "Authorization: Bearer <your-token>" \\
   -H "Content-Type: application/json" \\
-  -d '{"domain":"movies","product_id":1,"quantity":2}' \\
+  -d '{"domain":"movies","product_id":1,"name":"Test Movie","price":12.99,"quantity":2}' \\
   "${req.protocol}://${req.get('host')}/api/v1/cart/add"` // 🛒 ახალი!
           }
         },
@@ -559,6 +579,7 @@ async function startServer() {
       console.log(`🛒 Cart Example: GET http://localhost:${PORT}/api/v1/cart`); // 🛒 ახალი!
       console.log(`🔍 Search Example: http://localhost:${PORT}/api/v1/books/products/search?q=javascript`);
       console.log(`🏥 Database: ${databaseReady ? 'Connected' : 'Limited Mode'}`);
+      console.log(`🌐 CORS: Enabled for localhost:5500, 127.0.0.1:5500`); // 🆕 CORS info!
       console.log(`🚀 Ready for student projects!`);
       console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Shopping Cart' : 'Basic functionality available'}`); // 🛒 updated!
     });
