@@ -1,16 +1,63 @@
-// routes/cart.js
+// routes/cart.js - Updated with Cart Persistence Support
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
-const { authenticateToken } = require('../middleware/auth');
 
-// In-memory cart for educational purposes (in production, use database)
-let userCarts = {};
+// Import auth middleware if it exists, otherwise define here
+let authenticateToken;
+try {
+  const { authenticateToken: importedAuth } = require('../middleware/auth');
+  authenticateToken = importedAuth;
+} catch (error) {
+  // Define middleware here if import fails
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-2024';
+  
+  authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-// Get User's Cart
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: 'Access denied',
+        message: 'No token provided'
+      });
+    }
+
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET);
+      req.user = decoded;
+      next();
+    } catch (error) {
+      return res.status(403).json({
+        success: false,
+        error: 'Invalid token',
+        message: 'Token is not valid'
+      });
+    }
+  };
+}
+
+// Helper function to get product details (mock data)
+function getProductDetails(domain, productId) {
+  // In a real app, this would fetch from database
+  // For demo purposes, return mock data
+  return {
+    id: productId,
+    domain: domain,
+    name: `Sample ${domain} Product #${productId}`,
+    price: 19.99,
+    image_url: `https://via.placeholder.com/150?text=${domain}+${productId}`
+  };
+}
+
+// 🛒 GET CART - Get user's shopping cart
 router.get('/', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
-    const cart = userCarts[userId] || [];
+    
+    // Get user's cart from persistent storage
+    const cart = global.cartPersistence.getUserCart(userId);
     
     // Calculate cart totals
     let totalItems = 0;
@@ -27,7 +74,7 @@ router.get('/', authenticateToken, (req, res) => {
         cart: cart,
         summary: {
           total_items: totalItems,
-          total_price: totalPrice.toFixed(2),
+          total_price: parseFloat(totalPrice.toFixed(2)),
           cart_count: cart.length
         },
         user: {
@@ -38,7 +85,7 @@ router.get('/', authenticateToken, (req, res) => {
     });
     
   } catch (error) {
-    console.error('Cart fetch error:', error);
+    console.error('❌ Cart fetch error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to fetch cart',
@@ -47,7 +94,7 @@ router.get('/', authenticateToken, (req, res) => {
   }
 });
 
-// Add Item to Cart
+// ➕ ADD TO CART - Add product to cart
 router.post('/add', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -70,12 +117,8 @@ router.post('/add', authenticateToken, (req, res) => {
       });
     }
     
-    // Initialize user cart if doesn't exist
-    if (!userCarts[userId]) {
-      userCarts[userId] = [];
-    }
-    
-    const cart = userCarts[userId];
+    // Get current user cart from persistent storage
+    const cart = global.cartPersistence.getUserCart(userId);
     
     // Check if item already exists in cart
     const existingItemIndex = cart.findIndex(
@@ -101,6 +144,9 @@ router.post('/add', authenticateToken, (req, res) => {
       });
     }
     
+    // Save updated cart to persistent storage
+    global.cartPersistence.saveUserCart(userId, cart);
+    
     // Calculate updated totals
     let totalItems = 0;
     let totalPrice = 0;
@@ -117,14 +163,14 @@ router.post('/add', authenticateToken, (req, res) => {
         cart: cart,
         summary: {
           total_items: totalItems,
-          total_price: totalPrice.toFixed(2),
+          total_price: parseFloat(totalPrice.toFixed(2)),
           cart_count: cart.length
         }
       }
     });
     
   } catch (error) {
-    console.error('Add to cart error:', error);
+    console.error('❌ Add to cart error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to add item to cart',
@@ -133,7 +179,7 @@ router.post('/add', authenticateToken, (req, res) => {
   }
 });
 
-// Update Cart Item Quantity
+// ✏️ UPDATE CART ITEM - Update item quantity
 router.put('/update/:item_id', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -148,14 +194,16 @@ router.put('/update/:item_id', authenticateToken, (req, res) => {
       });
     }
     
-    if (!userCarts[userId]) {
+    // Get current user cart from persistent storage
+    const cart = global.cartPersistence.getUserCart(userId);
+    
+    if (cart.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Cart not found'
       });
     }
     
-    const cart = userCarts[userId];
     const itemIndex = cart.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
@@ -174,16 +222,20 @@ router.put('/update/:item_id', authenticateToken, (req, res) => {
       cart[itemIndex].updated_at = new Date().toISOString();
     }
     
+    // Save updated cart to persistent storage
+    global.cartPersistence.saveUserCart(userId, cart);
+    
     res.json({
       success: true,
       message: quantity === 0 ? 'Item removed from cart' : 'Cart updated successfully',
       data: {
-        cart: cart
+        cart: cart,
+        updated_item: quantity === 0 ? null : cart[itemIndex]
       }
     });
     
   } catch (error) {
-    console.error('Cart update error:', error);
+    console.error('❌ Cart update error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to update cart',
@@ -192,20 +244,22 @@ router.put('/update/:item_id', authenticateToken, (req, res) => {
   }
 });
 
-// Remove Item from Cart
+// 🗑️ REMOVE FROM CART - Remove specific item
 router.delete('/remove/:item_id', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
     const itemId = parseInt(req.params.item_id);
     
-    if (!userCarts[userId]) {
+    // Get current user cart from persistent storage
+    const cart = global.cartPersistence.getUserCart(userId);
+    
+    if (cart.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Cart not found'
       });
     }
     
-    const cart = userCarts[userId];
     const itemIndex = cart.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
@@ -218,6 +272,9 @@ router.delete('/remove/:item_id', authenticateToken, (req, res) => {
     // Remove item
     const removedItem = cart.splice(itemIndex, 1)[0];
     
+    // Save updated cart to persistent storage
+    global.cartPersistence.saveUserCart(userId, cart);
+    
     res.json({
       success: true,
       message: 'Item removed from cart successfully',
@@ -228,7 +285,7 @@ router.delete('/remove/:item_id', authenticateToken, (req, res) => {
     });
     
   } catch (error) {
-    console.error('Cart remove error:', error);
+    console.error('❌ Cart remove error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to remove item from cart',
@@ -237,13 +294,17 @@ router.delete('/remove/:item_id', authenticateToken, (req, res) => {
   }
 });
 
-// Clear Cart
+// 🧹 CLEAR CART - Remove all items
 router.delete('/clear', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
     
-    const itemCount = userCarts[userId] ? userCarts[userId].length : 0;
-    userCarts[userId] = [];
+    // Get current cart to count items
+    const cart = global.cartPersistence.getUserCart(userId);
+    const itemCount = cart.length;
+    
+    // Clear user's cart using persistent storage
+    global.cartPersistence.clearUserCart(userId);
     
     res.json({
       success: true,
@@ -255,7 +316,7 @@ router.delete('/clear', authenticateToken, (req, res) => {
     });
     
   } catch (error) {
-    console.error('Cart clear error:', error);
+    console.error('❌ Cart clear error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to clear cart',
@@ -264,11 +325,40 @@ router.delete('/clear', authenticateToken, (req, res) => {
   }
 });
 
-// Mock Checkout (Educational)
+// 🔢 GET CART COUNT - Get number of items in cart
+router.get('/count', authenticateToken, (req, res) => {
+  try {
+    // Get user's cart from persistent storage
+    const cart = global.cartPersistence.getUserCart(req.user.id);
+    
+    // Calculate total items
+    const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+    res.json({
+      success: true,
+      data: {
+        count: totalItems
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Get cart count error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Server error',
+      message: 'Failed to get cart count'
+    });
+  }
+});
+
+// 💳 CHECKOUT - Mock checkout process
 router.post('/checkout', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
-    const cart = userCarts[userId] || [];
+    const { payment_method = 'credit_card', shipping_address } = req.body;
+    
+    // Get current user cart from persistent storage
+    const cart = global.cartPersistence.getUserCart(userId);
     
     if (cart.length === 0) {
       return res.status(400).json({
@@ -290,30 +380,69 @@ router.post('/checkout', authenticateToken, (req, res) => {
     // Mock order creation
     const orderId = 'ORDER_' + Date.now();
     
-    // Clear cart after checkout
-    userCarts[userId] = [];
+    // Create order object
+    const order = {
+      id: orderId,
+      user_id: userId,
+      items: [...cart], // Copy cart items
+      total_items: totalItems,
+      total_price: parseFloat(totalPrice.toFixed(2)),
+      payment_method,
+      shipping_address: shipping_address || 'Not provided',
+      status: 'confirmed',
+      created_at: new Date().toISOString(),
+      estimated_delivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
+    };
+    
+    // Clear cart after successful checkout using persistent storage
+    global.cartPersistence.clearUserCart(userId);
     
     res.json({
       success: true,
       message: 'Checkout completed successfully',
       data: {
-        order: {
-          id: orderId,
-          total_items: totalItems,
-          total_price: totalPrice.toFixed(2),
-          status: 'pending',
-          created_at: new Date().toISOString(),
-          estimated_delivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString()
-        },
-        items: cart
+        order
       }
     });
     
   } catch (error) {
-    console.error('Checkout error:', error);
+    console.error('❌ Checkout error:', error);
     res.status(500).json({
       success: false,
       error: 'Checkout failed',
+      message: error.message
+    });
+  }
+});
+
+// 🧪 HEALTH CHECK for cart system
+router.get('/health', authenticateToken, (req, res) => {
+  try {
+    const cart = global.cartPersistence.getUserCart(req.user.id);
+    
+    res.json({
+      success: true,
+      message: 'Cart system healthy',
+      data: {
+        user_id: req.user.id,
+        cart_items: cart.length,
+        persistence: 'File-based storage',
+        features: [
+          'Add to cart',
+          'Update quantities',
+          'Remove items',
+          'Clear cart',
+          'Checkout process',
+          'Persistent storage'
+        ]
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Cart health check error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Cart system error',
       message: error.message
     });
   }
