@@ -407,15 +407,26 @@
                 body: JSON.stringify({ username, password })
             });
             
-            if (result.success && result.data.token) {
-                authToken = result.data.token;
-                currentUser = result.data.user;
-                updateAuthUI();
-                showToast(`Welcome back, ${username}!`, 'success');
-                loadCart();
-                return true;
+            console.log('Login result:', result); // Debug log
+            
+            if (result.success && result.data) {
+                // Handle nested data structure
+                authToken = result.data.token || result.data.data?.token || result.data.access_token;
+                currentUser = result.data.user || result.data.data?.user || { username: username, role: 'user' };
+                
+                if (authToken) {
+                    console.log('Token found:', authToken.substring(0, 20) + '...');
+                    updateAuthUI();
+                    showToast(`Welcome back, ${username}!`, 'success');
+                    loadCart();
+                    return true;
+                } else {
+                    console.log('No token in response:', result.data);
+                    showToast('Login successful but no token received', 'error');
+                    return false;
+                }
             } else {
-                showToast(result.data.message || 'Login failed', 'error');
+                showToast(result.data?.message || 'Login failed', 'error');
                 return false;
             }
         }
@@ -426,12 +437,28 @@
                 body: JSON.stringify({ username, email, password })
             });
             
-            if (result.success) {
-                showToast('Registration successful! Please login.', 'success');
-                toggleAuthSection();
+            console.log('Registration result:', result); // Debug log
+            
+            if (result.success && result.data) {
+                // Check if registration includes token for auto-login
+                const token = result.data.token || result.data.data?.token;
+                const user = result.data.user || result.data.data?.user;
+                
+                if (token && user) {
+                    // Auto-login after successful registration
+                    authToken = token;
+                    currentUser = user;
+                    updateAuthUI();
+                    showToast(`Welcome ${username}! Registration and login successful.`, 'success');
+                    loadCart();
+                } else {
+                    // Registration successful but no auto-login
+                    showToast('Registration successful! Please login manually.', 'success');
+                    toggleAuthSection(); // Switch to login form
+                }
                 return true;
             } else {
-                showToast(result.data.message || 'Registration failed', 'error');
+                showToast(result.data?.message || 'Registration failed', 'error');
                 return false;
             }
         }
@@ -486,13 +513,24 @@
 
         // Cart Functions
         async function loadCart() {
-            if (!authToken) return;
+            if (!authToken) {
+                console.log('No auth token for cart loading');
+                return;
+            }
             
+            console.log('Loading cart with token:', authToken.substring(0, 20) + '...');
             const result = await apiCall('/api/v1/cart');
             
-            if (result.success && result.data.data) {
-                cart = result.data.data.cart || [];
+            console.log('Cart result:', result);
+            
+            if (result.success && result.data) {
+                // Handle different response structures
+                cart = result.data.cart || result.data.data?.cart || result.data.items || [];
                 updateCartUI();
+            } else if (result.status === 401) {
+                console.log('Cart access unauthorized - token may be invalid');
+                showToast('Session expired - please login again', 'error');
+                logout();
             }
         }
 
