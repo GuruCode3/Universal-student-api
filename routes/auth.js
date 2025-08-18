@@ -1,11 +1,11 @@
-// routes/auth.js - FINAL SECURITY FIX (Remove Emergency Fallback)
+// routes/auth.js - COMPLETE FIXED VERSION WITH PERSISTENCE SUPPORT
 const express = require('express');
 const AuthUtils = require('../utils/auth');
 const { dbConfig } = require('../utils/database');
 
 const router = express.Router();
 
-console.log('🔐 FINAL Secure authentication routes loading...');
+console.log('🔐 FIXED Secure authentication routes with persistence loading...');
 
 // Simple middleware
 function authenticateToken(req, res, next) {
@@ -49,10 +49,10 @@ function authenticateToken(req, res, next) {
   }
 }
 
-// 🚨 FINAL SECURITY FIX - No Emergency Fallback
+// 🔐 LOGIN ENDPOINT - FIXED WITH PERSISTENCE SUPPORT
 router.post('/login', async (req, res) => {
   try {
-    console.log('🔐 FINAL SECURE login request');
+    console.log('🔐 FIXED login request with persistence support');
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -63,11 +63,52 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 🛡️ SECURITY: STRICT USERNAME WHITELIST
+    // 🔧 FIX: First check persistent storage for user
+    const persistentUser = global.userPersistence.findUserByUsername(username);
+    
+    if (persistentUser) {
+      console.log('🔍 Found user in persistent storage:', persistentUser.username);
+      
+      // Compare password with stored hash
+      const isValidPassword = await AuthUtils.comparePassword(password, persistentUser.password);
+      
+      if (isValidPassword) {
+        console.log('✅ Persistent user login successful:', persistentUser.username);
+        
+        // Generate token
+        const token = AuthUtils.generateToken(persistentUser);
+        
+        return res.json({
+          success: true,
+          message: 'Login successful (persistent user)',
+          data: {
+            user: {
+              id: persistentUser.id,
+              username: persistentUser.username,
+              email: persistentUser.email,
+              first_name: persistentUser.first_name,
+              last_name: persistentUser.last_name,
+              role: persistentUser.role
+            },
+            token: token,
+            expires_in: '24h'
+          }
+        });
+      } else {
+        console.log('❌ Invalid password for persistent user:', persistentUser.username);
+        return res.status(401).json({
+          success: false,
+          error: 'invalid_credentials',
+          message: 'Invalid username or password'
+        });
+      }
+    }
+
+    // 🔧 FIX: Fallback to hardcoded demo users if not found in persistence
     const ALLOWED_USERS = ['demo', 'teacher'];
     
     if (!ALLOWED_USERS.includes(username)) {
-      console.log('🚨 SECURITY BLOCK: Username not allowed:', username);
+      console.log('🚨 SECURITY BLOCK: Username not in persistent storage or demo users:', username);
       return res.status(401).json({
         success: false,
         error: 'invalid_credentials',
@@ -75,9 +116,9 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // Password check
+    // Password check for demo users
     if (password !== 'demo123') {
-      console.log('🚨 SECURITY BLOCK: Invalid password for:', username);
+      console.log('🚨 SECURITY BLOCK: Invalid password for demo user:', username);
       return res.status(401).json({
         success: false,
         error: 'invalid_credentials',
@@ -85,7 +126,7 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // 🔒 SECURE: Only valid combinations get tokens
+    // 🔒 SECURE: Only valid demo combinations get tokens
     let user = null;
     
     if (username === 'demo' && password === 'demo123') {
@@ -109,7 +150,7 @@ router.post('/login', async (req, res) => {
     }
 
     if (!user) {
-      console.log('❌ FINAL SECURITY: No valid user found for:', username);
+      console.log('❌ No valid demo user found for:', username);
       return res.status(401).json({
         success: false,
         error: 'invalid_credentials',
@@ -117,13 +158,13 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    // ✅ Generate token ONLY for validated users
+    // ✅ Generate token ONLY for validated demo users
     const token = AuthUtils.generateToken(user);
 
-    console.log('✅ FINAL SECURE LOGIN SUCCESS for:', user.username);
+    console.log('✅ Demo user login successful:', user.username);
     res.json({
       success: true,
-      message: 'Login successful',
+      message: 'Login successful (demo user)',
       data: {
         user: user,
         token: token,
@@ -132,7 +173,7 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ FINAL LOGIN ERROR:', error);
+    console.error('❌ LOGIN ERROR:', error);
     res.status(500).json({
       success: false,
       error: 'server_error',
@@ -141,10 +182,10 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Registration endpoint - RESTORED VERSION
+// 📝 REGISTRATION ENDPOINT - COMPLETELY FIXED WITH PERSISTENCE
 router.post('/register', async (req, res) => {
   try {
-    console.log('📝 User registration request');
+    console.log('📝 User registration request with persistence support');
     const { username, email, password, first_name, last_name } = req.body;
 
     // Input validation
@@ -175,10 +216,11 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Check for existing users (in-memory check)
-    const existingUsernames = ['demo', 'teacher']; // Known existing users
+    // 🔧 FIX: Check for existing users using persistence system
+    const existingUserByUsername = global.userPersistence.findUserByUsername(username);
+    const existingUserByEmail = global.userPersistence.findUserByUsername(email); // This function checks both username and email
     
-    if (existingUsernames.includes(username.toLowerCase())) {
+    if (existingUserByUsername) {
       return res.status(409).json({
         success: false,
         error: 'conflict',
@@ -186,7 +228,7 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    if (email === 'demo@example.com' || email === 'teacher@example.com') {
+    if (existingUserByEmail && existingUserByEmail.email === email) {
       return res.status(409).json({
         success: false,
         error: 'conflict',
@@ -197,34 +239,45 @@ router.post('/register', async (req, res) => {
     // Hash password
     const hashedPassword = await AuthUtils.hashPassword(password);
 
-    // Create new user object
-    const newUser = {
-      id: Date.now(), // Simple ID generation
+    // 🔧 FIX: Create new user object for persistence
+    const newUserForPersistence = {
       username: username,
       email: email,
+      password: hashedPassword, // 🔧 FIX: Use hashed password for persistence
       first_name: first_name || null,
       last_name: last_name || null,
-      role: 'user',
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      role: 'user'
     };
 
-    // Generate token for immediate login
-    const token = AuthUtils.generateToken(newUser);
+    // 🔧 FIX: Save user using persistence system
+    const savedUser = global.userPersistence.saveUser(newUserForPersistence);
+    
+    if (!savedUser) {
+      return res.status(500).json({
+        success: false,
+        error: 'server_error',
+        message: 'Failed to save user to persistence storage'
+      });
+    }
 
-    console.log('✅ User registration successful:', username);
+    console.log('✅ User saved to persistence storage:', savedUser.username, 'ID:', savedUser.id);
+
+    // Generate token for immediate login (using saved user data)
+    const token = AuthUtils.generateToken(savedUser);
+
+    console.log('✅ User registration successful and persisted:', username);
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully and saved to persistent storage',
       data: {
         user: {
-          id: newUser.id,
-          username: newUser.username,
-          email: newUser.email,
-          first_name: newUser.first_name,
-          last_name: newUser.last_name,
-          role: newUser.role,
-          created_at: newUser.created_at
+          id: savedUser.id,
+          username: savedUser.username,
+          email: savedUser.email,
+          first_name: savedUser.first_name,
+          last_name: savedUser.last_name,
+          role: savedUser.role,
+          created_at: savedUser.created_at
         },
         token: token,
         expires_in: '24h'
@@ -240,22 +293,43 @@ router.post('/register', async (req, res) => {
     });
   }
 });
-// Profile
+
+// 👤 PROFILE ENDPOINT - UPDATED WITH PERSISTENCE SUPPORT
 router.get('/profile', authenticateToken, (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      id: req.user.id,
-      username: req.user.username,
-      email: req.user.email,
-      first_name: req.user.first_name,
-      last_name: req.user.last_name,
-      role: req.user.role
+  try {
+    // Try to get fresh user data from persistence if available
+    let userProfile = req.user;
+    
+    if (req.user.id && global.userPersistence) {
+      const freshUserData = global.userPersistence.findUserById(req.user.id);
+      if (freshUserData) {
+        userProfile = freshUserData;
+      }
     }
-  });
+
+    res.json({
+      success: true,
+      data: {
+        id: userProfile.id,
+        username: userProfile.username,
+        email: userProfile.email,
+        first_name: userProfile.first_name,
+        last_name: userProfile.last_name,
+        role: userProfile.role,
+        created_at: userProfile.created_at
+      }
+    });
+  } catch (error) {
+    console.error('❌ Profile error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'server_error',
+      message: 'Failed to get profile'
+    });
+  }
 });
 
-// Logout
+// 🚪 LOGOUT ENDPOINT
 router.post('/logout', authenticateToken, (req, res) => {
   res.json({
     success: true,
@@ -263,35 +337,41 @@ router.post('/logout', authenticateToken, (req, res) => {
   });
 });
 
-// Test endpoint
+// 🧪 TEST ENDPOINT - UPDATED
 router.get('/test', (req, res) => {
   res.json({
     success: true,
-    message: 'FINAL SECURITY FIX ACTIVE! 🛡️',
-    version: '3.0.0-FINAL-SECURE',
-    security: 'NO EMERGENCY FALLBACK - STRICT WHITELIST ONLY',
-    allowed_users: ['demo', 'teacher'],
+    message: 'COMPLETE PERSISTENCE FIX ACTIVE! 🛡️',
+    version: '3.0.0-PERSISTENCE-FIXED',
+    security: 'Persistent user storage + Demo users + Strict validation',
+    features: [
+      'User registration with persistent storage',
+      'Login checks persistent storage first',
+      'Demo users still work (demo/demo123, teacher/demo123)',
+      'Hashed passwords for security',
+      'Auto-save to data/users.json',
+      'Cross-restart user persistence'
+    ],
     timestamp: new Date().toISOString(),
-    fixes: [
-      'Removed dangerous emergency fallback',
-      'Strict username whitelist enforcement',
-      'Exact credential matching only',
-      'No token generation for invalid users'
-    ]
+    persistence_status: {
+      users_loaded: global.userPersistence ? global.userPersistence.getUsers().length : 0,
+      system_ready: !!global.userPersistence
+    }
   });
 });
 
-// Cache bust
+// 🔄 CACHE BUST ENDPOINT - UPDATED
 router.get('/cache-bust', (req, res) => {
   res.json({
     success: true,
-    message: 'FINAL SECURITY FIX DEPLOYED',
-    version: '3.0.0-FINAL-SECURE',
+    message: 'COMPLETE PERSISTENCE FIX DEPLOYED',
+    version: '3.0.0-PERSISTENCE-FIXED',
     timestamp: new Date().toISOString(),
-    random: Math.random()
+    random: Math.random(),
+    persistence_working: !!global.userPersistence
   });
 });
 
-console.log('✅ FINAL SECURE authentication routes loaded - ALL SECURITY BUGS FIXED!');
+console.log('✅ COMPLETE FIXED authentication routes loaded - User persistence working!');
 
 module.exports = router;

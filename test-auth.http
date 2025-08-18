@@ -1,0 +1,8 @@
+# 1. Health check with persistence info
+# ეს endpoint უნდა მუშაობდეს:
+curl https://universal-student-api-production.up.railway.app/
+# 2. Direct login test
+curl -X POST # ეს endpoint უნდა მუშაობდეს:
+curl https://universal-student-api-production.up.railway.app\
+  -H "Content-Type: application/json" \
+  -d '{"username":"testuser999","password":"password123"}'
