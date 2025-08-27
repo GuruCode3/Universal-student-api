@@ -1,25 +1,27 @@
-// server.js - INTEGRATED Universal Student API v2.0 WITH CART & USER PERSISTENCE (FIXED!)
+// server.js - COMPLETE Universal Student API v2.0 WITH WISHLIST SYSTEM
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const compression = require('compression');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs'); // 📁 File system for persistence
-const path = require('path'); // 📁 Path utilities
+const fs = require('fs');
+const path = require('path');
 
 // Import database and routes
 const { initializeDatabase } = require('./database/connection');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
+const wishlistRoutes = require('./routes/wishlist'); // NEW: Wishlist routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 📁 USER PERSISTENCE SYSTEM (NEW!)
+// PERSISTENCE SYSTEM - Users, Carts & Wishlists
 const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CARTS_FILE = path.join(DATA_DIR, 'carts.json');
+const WISHLISTS_FILE = path.join(DATA_DIR, 'wishlists.json'); // NEW: Wishlists file
 
 // Create data directory if it doesn't exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -108,9 +110,37 @@ function saveCarts(carts) {
   }
 }
 
+// NEW: Load wishlists from file
+function loadWishlists() {
+  try {
+    if (fs.existsSync(WISHLISTS_FILE)) {
+      const data = fs.readFileSync(WISHLISTS_FILE, 'utf8');
+      const wishlists = JSON.parse(data);
+      console.log(`📤 Loaded wishlists from file`);
+      return wishlists;
+    }
+  } catch (error) {
+    console.log('⚠️ Error loading wishlists file:', error.message);
+  }
+  return {};
+}
+
+// NEW: Save wishlists to file
+function saveWishlists(wishlists) {
+  try {
+    fs.writeFileSync(WISHLISTS_FILE, JSON.stringify(wishlists, null, 2));
+    console.log(`💾 Saved wishlists to file`);
+    return true;
+  } catch (error) {
+    console.error('❌ Error saving wishlists:', error.message);
+    return false;
+  }
+}
+
 // Initialize persistence data
 let persistentUsers = loadUsers();
 let persistentCarts = loadCarts();
+let persistentWishlists = loadWishlists(); // NEW: Load wishlists
 
 // Make persistence functions available globally (for routes)
 global.userPersistence = {
@@ -158,16 +188,34 @@ global.cartPersistence = {
   }
 };
 
-console.log('✅ User & Cart persistence system initialized!');
+// NEW: Wishlist persistence functions
+global.wishlistPersistence = {
+  getWishlists: () => persistentWishlists,
+  getUserWishlist: (userId) => {
+    return persistentWishlists[userId] || [];
+  },
+  saveUserWishlist: (userId, wishlist) => {
+    persistentWishlists[userId] = wishlist;
+    saveWishlists(persistentWishlists);
+    return true;
+  },
+  clearUserWishlist: (userId) => {
+    persistentWishlists[userId] = [];
+    saveWishlists(persistentWishlists);
+    return true;
+  }
+};
 
-// 🚀 PERFORMANCE MIDDLEWARE
-app.use(compression()); // Gzip compression
-app.use(morgan('combined')); // Request logging
+console.log('✅ User, Cart & Wishlist persistence system initialized!');
 
-// 🔒 SECURITY MIDDLEWARE
+// PERFORMANCE MIDDLEWARE
+app.use(compression());
+app.use(morgan('combined'));
+
+// SECURITY MIDDLEWARE
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Limit each IP to 1000 requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   message: {
     success: false,
     error: 'Too many requests',
@@ -179,14 +227,14 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// 🌐 CORS CONFIGURATION (FIXED!)
+// CORS CONFIGURATION
 app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:3001', 
     'http://localhost:5173',
-    'http://localhost:5500',      // ✅ Live Server default
-    'http://127.0.0.1:5500',      // ✅ Live Server alternative
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
     'http://localhost:8000',
     'http://localhost:8080',
     'https://your-frontend-domain.com'
@@ -197,11 +245,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// 📋 BASIC MIDDLEWARE
+// BASIC MIDDLEWARE
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 🗄️ INITIALIZE DATABASE
+// INITIALIZE DATABASE
 let databaseReady = false;
 
 async function startServer() {
@@ -221,9 +269,9 @@ async function startServer() {
       console.log('⚠️ Database initialization failed, continuing with limited functionality');
     }
     
-    // 🛣️ ROUTES CONFIGURATION
+    // ROUTES CONFIGURATION
     
-    // Root endpoint with comprehensive API info (updated with persistence)
+    // Root endpoint with comprehensive API info
     app.get('/', (req, res) => {
       try {
         res.json({
@@ -231,13 +279,14 @@ async function startServer() {
           version: "2.0.0",
           status: "Running ✅",
           database: databaseReady ? "Connected 💾" : "Limited Mode ⚠️",
-          persistence: "✅ File-based User & Cart Persistence", // 🆕 ახალი!
+          persistence: "✅ File-based User, Cart & Wishlist Persistence",
           features: [
             "✅ 20 Domains with 500+ products each",
             "✅ Advanced JWT Authentication", 
             "✅ Role-based Access Control",
-            "✅ Persistent User Accounts", // 🆕 ახალი!
-            "✅ Shopping Cart System with Persistence", // 🛒 ახალი!
+            "✅ Persistent User Accounts",
+            "✅ Shopping Cart System with Persistence",
+            "✅ Wishlist System with Persistence", // NEW
             "✅ Search & Filtering",
             "✅ Pagination & Performance Optimized",
             "✅ Rate Limiting & Security",
@@ -253,7 +302,7 @@ async function startServer() {
           authentication: {
             demo_user: { username: "demo", password: "demo123", role: "user" },
             admin_user: { username: "teacher", password: "demo123", role: "admin" },
-            persistence: "✅ Users persist across server restarts", // 🆕 ახალი!
+            persistence: "✅ Users persist across server restarts",
             endpoints: [
               "POST /api/v1/auth/register",
               "POST /api/v1/auth/login", 
@@ -277,6 +326,14 @@ async function startServer() {
               "GET /api/v1/cart/count",
               "POST /api/v1/cart/checkout"
             ],
+            wishlist: [ // NEW
+              "GET /api/v1/wishlist",
+              "POST /api/v1/wishlist/add",
+              "DELETE /api/v1/wishlist/remove/:item_id",
+              "DELETE /api/v1/wishlist/clear",
+              "GET /api/v1/wishlist/count",
+              "POST /api/v1/wishlist/move-to-cart/:item_id"
+            ],
             utility: [
               "GET /health",
               "GET /api/v1/status", 
@@ -288,7 +345,7 @@ async function startServer() {
             compression: "Enabled",
             logging: "Enabled",
             caching: "In-memory optimized",
-            persistence: "File-based storage" // 🆕 ახალი!
+            persistence: "File-based storage"
           },
           example_requests: {
             products: "GET /api/v1/movies/products?page=1&limit=20",
@@ -297,7 +354,9 @@ async function startServer() {
             login: "POST /api/v1/auth/login",
             categories: "GET /api/v1/fashion/categories",
             cart: "GET /api/v1/cart",
-            add_to_cart: "POST /api/v1/cart/add"
+            add_to_cart: "POST /api/v1/cart/add",
+            wishlist: "GET /api/v1/wishlist", // NEW
+            add_to_wishlist: "POST /api/v1/wishlist/add" // NEW
           },
           cors_enabled: [
             "http://localhost:5500",
@@ -305,14 +364,15 @@ async function startServer() {
             "http://localhost:3000",
             "http://localhost:8000"
           ],
-          persistence_info: { // 🆕 ახალი section!
+          persistence_info: {
             users_loaded: persistentUsers.length,
             data_directory: DATA_DIR,
             files: {
               users: USERS_FILE,
-              carts: CARTS_FILE
+              carts: CARTS_FILE,
+              wishlists: WISHLISTS_FILE // NEW
             },
-            status: "✅ All user accounts and carts persist across restarts"
+            status: "✅ All user accounts, carts and wishlists persist across restarts"
           },
           timestamp: new Date().toISOString()
         });
@@ -326,7 +386,7 @@ async function startServer() {
       }
     });
 
-    // Health check endpoint (updated with persistence info)
+    // Health check endpoint
     app.get('/health', (req, res) => {
       try {
         const { healthCheck } = require('./utils/database');
@@ -345,9 +405,10 @@ async function startServer() {
             platform: process.platform,
             railway: !!process.env.RAILWAY_ENVIRONMENT
           },
-          persistence: { // 🆕 ახალი persistence health!
+          persistence: {
             users_file_exists: fs.existsSync(USERS_FILE),
             carts_file_exists: fs.existsSync(CARTS_FILE),
+            wishlists_file_exists: fs.existsSync(WISHLISTS_FILE), // NEW
             users_count: persistentUsers.length,
             data_directory: fs.existsSync(DATA_DIR) ? "✅ Exists" : "❌ Missing"
           },
@@ -363,7 +424,7 @@ async function startServer() {
       }
     });
 
-    // Status endpoint (updated with persistence and cart info)
+    // Status endpoint
     app.get('/api/v1/status', (req, res) => {
       try {
         const { getAvailableDomains, healthCheck } = require('./utils/database');
@@ -377,9 +438,10 @@ async function startServer() {
           version: "2.0.0",
           features: {
             authentication: databaseReady ? "✅ Available" : "⚠️ Limited",
-            user_persistence: "✅ File-based storage", // 🆕 ახალი!
+            user_persistence: "✅ File-based storage",
             products: health.tables.products > 0 ? "✅ Ready" : "⚠️ No products",
-            cart: "✅ Available with Persistence", // 🛒 updated!
+            cart: "✅ Available with Persistence",
+            wishlist: "✅ Available with Persistence", // NEW
             search: "✅ Available",
             pagination: "✅ Available",
             rate_limiting: "✅ Active",
@@ -390,7 +452,7 @@ async function startServer() {
             available_domains: domains.length,
             total_products: health.tables.products || 0,
             total_users: health.tables.users || 0,
-            persistent_users: persistentUsers.length, // 🆕 ახალი!
+            persistent_users: persistentUsers.length,
             total_categories: health.tables.categories || 0,
             total_brands: health.tables.brands || 0
           },
@@ -399,11 +461,13 @@ async function startServer() {
             search: "GET /api/v1/books/products/search?q=javascript", 
             authentication: "POST /api/v1/auth/login",
             cart: "GET /api/v1/cart",
+            wishlist: "GET /api/v1/wishlist", // NEW
             demo_credentials: "demo / demo123"
           },
-          persistence_status: { // 🆕 ახალი section!
+          persistence_status: {
             users_file: fs.existsSync(USERS_FILE) ? "✅ Exists" : "❌ Missing",
             carts_file: fs.existsSync(CARTS_FILE) ? "✅ Exists" : "❌ Missing",
+            wishlists_file: fs.existsSync(WISHLISTS_FILE) ? "✅ Exists" : "❌ Missing", // NEW
             loaded_users: persistentUsers.length,
             last_save_time: fs.existsSync(USERS_FILE) 
               ? fs.statSync(USERS_FILE).mtime.toISOString()
@@ -447,7 +511,8 @@ async function startServer() {
               "Brands with product counts",
               "Single product details",
               "Related products",
-              "Shopping cart functionality with persistence" // 🛒 updated!
+              "Shopping cart functionality with persistence",
+              "Wishlist functionality with persistence" // NEW
             ]
           },
           meta: {
@@ -466,16 +531,19 @@ async function startServer() {
       }
     });
 
-    // 🔐 AUTHENTICATION ROUTES
+    // AUTHENTICATION ROUTES
     app.use('/api/v1/auth', authRoutes);
 
-    // 🛒 CART ROUTES (ახალი! - authentication-ს შემდეგ უნდა იყოს)
+    // CART ROUTES
     app.use('/api/v1/cart', cartRoutes);
 
-    // 🛍️ PRODUCT ROUTES (with domain parameter)
+    // NEW: WISHLIST ROUTES
+    app.use('/api/v1/wishlist', wishlistRoutes);
+
+    // PRODUCT ROUTES (with domain parameter)
     app.use('/api/v1/:domain', productRoutes);
 
-    // 📚 API DOCUMENTATION ENDPOINT (updated with persistence and cart)
+    // API DOCUMENTATION ENDPOINT
     app.get('/api/v1/docs', (req, res) => {
       res.json({
         success: true,
@@ -486,7 +554,7 @@ async function startServer() {
           type: "JWT Bearer Token",
           header: "Authorization: Bearer <token>",
           login_endpoint: "POST /api/v1/auth/login",
-          persistence: "✅ User accounts persist across server restarts", // 🆕 ახალი!
+          persistence: "✅ User accounts persist across server restarts",
           demo_credentials: {
             username: "demo",
             password: "demo123",
@@ -588,6 +656,60 @@ async function startServer() {
               response: "Order details and confirmation"
             }
           },
+          wishlist: { // NEW SECTION
+            "GET /api/v1/wishlist": {
+              description: "Get user's wishlist (persistent storage)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Wishlist items with product details"
+            },
+            "POST /api/v1/wishlist/add": {
+              description: "Add product to wishlist (auto-saved to file)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              body: {
+                domain: "string (e.g., 'movies', 'books')",
+                product_id: "number",
+                name: "string (product name)",
+                price: "number (product price)",
+                image_url: "string (optional)"
+              },
+              response: "Updated wishlist summary"
+            },
+            "DELETE /api/v1/wishlist/remove/:item_id": {
+              description: "Remove item from wishlist (auto-saved)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Removed item confirmation"
+            },
+            "DELETE /api/v1/wishlist/clear": {
+              description: "Clear entire wishlist (auto-saved)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Clear confirmation"
+            },
+            "GET /api/v1/wishlist/count": {
+              description: "Get wishlist items count",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Wishlist items count"
+            },
+            "POST /api/v1/wishlist/move-to-cart/:item_id": {
+              description: "Move item from wishlist to cart",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              body: {
+                quantity: "number (optional, default: 1)"
+              },
+              response: "Move confirmation and updated cart"
+            }
+          },
           products: {
             "GET /api/v1/{domain}/products": {
               description: "Get products for domain with pagination",
@@ -660,7 +782,13 @@ async function startServer() {
             add_to_cart: `curl -X POST -H "Authorization: Bearer <your-token>" \\
   -H "Content-Type: application/json" \\
   -d '{"domain":"movies","product_id":1,"name":"Test Movie","price":12.99,"quantity":2}' \\
-  "${req.protocol}://${req.get('host')}/api/v1/cart/add"`
+  "${req.protocol}://${req.get('host')}/api/v1/cart/add"`,
+            wishlist: `curl -H "Authorization: Bearer <your-token>" \\
+  "${req.protocol}://${req.get('host')}/api/v1/wishlist"`,
+            add_to_wishlist: `curl -X POST -H "Authorization: Bearer <your-token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"domain":"books","product_id":5,"name":"JavaScript Guide","price":29.99}' \\
+  "${req.protocol}://${req.get('host')}/api/v1/wishlist/add"`
           }
         },
         supported_domains: [
@@ -669,8 +797,8 @@ async function startServer() {
           "tools", "medicines", "courses", "events", "apps", "flights",
           "pets", "realestate"
         ],
-        persistence_info: { // 🆕 ახალი section!
-          description: "All user accounts and shopping carts persist across server restarts",
+        persistence_info: {
+          description: "All user accounts, shopping carts and wishlists persist across server restarts",
           storage_type: "File-based JSON storage",
           auto_save: "All changes are automatically saved to disk",
           demo_accounts: "Pre-loaded: demo/demo123 and teacher/demo123",
@@ -692,7 +820,7 @@ async function startServer() {
       });
     });
 
-    // 🚫 404 HANDLER (updated with cart endpoints)
+    // 404 HANDLER
     app.use('*', (req, res) => {
       res.status(404).json({
         success: false,
@@ -708,6 +836,8 @@ async function startServer() {
           'POST /api/v1/auth/register',
           'GET /api/v1/cart',
           'POST /api/v1/cart/add',
+          'GET /api/v1/wishlist',
+          'POST /api/v1/wishlist/add',
           'GET /api/v1/{domain}/products',
           'GET /api/v1/{domain}/products/{id}',
           'GET /api/v1/{domain}/products/search',
@@ -719,11 +849,10 @@ async function startServer() {
       });
     });
 
-    // 🚨 GLOBAL ERROR HANDLER
+    // GLOBAL ERROR HANDLER
     app.use((error, req, res, next) => {
       console.error(`❌ Global error [${req.method} ${req.path}]:`, error);
       
-      // Handle specific error types
       if (error.type === 'entity.parse.failed') {
         return res.status(400).json({
           success: false,
@@ -742,7 +871,6 @@ async function startServer() {
         });
       }
       
-      // Generic error response
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -753,7 +881,7 @@ async function startServer() {
       });
     });
 
-    // 🚀 START SERVER
+    // START SERVER
     app.listen(PORT, () => {
       console.log('🎓 Universal Student API v2.0 Started Successfully!');
       console.log(`📍 Server running on: http://localhost:${PORT}`);
@@ -763,14 +891,15 @@ async function startServer() {
       console.log(`🔐 Demo Login: POST http://localhost:${PORT}/api/v1/auth/login`);
       console.log(`🛍️ Products Example: http://localhost:${PORT}/api/v1/movies/products`);
       console.log(`🛒 Cart Example: GET http://localhost:${PORT}/api/v1/cart`);
+      console.log(`💝 Wishlist Example: GET http://localhost:${PORT}/api/v1/wishlist`);
       console.log(`🔍 Search Example: http://localhost:${PORT}/api/v1/books/products/search?q=javascript`);
       console.log(`🏥 Database: ${databaseReady ? 'Connected' : 'Limited Mode'}`);
-      console.log(`📁 User Persistence: ${persistentUsers.length} users loaded from file`); // 🆕 ახალი!
-      console.log(`💾 Data Directory: ${DATA_DIR}`); // 🆕 ახალი!
+      console.log(`📁 User Persistence: ${persistentUsers.length} users loaded from file`);
+      console.log(`💾 Data Directory: ${DATA_DIR}`);
       console.log(`🌐 CORS: Enabled for localhost:5500, 127.0.0.1:5500`);
       console.log(`🚀 Ready for student projects!`);
-      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Persistent Shopping Cart' : 'Basic functionality available'}`);
-      console.log(`🔒 FIXED: Users now persist across server restarts!`); // 🆕 ახალი!
+      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Cart + Wishlist' : 'Basic functionality available'}`);
+      console.log(`✅ NEW: Wishlist System with Persistence Added!`);
     });
 
   } catch (error) {
@@ -782,10 +911,10 @@ async function startServer() {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   console.error('❌ Uncaught Exception:', error);
-  // Save data before exit
   try {
     saveUsers(persistentUsers);
     saveCarts(persistentCarts);
+    saveWishlists(persistentWishlists);
     console.log('💾 Emergency save completed');
   } catch (saveError) {
     console.error('❌ Emergency save failed:', saveError);
@@ -795,10 +924,10 @@ process.on('uncaughtException', (error) => {
 
 process.on('unhandledRejection', (error) => {
   console.error('❌ Unhandled Rejection:', error);
-  // Save data before exit
   try {
     saveUsers(persistentUsers);
     saveCarts(persistentCarts);
+    saveWishlists(persistentWishlists);
     console.log('💾 Emergency save completed');
   } catch (saveError) {
     console.error('❌ Emergency save failed:', saveError);
@@ -809,10 +938,10 @@ process.on('unhandledRejection', (error) => {
 // Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('🔒 SIGTERM received, shutting down gracefully');
-  // Save data before shutdown
   try {
     saveUsers(persistentUsers);
     saveCarts(persistentCarts);
+    saveWishlists(persistentWishlists);
     console.log('💾 Final save completed');
   } catch (saveError) {
     console.error('❌ Final save failed:', saveError);
@@ -825,7 +954,8 @@ setInterval(() => {
   try {
     saveUsers(persistentUsers);
     saveCarts(persistentCarts);
-    console.log('🔄 Auto-save completed');
+    saveWishlists(persistentWishlists);
+    console.log('🔄 Auto-save completed (users, carts, wishlists)');
   } catch (error) {
     console.error('❌ Auto-save failed:', error);
   }
