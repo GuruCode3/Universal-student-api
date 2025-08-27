@@ -1,4 +1,4 @@
-// routes/wishlist.js - Wishlist System with Persistence Support
+// routes/wishlist.js - Wishlist System with Persistence Support - FIXED JWT SECRET
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
@@ -9,8 +9,8 @@ try {
   const { authenticateToken: importedAuth } = require('../middleware/auth');
   authenticateToken = importedAuth;
 } catch (error) {
-  // Define middleware here if import fails
-  const JWT_SECRET = process.env.JWT_SECRET || 'universal-student-api-super-secret-key-2024-production';
+  // Define middleware here if import fails - FIXED JWT SECRET TO MATCH CART ROUTES
+  const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-2024';
   
   authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -38,7 +38,7 @@ try {
   };
 }
 
-// 💝 GET WISHLIST - Get user's wishlist
+// GET WISHLIST - Get user's wishlist
 router.get('/', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -74,7 +74,7 @@ router.get('/', authenticateToken, (req, res) => {
   }
 });
 
-// ➕ ADD TO WISHLIST - Add product to wishlist
+// ADD TO WISHLIST - Add product to wishlist
 router.post('/add', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -144,7 +144,7 @@ router.post('/add', authenticateToken, (req, res) => {
   }
 });
 
-// 🗑️ REMOVE FROM WISHLIST - Remove specific item
+// REMOVE FROM WISHLIST - Remove specific item
 router.delete('/remove/:item_id', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -198,7 +198,7 @@ router.delete('/remove/:item_id', authenticateToken, (req, res) => {
   }
 });
 
-// 🧹 CLEAR WISHLIST - Remove all items
+// CLEAR WISHLIST - Remove all items
 router.delete('/clear', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -229,7 +229,7 @@ router.delete('/clear', authenticateToken, (req, res) => {
   }
 });
 
-// 🔢 GET WISHLIST COUNT - Get number of items in wishlist
+// GET WISHLIST COUNT - Get number of items in wishlist
 router.get('/count', authenticateToken, (req, res) => {
   try {
     // Get user's wishlist from persistent storage
@@ -252,7 +252,7 @@ router.get('/count', authenticateToken, (req, res) => {
   }
 });
 
-// 🛒 MOVE TO CART - Move item from wishlist to cart
+// MOVE TO CART - Move item from wishlist to cart
 router.post('/move-to-cart/:item_id', authenticateToken, (req, res) => {
   try {
     const userId = req.user.id;
@@ -330,7 +330,7 @@ router.post('/move-to-cart/:item_id', authenticateToken, (req, res) => {
   }
 });
 
-// 🧪 HEALTH CHECK for wishlist system
+// HEALTH CHECK for wishlist system
 router.get('/health', authenticateToken, (req, res) => {
   try {
     const wishlist = global.wishlistPersistence.getUserWishlist(req.user.id);
@@ -363,6 +363,6 @@ router.get('/health', authenticateToken, (req, res) => {
   }
 });
 
-console.log('✅ Wishlist routes loaded successfully');
+console.log('✅ Wishlist routes loaded successfully - JWT SECRET FIXED');
 
 module.exports = router;
