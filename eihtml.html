@@ -3,388 +3,813 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎓 Universal Student API - Live Testing Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Universal Student Store</title>
     <style>
-        .loading { opacity: 0.6; pointer-events: none; }
-        .success { background-color: #10b981; }
-        .error { background-color: #ef4444; }
-        .test-result { transition: all 0.3s ease; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         
-        /* Custom scrollbar */
-        .custom-scroll::-webkit-scrollbar { width: 8px; }
-        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #64748b; border-radius: 4px; }
+        :root {
+            --primary: #667eea;
+            --primary-dark: #4c63d2;
+            --secondary: #764ba2;
+            --accent: #4ecdc4;
+            --success: #2ecc71;
+            --error: #e74c3c;
+            --warning: #f39c12;
+            --light: #f8f9fa;
+            --dark: #2c3e50;
+            --gray: #6c757d;
+        }
         
-        /* Animation */
-        @keyframes pulse-green { 0%, 100% { background-color: #10b981; } 50% { background-color: #059669; } }
-        @keyframes pulse-red { 0%, 100% { background-color: #ef4444; } 50% { background-color: #dc2626; } }
-        .pulse-success { animation: pulse-green 1s ease-in-out; }
-        .pulse-error { animation: pulse-red 1s ease-in-out; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
         
-        /* Line clamp */
-        .line-clamp-2 {
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+        
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+        }
+        
+        .user-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .cart-badge, .wishlist-badge {
+            position: relative;
+            cursor: pointer;
+            padding: 0.5rem;
+            border: none;
+            background: none;
+            font-size: 1.2rem;
+        }
+        
+        .badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error);
+            color: white;
+            border-radius: 50%;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.8rem;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Main Content */
+        .main {
+            min-height: calc(100vh - 80px);
+            padding: 2rem 0;
+        }
+        
+        /* Auth Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+        }
+        
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Dashboard */
+        .dashboard {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .welcome-message {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .welcome-message h1 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Domain Selection */
+        .domain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .domain-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .domain-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .domain-card.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* Products */
+        .products-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 12px;
             overflow: hidden;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .product-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+        
+        .product-info {
+            padding: 1.5rem;
+        }
+        
+        .product-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+        
+        .product-price {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: var(--gray);
+        }
+        
+        .product-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Cart & Wishlist */
+        .cart-drawer, .wishlist-drawer {
+            position: fixed;
+            right: -400px;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: white;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s;
+            z-index: 1500;
+            overflow-y: auto;
+        }
+        
+        .cart-drawer.open, .wishlist-drawer.open {
+            right: 0;
+        }
+        
+        .drawer-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .drawer-content {
+            padding: 1rem;
+        }
+        
+        .cart-item, .wishlist-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .item-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .item-price {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .quantity-input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.25rem;
+        }
+        
+        .cart-total {
+            padding: 1.5rem;
+            border-top: 2px solid #e9ecef;
+            background: #f8f9fa;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .total-amount {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0;
+        }
+        
+        .page-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .page-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Alert */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            border-color: var(--error);
+            color: #721c24;
+        }
+        
+        .alert-info {
+            background: #cce5ff;
+            border-color: var(--primary);
+            color: #004085;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .nav-links {
+                gap: 1rem;
+            }
+            
+            .domain-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+            
+            .cart-drawer, .wishlist-drawer {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .section {
+            margin: 2rem 0;
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    
+<body>
     <!-- Header -->
-    <header class="bg-blue-600 text-white shadow-lg">
-        <div class="container mx-auto px-4 py-4">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold">🎓 Universal Student API</h1>
-                    <p class="text-blue-100">Live Testing Dashboard</p>
+    <header class="header">
+        <nav class="nav container">
+            <div class="logo">Universal Student Store</div>
+            
+            <div class="nav-links">
+                <a href="#" class="nav-link" onclick="showSection('home')">მთავარი</a>
+                <a href="#" class="nav-link" onclick="showSection('products')">პროდუქტები</a>
+                <a href="#" class="nav-link" id="profileLink" class="hidden">პროფილი</a>
+            </div>
+            
+            <div class="user-controls">
+                <button class="wishlist-badge" onclick="toggleWishlist()">
+                    ❤️
+                    <span class="badge" id="wishlistCount">0</span>
+                </button>
+                
+                <button class="cart-badge" onclick="toggleCart()">
+                    🛒
+                    <span class="badge" id="cartCount">0</span>
+                </button>
+                
+                <div id="authButtons">
+                    <button class="btn btn-outline btn-sm" onclick="showAuth('login')">შესვლა</button>
+                    <button class="btn btn-primary btn-sm" onclick="showAuth('register')">რეგისტრაცია</button>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div id="apiStatus" class="flex items-center space-x-2">
-                        <div class="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></div>
-                        <span class="text-sm">Checking API...</span>
-                    </div>
-                    <button id="logoutBtn" class="hidden bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                        Logout
-                    </button>
+                
+                <div id="userInfo" class="hidden">
+                    <span id="userName"></span>
+                    <button class="btn btn-sm" onclick="logout()">გამოსვლა</button>
                 </div>
             </div>
-        </div>
+        </nav>
     </header>
 
-    <div class="container mx-auto px-4 py-8">
-        
-        <!-- User Status -->
-        <div id="userStatus" class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-xl font-semibold mb-2">👤 User Status</h2>
-                    <div id="authStatus" class="text-gray-600">Not logged in</div>
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Home Section -->
+            <section id="homeSection" class="section">
+                <div class="dashboard">
+                    <div class="welcome-message">
+                        <h1>კეთილი იყოს თქვენი მობრძანება Universal Student Store-ში!</h1>
+                        <p>აღმოაჩინეთ 20+ კატეგორიაში 10,000+ პროდუქტი</p>
+                    </div>
+                    
+                    <div class="domain-grid" id="domainGrid">
+                        <!-- Domains will be loaded here -->
+                    </div>
                 </div>
-                <div id="userInfo" class="hidden text-right">
-                    <div class="text-sm text-gray-500">Logged in as</div>
-                    <div id="username" class="font-semibold text-lg"></div>
-                    <div id="userRole" class="text-xs text-blue-600"></div>
+            </section>
+
+            <!-- Products Section -->
+            <section id="productsSection" class="section hidden">
+                <div class="products-section">
+                    <div class="section-header">
+                        <h2 id="categoryTitle">პროდუქტები</h2>
+                        <button class="btn btn-outline" onclick="showSection('home')">უკან დაბრუნება</button>
+                    </div>
+                    
+                    <div class="search-box">
+                        <input type="text" class="search-input" id="searchInput" placeholder="ძიება...">
+                        <button class="btn btn-primary" onclick="searchProducts()">ძიება</button>
+                        <button class="btn btn-outline" onclick="clearSearch()">გასუფთავება</button>
+                    </div>
+                    
+                    <div id="productsGrid" class="products-grid">
+                        <!-- Products will be loaded here -->
+                    </div>
+                    
+                    <div id="pagination" class="pagination">
+                        <!-- Pagination will be loaded here -->
+                    </div>
                 </div>
-            </div>
+            </section>
         </div>
+    </main>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeAuth()">&times;</button>
             
-            <!-- Left Column: Authentication & Cart -->
-            <div class="space-y-8">
-                
-                <!-- Authentication Section -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold mb-6 flex items-center">
-                        🔐 Authentication
-                    </h2>
-                    
-                    <!-- Login Form -->
-                    <div id="loginSection">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                                <input type="text" id="loginUsername" value="demo" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                                <input type="password" id="loginPassword" value="demo123" 
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            </div>
-                            <button id="loginBtn" 
-                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                                🔑 Login
-                            </button>
-                        </div>
-                        
-                        <!-- Quick Login Buttons -->
-                        <div class="mt-4 space-y-2">
-                            <div class="text-sm text-gray-600 mb-2">Quick Login:</div>
-                            <div class="flex space-x-2">
-                                <button class="quick-login flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded text-sm" 
-                                    data-username="demo" data-password="demo123">
-                                    👤 Demo User
-                                </button>
-                                <button class="quick-login flex-1 bg-purple-500 hover:bg-purple-600 text-white py-2 px-3 rounded text-sm" 
-                                    data-username="teacher" data-password="demo123">
-                                    👨‍🏫 Admin
-                                </button>
-                            </div>
-                        </div>
+            <div id="loginForm">
+                <h2>შესვლა</h2>
+                <form onsubmit="login(event)">
+                    <div class="form-group">
+                        <label class="form-label">მომხმარებლის სახელი ან ელ-ფოსტა</label>
+                        <input type="text" class="form-input" id="loginUsername" required>
                     </div>
-
-                    <!-- Registration Form -->
-                    <div id="registerSection" class="hidden space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
-                            <input type="text" id="regUsername" placeholder="Enter username" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                            <input type="email" id="regEmail" placeholder="Enter email" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                            <input type="password" id="regPassword" placeholder="Enter password" 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
-                        <button id="registerBtn" 
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-                            📝 Register
-                        </button>
+                    <div class="form-group">
+                        <label class="form-label">პაროლი</label>
+                        <input type="password" class="form-input" id="loginPassword" required>
                     </div>
-
-                    <!-- Auth Toggle -->
-                    <div class="mt-4 text-center">
-                        <button id="authToggle" class="text-blue-600 hover:text-blue-800 text-sm">
-                            Don't have an account? Register here
-                        </button>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">შესვლა</button>
                     </div>
-                </div>
-
-                <!-- Shopping Cart Section -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-semibold flex items-center">
-                            🛒 Shopping Cart
-                        </h2>
-                        <div id="cartCount" class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                            0
-                        </div>
+                    <p style="text-align: center; margin-top: 1rem;">
+                        არ გაქვთ ანგარიში? 
+                        <a href="#" onclick="showAuth('register')" style="color: var(--primary);">რეგისტრაცია</a>
+                    </p>
+                    <div class="alert alert-info">
+                        <strong>Demo ანგარიში:</strong><br>
+                        მომხმარებელი: demo, პაროლი: demo123<br>
+                        ადმინი: teacher, პაროლი: demo123
                     </div>
-                    
-                    <div id="cartSection" class="hidden">
-                        <!-- Cart Items -->
-                        <div id="cartItems" class="space-y-3 mb-4 max-h-64 overflow-y-auto custom-scroll">
-                            <!-- Cart items will be populated here -->
-                        </div>
-                        
-                        <!-- Cart Actions -->
-                        <div class="space-y-2">
-                            <div class="flex items-center justify-between text-lg font-semibold border-t pt-3">
-                                <span>Total:</span>
-                                <span id="cartTotal" class="text-blue-600">$0.00</span>
-                            </div>
-                            <div class="flex space-x-2">
-                                <button id="clearCartBtn" 
-                                    class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg text-sm transition-colors">
-                                    🗑️ Clear Cart
-                                </button>
-                                <button id="checkoutBtn" 
-                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm transition-colors">
-                                    💳 Checkout
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="cartEmpty" class="text-center text-gray-500 py-8">
-                        <div class="text-4xl mb-2">🛒</div>
-                        <div>Your cart is empty</div>
-                        <div class="text-sm mt-1">Add some products to get started!</div>
-                    </div>
-                </div>
+                </form>
             </div>
-
-            <!-- Right Column: Products & Testing -->
-            <div class="space-y-8">
-                
-                <!-- Domain Selector -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold mb-4">🏪 Product Domains</h2>
-                    <div class="grid grid-cols-4 gap-2" id="domainGrid">
-                        <!-- Domains will be populated here -->
+            
+            <div id="registerForm" class="hidden">
+                <h2>რეგისტრაცია</h2>
+                <form onsubmit="register(event)">
+                    <div class="form-group">
+                        <label class="form-label">მომხმარებლის სახელი</label>
+                        <input type="text" class="form-input" id="registerUsername" required>
                     </div>
-                    <div class="mt-4">
-                        <div class="text-sm text-gray-600 mb-2">Current Domain:</div>
-                        <div id="currentDomain" class="font-semibold text-lg text-blue-600">movies</div>
+                    <div class="form-group">
+                        <label class="form-label">ელ-ფოსტა</label>
+                        <input type="email" class="form-input" id="registerEmail" required>
                     </div>
-                </div>
-
-                <!-- Products Section -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-xl font-semibold">🛍️ Products</h2>
-                        <button id="loadProductsBtn" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-                            🔄 Reload Products
-                        </button>
+                    <div class="form-group">
+                        <label class="form-label">სახელი</label>
+                        <input type="text" class="form-input" id="registerFirstName">
                     </div>
-                    
-                    <!-- Search Bar -->
-                    <div class="mb-4">
-                        <div class="flex space-x-2">
-                            <input type="text" id="searchInput" placeholder="Search products..." 
-                                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                            <button id="searchBtn" 
-                                class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
-                                🔍
-                            </button>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">გვარი</label>
+                        <input type="text" class="form-input" id="registerLastName">
                     </div>
-                    
-                    <!-- Products Grid -->
-                    <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-96 overflow-y-auto custom-scroll">
-                        <!-- Products will be populated here -->
+                    <div class="form-group">
+                        <label class="form-label">პაროლი</label>
+                        <input type="password" class="form-input" id="registerPassword" required>
                     </div>
-                    
-                    <div id="productsLoading" class="text-center py-8 text-gray-500">
-                        <div class="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-2"></div>
-                        Loading products...
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">რეგისტრაცია</button>
                     </div>
-                </div>
-
-                <!-- API Testing Section -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-xl font-semibold mb-6">🧪 API Testing</h2>
-                    
-                    <!-- Test Buttons -->
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <button class="test-btn bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded text-sm transition-colors" 
-                            data-test="health">
-                            🏥 Health Check
-                        </button>
-                        <button class="test-btn bg-green-500 hover:bg-green-600 text-white py-2 px-3 rounded text-sm transition-colors" 
-                            data-test="domains">
-                            📋 Get Domains
-                        </button>
-                        <button class="test-btn bg-purple-500 hover:bg-purple-600 text-white py-2 px-3 rounded text-sm transition-colors" 
-                            data-test="categories">
-                            🏷️ Categories
-                        </button>
-                        <button class="test-btn bg-orange-500 hover:bg-orange-600 text-white py-2 px-3 rounded text-sm transition-colors" 
-                            data-test="brands">
-                            🏢 Brands
-                        </button>
-                        <button class="test-btn bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded text-sm transition-colors" 
-                            data-test="invalid-domain">
-                            🚨 Invalid Domain
-                        </button>
-                        <button class="test-btn bg-yellow-500 hover:bg-yellow-600 text-white py-2 px-3 rounded text-sm transition-colors" 
-                            data-test="security">
-                            🔒 Security Test
-                        </button>
-                    </div>
-                    
-                    <!-- Test Results -->
-                    <div id="testResults" class="space-y-2 max-h-64 overflow-y-auto custom-scroll">
-                        <div class="text-sm text-gray-500 text-center py-4">
-                            Click a test button to see results
-                        </div>
-                    </div>
-                </div>
+                    <p style="text-align: center; margin-top: 1rem;">
+                        უკვე გაქვთ ანგარიში? 
+                        <a href="#" onclick="showAuth('login')" style="color: var(--primary);">შესვლა</a>
+                    </p>
+                </form>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications -->
-    <div id="toastContainer" class="fixed top-4 right-4 space-y-2 z-50">
-        <!-- Toasts will be added here -->
+    <!-- Cart Drawer -->
+    <div id="cartDrawer" class="cart-drawer">
+        <div class="drawer-header">
+            <h3>კალათა</h3>
+            <button onclick="toggleCart()">&times;</button>
+        </div>
+        <div class="drawer-content">
+            <div id="cartItems">
+                <!-- Cart items will be loaded here -->
+            </div>
+        </div>
+        <div class="cart-total">
+            <div class="total-row">
+                <span>სულ:</span>
+                <span class="total-amount" id="cartTotal">$0.00</span>
+            </div>
+            <button class="btn btn-success" style="width: 100%; margin-top: 1rem;" onclick="checkout()">
+                შეკვეთის გაფორმება
+            </button>
+            <button class="btn btn-outline" style="width: 100%; margin-top: 0.5rem;" onclick="clearCart()">
+                კალათის გასუფთავება
+            </button>
+        </div>
+    </div>
+
+    <!-- Wishlist Drawer -->
+    <div id="wishlistDrawer" class="wishlist-drawer">
+        <div class="drawer-header">
+            <h3>სურვილების სია</h3>
+            <button onclick="toggleWishlist()">&times;</button>
+        </div>
+        <div class="drawer-content">
+            <div id="wishlistItems">
+                <!-- Wishlist items will be loaded here -->
+            </div>
+        </div>
+        <div style="padding: 1rem;">
+            <button class="btn btn-outline" style="width: 100%;" onclick="clearWishlist()">
+                სიის გასუფთავება
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" style="position: fixed; top: 100px; right: 20px; z-index: 3000; max-width: 400px;">
+        <!-- Alerts will be shown here -->
     </div>
 
     <script>
         // Configuration
         const API_BASE = 'https://universal-student-api-production.up.railway.app';
         
-        // Global state
+        // State
         let currentUser = null;
         let authToken = null;
-        let currentDomain = 'movies';
+        let currentDomain = null;
+        let currentPage = 1;
+        let currentSearchQuery = '';
         let cart = [];
+        let wishlist = [];
         
         // Available domains
-        const domains = [
-            'movies', 'books', 'electronics', 'restaurants', 'fashion',
-            'cars', 'hotels', 'games', 'music', 'food', 'sports',
-            'toys', 'tools', 'medicines', 'courses', 'events',
-            'apps', 'flights', 'pets', 'realestate'
+        const DOMAINS = [
+            { name: 'movies', title: 'ფილმები', icon: '🎬' },
+            { name: 'books', title: 'წიგნები', icon: '📚' },
+            { name: 'electronics', title: 'ელექტრონიკა', icon: '📱' },
+            { name: 'restaurants', title: 'რესტორნები', icon: '🍕' },
+            { name: 'fashion', title: 'მოდა', icon: '👕' },
+            { name: 'cars', title: 'ავტომობილები', icon: '🚗' },
+            { name: 'hotels', title: 'სასტუმროები', icon: '🏨' },
+            { name: 'games', title: 'თამაშები', icon: '🎮' },
+            { name: 'music', title: 'მუსიკა', icon: '🎵' },
+            { name: 'food', title: 'პროდუქტები', icon: '🍎' },
+            { name: 'sports', title: 'სპორტი', icon: '⚽' },
+            { name: 'toys', title: 'სათამაშოები', icon: '🧸' },
+            { name: 'tools', title: 'ხელსაწყოები', icon: '🔧' },
+            { name: 'medicines', title: 'მედიკამენტები', icon: '💊' },
+            { name: 'courses', title: 'კურსები', icon: '📖' },
+            { name: 'events', title: 'ივენთები', icon: '🎪' },
+            { name: 'apps', title: 'აპლიკაციები', icon: '📲' },
+            { name: 'flights', title: 'ფრენები', icon: '✈️' },
+            { name: 'pets', title: 'შინაური ცხოველები', icon: '🐕' },
+            { name: 'realestate', title: 'უძრავი ქონება', icon: '🏠' }
         ];
 
-        // Domain emojis
-        const domainEmojis = {
-            movies: '🎬', books: '📚', electronics: '📱', restaurants: '🍽️',
-            fashion: '👕', cars: '🚗', hotels: '🏨', games: '🎮',
-            music: '🎵', food: '🍕', sports: '⚽', toys: '🧸',
-            tools: '🔧', medicines: '💊', courses: '📖', events: '🎉',
-            apps: '📱', flights: '✈️', pets: '🐕', realestate: '🏠'
-        };
-
         // Utility Functions
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-            
-            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-            toast.textContent = message;
-            
-            document.getElementById('toastContainer').appendChild(toast);
-            
-            // Animate in
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full');
-            }, 100);
-            
-            // Animate out and remove
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 3000);
-        }
-
-        function addTestResult(testName, status, message, data = null) {
-            const resultsContainer = document.getElementById('testResults');
-            
-            // Clear initial message
-            if (resultsContainer.children.length === 1 && resultsContainer.children[0].textContent.includes('Click a test button')) {
-                resultsContainer.innerHTML = '';
-            }
-            
-            const result = document.createElement('div');
-            const statusColor = status === 'success' ? 'bg-green-100 border-green-400 text-green-800' : 
-                               status === 'error' ? 'bg-red-100 border-red-400 text-red-800' : 
-                               'bg-yellow-100 border-yellow-400 text-yellow-800';
-            
-            result.className = `test-result border-l-4 p-3 rounded ${statusColor}`;
-            result.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="font-semibold text-sm">${testName}</div>
-                        <div class="text-xs mt-1">${message}</div>
-                        ${data ? `<div class="text-xs mt-1 opacity-75">Data: ${JSON.stringify(data).substring(0, 100)}...</div>` : ''}
-                    </div>
-                    <div class="text-lg">${status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️'}</div>
-                </div>
-            `;
-            
-            resultsContainer.insertBefore(result, resultsContainer.firstChild);
-            
-            // Remove old results if more than 10
-            while (resultsContainer.children.length > 10) {
-                resultsContainer.removeChild(resultsContainer.lastChild);
-            }
-        }
-
-        // API Functions
         async function apiCall(endpoint, options = {}) {
             const url = `${API_BASE}${endpoint}`;
-            const defaultOptions = {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(authToken && { 'Authorization': `Bearer ${authToken}` })
-                }
+            const headers = {
+                'Content-Type': 'application/json',
+                ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
+                ...options.headers
             };
-            
+
             try {
-                const response = await fetch(url, { ...defaultOptions, ...options });
-                const data = await response.json();
+                const response = await fetch(url, { ...options, headers });
+                let data;
+                
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = { message: 'Invalid response' };
+                }
                 
                 return {
                     success: response.ok,
@@ -399,163 +824,342 @@
                 };
             }
         }
+        
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+        
+        function showLoading(containerId) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>იტვირთება...</p>
+                </div>
+            `;
+        }
 
-        // Authentication Functions
-        async function login(username, password) {
+        // Navigation
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`${section}Section`).classList.remove('hidden');
+        }
+
+        // Authentication
+        function showAuth(type) {
+            document.getElementById('authModal').classList.add('show');
+            document.getElementById('loginForm').classList.toggle('hidden', type !== 'login');
+            document.getElementById('registerForm').classList.toggle('hidden', type !== 'register');
+        }
+
+        function closeAuth() {
+            document.getElementById('authModal').classList.remove('show');
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
             const result = await apiCall('/api/v1/auth/login', {
                 method: 'POST',
                 body: JSON.stringify({ username, password })
             });
             
-            console.log('Login result:', result); // Debug log
-            
-            if (result.success && result.data) {
-                // Handle nested data structure
-                authToken = result.data.token || result.data.data?.token || result.data.access_token;
-                currentUser = result.data.user || result.data.data?.user || { username: username, role: 'user' };
+            if (result.success && result.data.data) {
+                currentUser = result.data.data.user;
+                authToken = result.data.data.token;
                 
-                if (authToken) {
-                    console.log('Token found:', authToken.substring(0, 20) + '...');
-                    updateAuthUI();
-                    showToast(`Welcome back, ${username}!`, 'success');
-                    loadCart();
-                    return true;
-                } else {
-                    console.log('No token in response:', result.data);
-                    showToast('Login successful but no token received', 'error');
-                    return false;
-                }
+                updateAuthUI();
+                closeAuth();
+                showAlert('წარმატებით შეხვედით!', 'success');
+                
+                // Load cart and wishlist
+                loadCart();
+                loadWishlist();
             } else {
-                showToast(result.data?.message || 'Login failed', 'error');
-                return false;
+                showAlert(result.data.message || 'შესვლა ვერ მოხერხდა', 'error');
             }
         }
 
-        async function register(username, email, password) {
+        async function register(event) {
+            event.preventDefault();
+            
+            const userData = {
+                username: document.getElementById('registerUsername').value,
+                email: document.getElementById('registerEmail').value,
+                first_name: document.getElementById('registerFirstName').value,
+                last_name: document.getElementById('registerLastName').value,
+                password: document.getElementById('registerPassword').value
+            };
+            
             const result = await apiCall('/api/v1/auth/register', {
                 method: 'POST',
-                body: JSON.stringify({ username, email, password })
+                body: JSON.stringify(userData)
             });
             
-            console.log('Registration result:', result); // Debug log
-            
-            if (result.success && result.data) {
-                // Check if registration includes token for auto-login
-                const token = result.data.token || result.data.data?.token;
-                const user = result.data.user || result.data.data?.user;
+            if (result.success && result.data.data) {
+                currentUser = result.data.data.user;
+                authToken = result.data.data.token;
                 
-                if (token && user) {
-                    // Auto-login after successful registration
-                    authToken = token;
-                    currentUser = user;
-                    updateAuthUI();
-                    showToast(`Welcome ${username}! Registration and login successful.`, 'success');
-                    loadCart();
-                } else {
-                    // Registration successful but no auto-login
-                    showToast('Registration successful! Please login manually.', 'success');
-                    toggleAuthSection(); // Switch to login form
-                }
-                return true;
+                updateAuthUI();
+                closeAuth();
+                showAlert('რეგისტრაცია წარმატებით დასრულდა!', 'success');
+                
+                // Load cart and wishlist
+                loadCart();
+                loadWishlist();
             } else {
-                showToast(result.data?.message || 'Registration failed', 'error');
-                return false;
+                showAlert(result.data.message || 'რეგისტრაცია ვერ მოხერხდა', 'error');
             }
         }
 
         function logout() {
-            authToken = null;
             currentUser = null;
+            authToken = null;
             cart = [];
+            wishlist = [];
+            
             updateAuthUI();
             updateCartUI();
-            showToast('Logged out successfully', 'info');
+            updateWishlistUI();
+            showAlert('გამოხვედით სისტემიდან', 'info');
         }
 
         function updateAuthUI() {
-            const authStatus = document.getElementById('authStatus');
+            const authButtons = document.getElementById('authButtons');
             const userInfo = document.getElementById('userInfo');
-            const loginSection = document.getElementById('loginSection');
-            const logoutBtn = document.getElementById('logoutBtn');
-            const cartSection = document.getElementById('cartSection');
-            const cartEmpty = document.getElementById('cartEmpty');
+            const profileLink = document.getElementById('profileLink');
             
             if (currentUser) {
-                authStatus.textContent = 'Logged in';
+                authButtons.classList.add('hidden');
                 userInfo.classList.remove('hidden');
-                document.getElementById('username').textContent = currentUser.username;
-                document.getElementById('userRole').textContent = currentUser.role;
-                loginSection.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
-                cartSection.classList.remove('hidden');
-                cartEmpty.classList.add('hidden');
-                
-                // Update API status
-                document.getElementById('apiStatus').innerHTML = `
-                    <div class="w-3 h-3 bg-green-400 rounded-full"></div>
-                    <span class="text-sm">Authenticated</span>
-                `;
+                profileLink.classList.remove('hidden');
+                document.getElementById('userName').textContent = currentUser.first_name || currentUser.username;
             } else {
-                authStatus.textContent = 'Not logged in';
+                authButtons.classList.remove('hidden');
                 userInfo.classList.add('hidden');
-                loginSection.classList.remove('hidden');
-                logoutBtn.classList.add('hidden');
-                cartSection.classList.add('hidden');
-                cartEmpty.classList.remove('hidden');
-                
-                // Update API status
-                document.getElementById('apiStatus').innerHTML = `
-                    <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                    <span class="text-sm">Not authenticated</span>
+                profileLink.classList.add('hidden');
+            }
+        }
+
+        // Domain Management
+        async function loadDomains() {
+            const domainGrid = document.getElementById('domainGrid');
+            
+            let domainsHtml = '';
+            DOMAINS.forEach(domain => {
+                domainsHtml += `
+                    <div class="domain-card" onclick="selectDomain('${domain.name}')">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">${domain.icon}</div>
+                        <h3>${domain.title}</h3>
+                        <p>${domain.name}</p>
+                    </div>
+                `;
+            });
+            
+            domainGrid.innerHTML = domainsHtml;
+        }
+
+        function selectDomain(domain) {
+            currentDomain = domain;
+            currentPage = 1;
+            currentSearchQuery = '';
+            
+            document.getElementById('searchInput').value = '';
+            
+            const domainInfo = DOMAINS.find(d => d.name === domain);
+            document.getElementById('categoryTitle').textContent = domainInfo ? domainInfo.title : domain;
+            
+            showSection('products');
+            loadProducts();
+        }
+
+        // Products Management
+        async function loadProducts() {
+            if (!currentDomain) return;
+            
+            showLoading('productsGrid');
+            
+            const endpoint = currentSearchQuery 
+                ? `/api/v1/${currentDomain}/products/search?q=${encodeURIComponent(currentSearchQuery)}&page=${currentPage}&limit=12`
+                : `/api/v1/${currentDomain}/products?page=${currentPage}&limit=12`;
+            
+            const result = await apiCall(endpoint);
+            
+            if (result.success && result.data.data) {
+                displayProducts(result.data.data, result.data.pagination);
+            } else {
+                document.getElementById('productsGrid').innerHTML = `
+                    <div class="alert alert-error">
+                        პროდუქტების ჩატვირთვა ვერ მოხერხდა: ${result.data.message || 'უცნობი შეცდომა'}
+                    </div>
                 `;
             }
         }
 
-        // Cart Functions
-        async function loadCart() {
-            if (!authToken) {
-                console.log('No auth token for cart loading');
+        function displayProducts(products, pagination) {
+            const productsGrid = document.getElementById('productsGrid');
+            
+            if (!products || products.length === 0) {
+                productsGrid.innerHTML = `
+                    <div class="alert alert-info" style="grid-column: 1 / -1; text-align: center;">
+                        პროდუქტები ვერ მოიძებნა
+                    </div>
+                `;
                 return;
             }
             
-            console.log('Loading cart with token:', authToken.substring(0, 20) + '...');
+            let productsHtml = '';
+            products.forEach(product => {
+                const attributes = typeof product.attributes === 'string' 
+                    ? JSON.parse(product.attributes) 
+                    : product.attributes || {};
+                
+                productsHtml += `
+                    <div class="product-card">
+                        <img src="${product.image_url}" alt="${product.name}" class="product-image" 
+                             onerror="this.src='https://via.placeholder.com/280x200?text=${encodeURIComponent(product.name)}'">
+                        <div class="product-info">
+                            <h3 class="product-title">${product.name}</h3>
+                            <div class="product-price">${product.price}</div>
+                            <div class="product-rating">
+                                <span>⭐ ${product.rating || 'N/A'}</span>
+                                <span>(${product.review_count || 0} მიმოხილვა)</span>
+                            </div>
+                            <div class="product-actions">
+                                <button class="btn btn-primary btn-sm" onclick="addToCart(${product.id}, '${product.domain}', '${product.name.replace(/'/g, "\\'")}', ${product.price})">
+                                    კალათში დამატება
+                                </button>
+                                <button class="btn btn-outline btn-sm" onclick="addToWishlist(${product.id}, '${product.domain}', '${product.name.replace(/'/g, "\\'")}', ${product.price})">
+                                    ❤️
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            productsGrid.innerHTML = productsHtml;
+            
+            // Update pagination
+            updatePagination(pagination);
+        }
+
+        function updatePagination(pagination) {
+            const paginationContainer = document.getElementById('pagination');
+            
+            if (!pagination || pagination.total_pages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            let paginationHtml = '';
+            
+            // Previous button
+            if (pagination.has_prev) {
+                paginationHtml += `<button class="page-btn" onclick="changePage(${pagination.prev_page})">წინა</button>`;
+            }
+            
+            // Page numbers
+            const startPage = Math.max(1, pagination.current_page - 2);
+            const endPage = Math.min(pagination.total_pages, pagination.current_page + 2);
+            
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `
+                    <button class="page-btn ${i === pagination.current_page ? 'active' : ''}" onclick="changePage(${i})">
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // Next button
+            if (pagination.has_next) {
+                paginationHtml += `<button class="page-btn" onclick="changePage(${pagination.next_page})">შემდეგი</button>`;
+            }
+            
+            paginationContainer.innerHTML = paginationHtml;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            loadProducts();
+        }
+
+        async function searchProducts() {
+            currentSearchQuery = document.getElementById('searchInput').value.trim();
+            currentPage = 1;
+            await loadProducts();
+        }
+
+        function clearSearch() {
+            document.getElementById('searchInput').value = '';
+            currentSearchQuery = '';
+            currentPage = 1;
+            loadProducts();
+        }
+
+        // Cart Management
+        async function loadCart() {
+            if (!authToken) return;
+            
             const result = await apiCall('/api/v1/cart');
             
-            console.log('Cart result:', result);
-            
-            if (result.success && result.data) {
-                // Handle different response structures
-                cart = result.data.cart || result.data.data?.cart || result.data.items || [];
+            if (result.success && result.data.data) {
+                cart = result.data.data.cart;
                 updateCartUI();
-            } else if (result.status === 401) {
-                console.log('Cart access unauthorized - token may be invalid');
-                showToast('Session expired - please login again', 'error');
-                logout();
             }
         }
 
-        async function addToCart(domain, productId, name, price, quantity = 1) {
+        async function addToCart(productId, domain, name, price) {
             if (!authToken) {
-                showToast('Please login to add items to cart', 'error');
+                showAlert('გთხოვთ, შეხვიდეთ სისტემაში', 'error');
                 return;
             }
             
             const result = await apiCall('/api/v1/cart/add', {
                 method: 'POST',
                 body: JSON.stringify({
-                    domain,
+                    domain: domain,
                     product_id: productId,
-                    name,
-                    price,
-                    quantity
+                    name: name,
+                    price: price,
+                    quantity: 1
                 })
             });
             
             if (result.success) {
-                showToast('Item added to cart!', 'success');
+                showAlert('პროდუქტი კალათშია დამატებული!', 'success');
                 loadCart();
             } else {
-                showToast(result.data.message || 'Failed to add to cart', 'error');
+                showAlert(result.data.message || 'პროდუქტის დამატება ვერ მოხერხდა', 'error');
+            }
+        }
+
+        async function updateCartQuantity(itemId, quantity) {
+            if (quantity <= 0) {
+                await removeFromCart(itemId);
+                return;
+            }
+            
+            const result = await apiCall(`/api/v1/cart/update/${itemId}`, {
+                method: 'PUT',
+                body: JSON.stringify({ quantity: quantity })
+            });
+            
+            if (result.success) {
+                loadCart();
+            } else {
+                showAlert('რაოდენობის განახლება ვერ მოხერხდა', 'error');
             }
         }
 
@@ -565,41 +1169,25 @@
             });
             
             if (result.success) {
-                showToast('Item removed from cart', 'info');
+                showAlert('პროდუქტი ამოღებულია კალათიდან', 'info');
                 loadCart();
             } else {
-                showToast('Failed to remove item', 'error');
+                showAlert('პროდუქტის ამოღება ვერ მოხერხდა', 'error');
             }
         }
 
         async function clearCart() {
+            if (!confirm('დარწმუნებული ხართ, რომ გსურთ კალათის გასუფთავება?')) return;
+            
             const result = await apiCall('/api/v1/cart/clear', {
                 method: 'DELETE'
             });
             
             if (result.success) {
-                showToast('Cart cleared!', 'info');
+                showAlert('კალათა გასუფთავებულია', 'info');
                 loadCart();
             } else {
-                showToast('Failed to clear cart', 'error');
-            }
-        }
-
-        async function checkout() {
-            const result = await apiCall('/api/v1/cart/checkout', {
-                method: 'POST',
-                body: JSON.stringify({
-                    payment_method: 'credit_card',
-                    shipping_address: '123 Test Street, Tbilisi, Georgia'
-                })
-            });
-            
-            if (result.success) {
-                showToast(`Order ${result.data.data.order.id} created successfully!`, 'success');
-                cart = [];
-                updateCartUI();
-            } else {
-                showToast('Checkout failed', 'error');
+                showAlert('კალათის გასუფთავება ვერ მოხერხდა', 'error');
             }
         }
 
@@ -608,292 +1196,289 @@
             const cartCount = document.getElementById('cartCount');
             const cartTotal = document.getElementById('cartTotal');
             
-            // Update cart count
-            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
-            cartCount.textContent = totalItems;
+            if (!cart || cart.length === 0) {
+                cartItems.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">კალათა ცარიელია</p>';
+                cartCount.textContent = '0';
+                cartTotal.textContent = '$0.00';
+                return;
+            }
             
-            // Update cart total
-            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-            cartTotal.textContent = `$${total.toFixed(2)}`;
-            
-            // Update cart items
-            cartItems.innerHTML = '';
+            let totalAmount = 0;
+            let totalItems = 0;
+            let cartHtml = '';
             
             cart.forEach(item => {
-                const cartItem = document.createElement('div');
-                cartItem.className = 'border rounded-lg p-3 flex items-center justify-between';
-                cartItem.innerHTML = `
-                    <div class="flex-1">
-                        <div class="font-semibold text-sm">${item.name}</div>
-                        <div class="text-xs text-gray-500">${item.domain} • $${item.price}</div>
-                        <div class="text-xs text-blue-600">Qty: ${item.quantity}</div>
-                    </div>
-                    <button onclick="removeFromCart(${item.id})" 
-                        class="text-red-500 hover:text-red-700 p-1">
-                        🗑️
-                    </button>
-                `;
-                cartItems.appendChild(cartItem);
-            });
-        }
-
-        // Products Functions
-        async function loadProducts(domain = currentDomain, search = '') {
-            const loadingEl = document.getElementById('productsLoading');
-            const gridEl = document.getElementById('productsGrid');
-            
-            loadingEl.classList.remove('hidden');
-            gridEl.innerHTML = '';
-            
-            let endpoint = `/api/v1/${domain}/products?limit=20`;
-            if (search) {
-                endpoint = `/api/v1/${domain}/products/search?q=${encodeURIComponent(search)}&limit=20`;
-            }
-            
-            const result = await apiCall(endpoint);
-            
-            loadingEl.classList.add('hidden');
-            
-            if (result.success && result.data.data) {
-                const products = result.data.data;
+                const itemTotal = item.price * item.quantity;
+                totalAmount += itemTotal;
+                totalItems += item.quantity;
                 
-                products.forEach(product => {
-                    const productCard = document.createElement('div');
-                    productCard.className = 'border rounded-lg p-4 hover:shadow-md transition-shadow';
-                    productCard.innerHTML = `
-                        <div class="aspect-square bg-gray-200 rounded-lg mb-3 overflow-hidden">
-                            <img src="${product.image_url || 'https://via.placeholder.com/150'}" 
-                                alt="${product.name || product.title}" 
-                                class="w-full h-full object-cover"
-                                onerror="this.src='https://via.placeholder.com/150'">
+                cartHtml += `
+                    <div class="cart-item">
+                        <img src="${item.image_url || `https://via.placeholder.com/60?text=${encodeURIComponent(item.name)}`}" alt="${item.name}" class="item-image">
+                        <div class="item-info">
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-price">${item.price}</div>
+                            <div class="quantity-controls">
+                                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, ${item.quantity - 1})">-</button>
+                                <input type="number" class="quantity-input" value="${item.quantity}" 
+                                       onchange="updateCartQuantity(${item.id}, this.value)" min="0">
+                                <button class="quantity-btn" onclick="updateCartQuantity(${item.id}, ${item.quantity + 1})">+</button>
+                                <button class="btn btn-sm" onclick="removeFromCart(${item.id})" style="margin-left: 0.5rem; background: #dc3545; color: white;">
+                                    ❌
+                                </button>
+                            </div>
                         </div>
-                        <div class="font-semibold text-sm mb-1 line-clamp-2">${product.name || product.title}</div>
-                        <div class="text-blue-600 font-bold mb-2">$${product.price}</div>
-                        <button onclick="addToCart('${domain}', ${product.id}, '${(product.name || product.title).replace(/'/g, "\\'")}', ${product.price})" 
-                            class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded text-sm transition-colors">
-                            🛒 Add to Cart
-                        </button>
-                    `;
-                    gridEl.appendChild(productCard);
-                });
-                
-                if (products.length === 0) {
-                    gridEl.innerHTML = '<div class="col-span-full text-center text-gray-500 py-8">No products found</div>';
-                }
-            } else {
-                gridEl.innerHTML = '<div class="col-span-full text-center text-red-500 py-8">Failed to load products</div>';
-            }
-        }
-
-        // Testing Functions
-        async function runTest(testType) {
-            const testBtn = document.querySelector(`[data-test="${testType}"]`);
-            testBtn.classList.add('loading');
-            
-            let result, testName, endpoint;
-            
-            switch (testType) {
-                case 'health':
-                    testName = 'Health Check';
-                    endpoint = '/health';
-                    break;
-                case 'domains':
-                    testName = 'Get Domains';
-                    endpoint = '/api/v1/domains';
-                    break;
-                case 'categories':
-                    testName = 'Get Categories';
-                    endpoint = `/api/v1/${currentDomain}/categories`;
-                    break;
-                case 'brands':
-                    testName = 'Get Brands';
-                    endpoint = `/api/v1/${currentDomain}/brands`;
-                    break;
-                case 'invalid-domain':
-                    testName = 'Invalid Domain Test (should be 404)';
-                    endpoint = '/api/v1/invaliddomainname/products';
-                    break;
-                case 'security':
-                    testName = 'Security Test (hacker123 login - should fail)';
-                    result = await apiCall('/api/v1/auth/login', {
-                        method: 'POST',
-                        body: JSON.stringify({ username: 'hacker123', password: 'demo123' })
-                    });
-                    break;
-                default:
-                    testName = 'Unknown Test';
-                    endpoint = '/';
-            }
-            
-            if (endpoint && testType !== 'security') {
-                result = await apiCall(endpoint);
-            }
-            
-            testBtn.classList.remove('loading');
-            
-            // Determine test result
-            let status, message;
-            
-            if (testType === 'invalid-domain') {
-                status = result.status === 404 ? 'success' : 'error';
-                message = result.status === 404 ? 
-                    'PASS: Invalid domain correctly returned 404' : 
-                    `FAIL: Expected 404, got ${result.status}`;
-            } else if (testType === 'security') {
-                status = result.status === 401 ? 'success' : 'error';
-                message = result.status === 401 ? 
-                    'PASS: Security fix working - hacker123 blocked' : 
-                    `FAIL: CRITICAL BUG - hacker123 can login! Status: ${result.status}`;
-            } else {
-                status = result.success ? 'success' : 'error';
-                message = result.success ? 
-                    `PASS: ${result.status} - ${result.data.message || 'Success'}` : 
-                    `FAIL: ${result.status} - ${result.data.message || 'Unknown error'}`;
-            }
-            
-            addTestResult(testName, status, message, result.data);
-        }
-
-        // UI Functions
-        function toggleAuthSection() {
-            const loginSection = document.getElementById('loginSection');
-            const registerSection = document.getElementById('registerSection');
-            const authToggle = document.getElementById('authToggle');
-            
-            if (loginSection.classList.contains('hidden')) {
-                loginSection.classList.remove('hidden');
-                registerSection.classList.add('hidden');
-                authToggle.textContent = "Don't have an account? Register here";
-            } else {
-                loginSection.classList.add('hidden');
-                registerSection.classList.remove('hidden');
-                authToggle.textContent = "Already have an account? Login here";
-            }
-        }
-
-        function selectDomain(domain) {
-            currentDomain = domain;
-            document.getElementById('currentDomain').textContent = domain;
-            
-            // Update active domain visual
-            document.querySelectorAll('.domain-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-600', 'text-white');
-                btn.classList.add('bg-gray-200', 'text-gray-700');
+                    </div>
+                `;
             });
-            document.querySelector(`[data-domain="${domain}"]`).classList.remove('bg-gray-200', 'text-gray-700');
-            document.querySelector(`[data-domain="${domain}"]`).classList.add('bg-blue-600', 'text-white');
             
-            // Load products for new domain
-            loadProducts(domain);
+            cartItems.innerHTML = cartHtml;
+            cartCount.textContent = totalItems.toString();
+            cartTotal.textContent = `${totalAmount.toFixed(2)}`;
         }
 
-        // Initialize UI
-        function initializeUI() {
-            // Populate domain grid
-            const domainGrid = document.getElementById('domainGrid');
-            domains.forEach(domain => {
-                const btn = document.createElement('button');
-                btn.className = `domain-btn p-2 rounded-lg text-sm font-medium transition-colors ${
-                    domain === currentDomain ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`;
-                btn.setAttribute('data-domain', domain);
-                btn.innerHTML = `${domainEmojis[domain]} ${domain}`;
-                btn.addEventListener('click', () => selectDomain(domain));
-                domainGrid.appendChild(btn);
+        async function checkout() {
+            if (!authToken) {
+                showAlert('გთხოვთ, შეხვიდეთ სისტემაში', 'error');
+                return;
+            }
+            
+            if (!cart || cart.length === 0) {
+                showAlert('კალათა ცარიელია', 'error');
+                return;
+            }
+            
+            const result = await apiCall('/api/v1/cart/checkout', {
+                method: 'POST',
+                body: JSON.stringify({
+                    payment_method: 'credit_card',
+                    shipping_address: 'Demo Address'
+                })
             });
-
-            // Initial load
-            updateAuthUI();
-            loadProducts();
-            
-            // Check API status
-            checkApiStatus();
-        }
-
-        async function checkApiStatus() {
-            const result = await apiCall('/health');
-            const statusEl = document.getElementById('apiStatus');
             
             if (result.success) {
-                statusEl.innerHTML = `
-                    <div class="w-3 h-3 bg-green-400 rounded-full"></div>
-                    <span class="text-sm">API Online</span>
-                `;
-                addTestResult('API Status', 'success', 'API is online and healthy', result.data);
+                showAlert('შეკვეთა წარმატებით გაფორმდა!', 'success');
+                cart = [];
+                updateCartUI();
+                toggleCart();
             } else {
-                statusEl.innerHTML = `
-                    <div class="w-3 h-3 bg-red-400 rounded-full"></div>
-                    <span class="text-sm">API Offline</span>
-                `;
-                addTestResult('API Status', 'error', 'API is not responding', null);
+                showAlert(result.data.message || 'შეკვეთის გაფორმება ვერ მოხერხდა', 'error');
             }
+        }
+
+        // Wishlist Management
+        async function loadWishlist() {
+            if (!authToken) return;
+            
+            const result = await apiCall('/api/v1/wishlist');
+            
+            if (result.success && result.data.data) {
+                wishlist = result.data.data.wishlist;
+                updateWishlistUI();
+            }
+        }
+
+        async function addToWishlist(productId, domain, name, price) {
+            if (!authToken) {
+                showAlert('გთხოვთ, შეხვიდეთ სისტემაში', 'error');
+                return;
+            }
+            
+            const result = await apiCall('/api/v1/wishlist/add', {
+                method: 'POST',
+                body: JSON.stringify({
+                    domain: domain,
+                    product_id: productId,
+                    name: name,
+                    price: price
+                })
+            });
+            
+            if (result.success) {
+                showAlert('პროდუქტი სურვილების სიაშია დამატებული!', 'success');
+                loadWishlist();
+            } else {
+                if (result.status === 409) {
+                    showAlert('ეს პროდუქტი უკვე სურვილების სიაშია', 'info');
+                } else {
+                    showAlert(result.data.message || 'პროდუქტის დამატება ვერ მოხერხდა', 'error');
+                }
+            }
+        }
+
+        async function removeFromWishlist(itemId) {
+            const result = await apiCall(`/api/v1/wishlist/remove/${itemId}`, {
+                method: 'DELETE'
+            });
+            
+            if (result.success) {
+                showAlert('პროდუქტი ამოღებულია სურვილების სიიდან', 'info');
+                loadWishlist();
+            } else {
+                showAlert('პროდუქტის ამოღება ვერ მოხერხდა', 'error');
+            }
+        }
+
+        async function moveToCart(itemId) {
+            const result = await apiCall(`/api/v1/wishlist/move-to-cart/${itemId}`, {
+                method: 'POST',
+                body: JSON.stringify({ quantity: 1 })
+            });
+            
+            if (result.success) {
+                showAlert('პროდუქტი კალათშია გადატანილი!', 'success');
+                loadWishlist();
+                loadCart();
+            } else {
+                showAlert('პროდუქტის გადატანა ვერ მოხერხდა', 'error');
+            }
+        }
+
+        async function clearWishlist() {
+            if (!confirm('დარწმუნებული ხართ, რომ გსურთ სურვილების სიის გასუფთავება?')) return;
+            
+            const result = await apiCall('/api/v1/wishlist/clear', {
+                method: 'DELETE'
+            });
+            
+            if (result.success) {
+                showAlert('სურვილების სია გასუფთავებულია', 'info');
+                loadWishlist();
+            } else {
+                showAlert('სიის გასუფთავება ვერ მოხერხდა', 'error');
+            }
+        }
+
+        function updateWishlistUI() {
+            const wishlistItems = document.getElementById('wishlistItems');
+            const wishlistCount = document.getElementById('wishlistCount');
+            
+            if (!wishlist || wishlist.length === 0) {
+                wishlistItems.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">სურვილების სია ცარიელია</p>';
+                wishlistCount.textContent = '0';
+                return;
+            }
+            
+            let wishlistHtml = '';
+            
+            wishlist.forEach(item => {
+                wishlistHtml += `
+                    <div class="wishlist-item">
+                        <img src="${item.image_url || `https://via.placeholder.com/60?text=${encodeURIComponent(item.name)}`}" alt="${item.name}" class="item-image">
+                        <div class="item-info">
+                            <div class="item-name">${item.name}</div>
+                            <div class="item-price">${item.price}</div>
+                            <div style="margin-top: 0.5rem;">
+                                <button class="btn btn-primary btn-sm" onclick="moveToCart(${item.id})">კალათში</button>
+                                <button class="btn btn-sm" onclick="removeFromWishlist(${item.id})" style="background: #dc3545; color: white; margin-left: 0.5rem;">
+                                    ❌
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            wishlistItems.innerHTML = wishlistHtml;
+            wishlistCount.textContent = wishlist.length.toString();
+        }
+
+        // UI Controls
+        function toggleCart() {
+            document.getElementById('cartDrawer').classList.toggle('open');
+        }
+
+        function toggleWishlist() {
+            document.getElementById('wishlistDrawer').classList.toggle('open');
         }
 
         // Event Listeners
-        document.addEventListener('DOMContentLoaded', function() {
-            // Auth events
-            document.getElementById('loginBtn').addEventListener('click', async () => {
-                const username = document.getElementById('loginUsername').value;
-                const password = document.getElementById('loginPassword').value;
-                await login(username, password);
-            });
-
-            document.getElementById('registerBtn').addEventListener('click', async () => {
-                const username = document.getElementById('regUsername').value;
-                const email = document.getElementById('regEmail').value;
-                const password = document.getElementById('regPassword').value;
-                await register(username, email, password);
-            });
-
-            document.getElementById('authToggle').addEventListener('click', toggleAuthSection);
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-
-            // Quick login buttons
-            document.querySelectorAll('.quick-login').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const username = e.target.dataset.username;
-                    const password = e.target.dataset.password;
-                    document.getElementById('loginUsername').value = username;
-                    document.getElementById('loginPassword').value = password;
-                    await login(username, password);
-                });
-            });
-
-            // Cart events
-            document.getElementById('clearCartBtn').addEventListener('click', clearCart);
-            document.getElementById('checkoutBtn').addEventListener('click', checkout);
-
-            // Products events
-            document.getElementById('loadProductsBtn').addEventListener('click', () => loadProducts(currentDomain));
-            document.getElementById('searchBtn').addEventListener('click', () => {
-                const query = document.getElementById('searchInput').value;
-                loadProducts(currentDomain, query);
-            });
-
-            document.getElementById('searchInput').addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    const query = e.target.value;
-                    loadProducts(currentDomain, query);
-                }
-            });
-
-            // Test events
-            document.querySelectorAll('.test-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const testType = e.target.dataset.test;
-                    runTest(testType);
-                });
-            });
-
-            // Initialize
-            initializeUI();
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProducts();
+            }
         });
 
-        // Global functions for onclick handlers
-        window.addToCart = addToCart;
-        window.removeFromCart = removeFromCart;
+        // Close modals when clicking outside
+        document.getElementById('authModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeAuth();
+            }
+        });
 
-        
+        // Initialization
+        async function init() {
+            await loadDomains();
+            updateAuthUI();
+            
+            // Check if user is already logged in (from localStorage)
+            const savedToken = localStorage.getItem('authToken');
+            const savedUser = localStorage.getItem('currentUser');
+            
+            if (savedToken && savedUser) {
+                try {
+                    authToken = savedToken;
+                    currentUser = JSON.parse(savedUser);
+                    
+                    // Verify token is still valid
+                    const result = await apiCall('/api/v1/auth/profile');
+                    if (result.success) {
+                        updateAuthUI();
+                        loadCart();
+                        loadWishlist();
+                    } else {
+                        // Token expired, clear storage
+                        localStorage.removeItem('authToken');
+                        localStorage.removeItem('currentUser');
+                        authToken = null;
+                        currentUser = null;
+                    }
+                } catch (e) {
+                    // Invalid stored data, clear storage
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('currentUser');
+                }
+            }
+        }
+
+        // Save auth state to localStorage
+        function saveAuthState() {
+            if (authToken && currentUser) {
+                localStorage.setItem('authToken', authToken);
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            } else {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('currentUser');
+            }
+        }
+
+        // Update existing login function to save state
+        const originalLogin = login;
+        login = async function(event) {
+            await originalLogin(event);
+            if (authToken) {
+                saveAuthState();
+            }
+        };
+
+        // Update existing register function to save state  
+        const originalRegister = register;
+        register = async function(event) {
+            await originalRegister(event);
+            if (authToken) {
+                saveAuthState();
+            }
+        };
+
+        // Update logout to clear saved state
+        const originalLogout = logout;
+        logout = function() {
+            originalLogout();
+            saveAuthState();
+        };
+
+        // Initialize app
+        init();
     </script>
 </body>
 </html>

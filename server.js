@@ -1,4 +1,4 @@
-// server.js - COMPLETE Universal Student API v2.0 WITH WISHLIST SYSTEM
+// server.js - COMPLETE Universal Student API v2.0 WITH REVIEWS SYSTEM
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -12,16 +12,18 @@ const { initializeDatabase } = require('./database/connection');
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
-const wishlistRoutes = require('./routes/wishlist'); // NEW: Wishlist routes
+const wishlistRoutes = require('./routes/wishlist');
+const reviewsRoutes = require('./routes/reviews'); // NEW: Reviews & Ratings System
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// PERSISTENCE SYSTEM - Users, Carts & Wishlists
+// PERSISTENCE SYSTEM - Users, Carts, Wishlists & Reviews
 const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CARTS_FILE = path.join(DATA_DIR, 'carts.json');
-const WISHLISTS_FILE = path.join(DATA_DIR, 'wishlists.json'); // NEW: Wishlists file
+const WISHLISTS_FILE = path.join(DATA_DIR, 'wishlists.json');
+const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json'); // NEW: Reviews file
 
 // Create data directory if it doesn't exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -110,7 +112,7 @@ function saveCarts(carts) {
   }
 }
 
-// NEW: Load wishlists from file
+// Load wishlists from file
 function loadWishlists() {
   try {
     if (fs.existsSync(WISHLISTS_FILE)) {
@@ -125,7 +127,7 @@ function loadWishlists() {
   return {};
 }
 
-// NEW: Save wishlists to file
+// Save wishlists to file
 function saveWishlists(wishlists) {
   try {
     fs.writeFileSync(WISHLISTS_FILE, JSON.stringify(wishlists, null, 2));
@@ -140,7 +142,7 @@ function saveWishlists(wishlists) {
 // Initialize persistence data
 let persistentUsers = loadUsers();
 let persistentCarts = loadCarts();
-let persistentWishlists = loadWishlists(); // NEW: Load wishlists
+let persistentWishlists = loadWishlists();
 
 // Make persistence functions available globally (for routes)
 global.userPersistence = {
@@ -188,7 +190,6 @@ global.cartPersistence = {
   }
 };
 
-// NEW: Wishlist persistence functions
 global.wishlistPersistence = {
   getWishlists: () => persistentWishlists,
   getUserWishlist: (userId) => {
@@ -206,7 +207,7 @@ global.wishlistPersistence = {
   }
 };
 
-console.log('✅ User, Cart & Wishlist persistence system initialized!');
+console.log('✅ User, Cart, Wishlist & Reviews persistence system initialized!');
 
 // PERFORMANCE MIDDLEWARE
 app.use(compression());
@@ -279,14 +280,15 @@ async function startServer() {
           version: "2.0.0",
           status: "Running ✅",
           database: databaseReady ? "Connected 💾" : "Limited Mode ⚠️",
-          persistence: "✅ File-based User, Cart & Wishlist Persistence",
+          persistence: "✅ File-based User, Cart, Wishlist & Reviews Persistence",
           features: [
             "✅ 20 Domains with 500+ products each",
             "✅ Advanced JWT Authentication", 
             "✅ Role-based Access Control",
             "✅ Persistent User Accounts",
             "✅ Shopping Cart System with Persistence",
-            "✅ Wishlist System with Persistence", // NEW
+            "✅ Wishlist System with Persistence",
+            "✅ Reviews & Ratings System with Persistence", // NEW
             "✅ Search & Filtering",
             "✅ Pagination & Performance Optimized",
             "✅ Rate Limiting & Security",
@@ -326,13 +328,22 @@ async function startServer() {
               "GET /api/v1/cart/count",
               "POST /api/v1/cart/checkout"
             ],
-            wishlist: [ // NEW
+            wishlist: [
               "GET /api/v1/wishlist",
               "POST /api/v1/wishlist/add",
               "DELETE /api/v1/wishlist/remove/:item_id",
               "DELETE /api/v1/wishlist/clear",
               "GET /api/v1/wishlist/count",
               "POST /api/v1/wishlist/move-to-cart/:item_id"
+            ],
+            reviews: [ // NEW SECTION
+              "GET /api/v1/{domain}/products/{id}/reviews",
+              "POST /api/v1/{domain}/products/{id}/reviews",
+              "PUT /api/v1/reviews/{reviewId}",
+              "DELETE /api/v1/reviews/{reviewId}",
+              "POST /api/v1/reviews/{reviewId}/helpful",
+              "GET /api/v1/users/{userId}/reviews",
+              "GET /api/v1/reviews/statistics"
             ],
             utility: [
               "GET /health",
@@ -355,8 +366,10 @@ async function startServer() {
             categories: "GET /api/v1/fashion/categories",
             cart: "GET /api/v1/cart",
             add_to_cart: "POST /api/v1/cart/add",
-            wishlist: "GET /api/v1/wishlist", // NEW
-            add_to_wishlist: "POST /api/v1/wishlist/add" // NEW
+            wishlist: "GET /api/v1/wishlist",
+            add_to_wishlist: "POST /api/v1/wishlist/add",
+            product_reviews: "GET /api/v1/movies/products/1/reviews", // NEW
+            add_review: "POST /api/v1/movies/products/1/reviews" // NEW
           },
           cors_enabled: [
             "http://localhost:5500",
@@ -370,9 +383,10 @@ async function startServer() {
             files: {
               users: USERS_FILE,
               carts: CARTS_FILE,
-              wishlists: WISHLISTS_FILE // NEW
+              wishlists: WISHLISTS_FILE,
+              reviews: REVIEWS_FILE // NEW
             },
-            status: "✅ All user accounts, carts and wishlists persist across restarts"
+            status: "✅ All user data, carts, wishlists and reviews persist across restarts"
           },
           timestamp: new Date().toISOString()
         });
@@ -408,7 +422,8 @@ async function startServer() {
           persistence: {
             users_file_exists: fs.existsSync(USERS_FILE),
             carts_file_exists: fs.existsSync(CARTS_FILE),
-            wishlists_file_exists: fs.existsSync(WISHLISTS_FILE), // NEW
+            wishlists_file_exists: fs.existsSync(WISHLISTS_FILE),
+            reviews_file_exists: fs.existsSync(REVIEWS_FILE), // NEW
             users_count: persistentUsers.length,
             data_directory: fs.existsSync(DATA_DIR) ? "✅ Exists" : "❌ Missing"
           },
@@ -441,7 +456,8 @@ async function startServer() {
             user_persistence: "✅ File-based storage",
             products: health.tables.products > 0 ? "✅ Ready" : "⚠️ No products",
             cart: "✅ Available with Persistence",
-            wishlist: "✅ Available with Persistence", // NEW
+            wishlist: "✅ Available with Persistence",
+            reviews: "✅ Available with Persistence", // NEW
             search: "✅ Available",
             pagination: "✅ Available",
             rate_limiting: "✅ Active",
@@ -461,13 +477,15 @@ async function startServer() {
             search: "GET /api/v1/books/products/search?q=javascript", 
             authentication: "POST /api/v1/auth/login",
             cart: "GET /api/v1/cart",
-            wishlist: "GET /api/v1/wishlist", // NEW
+            wishlist: "GET /api/v1/wishlist",
+            reviews: "GET /api/v1/movies/products/1/reviews", // NEW
             demo_credentials: "demo / demo123"
           },
           persistence_status: {
             users_file: fs.existsSync(USERS_FILE) ? "✅ Exists" : "❌ Missing",
             carts_file: fs.existsSync(CARTS_FILE) ? "✅ Exists" : "❌ Missing",
-            wishlists_file: fs.existsSync(WISHLISTS_FILE) ? "✅ Exists" : "❌ Missing", // NEW
+            wishlists_file: fs.existsSync(WISHLISTS_FILE) ? "✅ Exists" : "❌ Missing",
+            reviews_file: fs.existsSync(REVIEWS_FILE) ? "✅ Exists" : "❌ Missing", // NEW
             loaded_users: persistentUsers.length,
             last_save_time: fs.existsSync(USERS_FILE) 
               ? fs.statSync(USERS_FILE).mtime.toISOString()
@@ -502,7 +520,8 @@ async function startServer() {
               search: '/api/v1/books/products/search?q=javascript',
               categories: '/api/v1/electronics/categories',
               brands: '/api/v1/fashion/brands',
-              single_product: '/api/v1/games/products/1'
+              single_product: '/api/v1/games/products/1',
+              product_reviews: '/api/v1/movies/products/1/reviews' // NEW
             },
             supported_features: [
               "Products listing with pagination",
@@ -512,7 +531,8 @@ async function startServer() {
               "Single product details",
               "Related products",
               "Shopping cart functionality with persistence",
-              "Wishlist functionality with persistence" // NEW
+              "Wishlist functionality with persistence",
+              "Reviews & ratings system with persistence" // NEW
             ]
           },
           meta: {
@@ -537,8 +557,11 @@ async function startServer() {
     // CART ROUTES
     app.use('/api/v1/cart', cartRoutes);
 
-    // NEW: WISHLIST ROUTES
+    // WISHLIST ROUTES
     app.use('/api/v1/wishlist', wishlistRoutes);
+
+    // REVIEWS ROUTES - NEW
+    app.use('/api/v1', reviewsRoutes);
 
     // PRODUCT ROUTES (with domain parameter)
     app.use('/api/v1/:domain', productRoutes);
@@ -656,7 +679,7 @@ async function startServer() {
               response: "Order details and confirmation"
             }
           },
-          wishlist: { // NEW SECTION
+          wishlist: {
             "GET /api/v1/wishlist": {
               description: "Get user's wishlist (persistent storage)",
               headers: {
@@ -708,6 +731,73 @@ async function startServer() {
                 quantity: "number (optional, default: 1)"
               },
               response: "Move confirmation and updated cart"
+            }
+          },
+          reviews: { // NEW SECTION
+            "GET /api/v1/{domain}/products/{id}/reviews": {
+              description: "Get product reviews with statistics",
+              parameters: {
+                domain: "string (product domain)",
+                id: "number (product ID)",
+                page: "number (optional, default: 1)",
+                limit: "number (optional, default: 10, max: 50)",
+                sort: "string (optional: newest, oldest, highest, lowest, helpful)"
+              },
+              response: "Reviews array with statistics and pagination"
+            },
+            "POST /api/v1/{domain}/products/{id}/reviews": {
+              description: "Add review to product (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              body: {
+                rating: "number (required, 1-5)",
+                comment: "string (required, 10-1000 chars)",
+                title: "string (optional)"
+              },
+              response: "Created review object"
+            },
+            "PUT /api/v1/reviews/{reviewId}": {
+              description: "Update user's own review",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              body: {
+                rating: "number (optional, 1-5)",
+                comment: "string (optional, 10-1000 chars)",
+                title: "string (optional)"
+              },
+              response: "Updated review object"
+            },
+            "DELETE /api/v1/reviews/{reviewId}": {
+              description: "Delete user's own review (or admin delete any)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Delete confirmation"
+            },
+            "POST /api/v1/reviews/{reviewId}/helpful": {
+              description: "Mark review as helpful (requires auth)",
+              headers: {
+                "Authorization": "Bearer <token>"
+              },
+              response: "Helpful vote confirmation"
+            },
+            "GET /api/v1/users/{userId}/reviews": {
+              description: "Get user's reviews",
+              parameters: {
+                userId: "number (user ID)",
+                page: "number (optional)",
+                limit: "number (optional)"
+              },
+              response: "User's reviews with statistics"
+            },
+            "GET /api/v1/reviews/statistics": {
+              description: "Get overall review statistics",
+              parameters: {
+                domain: "string (optional, filter by domain)"
+              },
+              response: "Review statistics and analytics"
             }
           },
           products: {
@@ -762,7 +852,8 @@ async function startServer() {
             "GET /health": "Detailed health check",
             "GET /api/v1/status": "API status and features",
             "GET /api/v1/domains": "Available domains list",
-            "GET /api/v1/docs": "This documentation"
+            "GET /api/v1/docs": "This documentation",
+            "GET /api/v1/reviews/health": "Reviews system health check"
           }
         },
         example_requests: {
@@ -788,7 +879,13 @@ async function startServer() {
             add_to_wishlist: `curl -X POST -H "Authorization: Bearer <your-token>" \\
   -H "Content-Type: application/json" \\
   -d '{"domain":"books","product_id":5,"name":"JavaScript Guide","price":29.99}' \\
-  "${req.protocol}://${req.get('host')}/api/v1/wishlist/add"`
+  "${req.protocol}://${req.get('host')}/api/v1/wishlist/add"`,
+            get_reviews: `curl "${req.protocol}://${req.get('host')}/api/v1/movies/products/1/reviews?page=1&limit=5"`,
+            add_review: `curl -X POST -H "Authorization: Bearer <your-token>" \\
+  -H "Content-Type: application/json" \\
+  -d '{"rating":5,"comment":"Excellent product! Highly recommend.","title":"Great movie"}' \\
+  "${req.protocol}://${req.get('host')}/api/v1/movies/products/1/reviews"`,
+            review_statistics: `curl "${req.protocol}://${req.get('host')}/api/v1/reviews/statistics?domain=movies"`
           }
         },
         supported_domains: [
@@ -798,7 +895,7 @@ async function startServer() {
           "pets", "realestate"
         ],
         persistence_info: {
-          description: "All user accounts, shopping carts and wishlists persist across server restarts",
+          description: "All user accounts, shopping carts, wishlists and reviews persist across server restarts",
           storage_type: "File-based JSON storage",
           auto_save: "All changes are automatically saved to disk",
           demo_accounts: "Pre-loaded: demo/demo123 and teacher/demo123",
@@ -840,6 +937,8 @@ async function startServer() {
           'POST /api/v1/wishlist/add',
           'GET /api/v1/{domain}/products',
           'GET /api/v1/{domain}/products/{id}',
+          'GET /api/v1/{domain}/products/{id}/reviews',
+          'POST /api/v1/{domain}/products/{id}/reviews',
           'GET /api/v1/{domain}/products/search',
           'GET /api/v1/{domain}/categories',
           'GET /api/v1/{domain}/brands'
@@ -892,14 +991,15 @@ async function startServer() {
       console.log(`🛍️ Products Example: http://localhost:${PORT}/api/v1/movies/products`);
       console.log(`🛒 Cart Example: GET http://localhost:${PORT}/api/v1/cart`);
       console.log(`💝 Wishlist Example: GET http://localhost:${PORT}/api/v1/wishlist`);
+      console.log(`📝 Reviews Example: GET http://localhost:${PORT}/api/v1/movies/products/1/reviews`);
       console.log(`🔍 Search Example: http://localhost:${PORT}/api/v1/books/products/search?q=javascript`);
       console.log(`🏥 Database: ${databaseReady ? 'Connected' : 'Limited Mode'}`);
       console.log(`📁 User Persistence: ${persistentUsers.length} users loaded from file`);
       console.log(`💾 Data Directory: ${DATA_DIR}`);
       console.log(`🌐 CORS: Enabled for localhost:5500, 127.0.0.1:5500`);
       console.log(`🚀 Ready for student projects!`);
-      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Cart + Wishlist' : 'Basic functionality available'}`);
-      console.log(`✅ NEW: Wishlist System with Persistence Added!`);
+      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Cart + Wishlist + Reviews' : 'Basic functionality available'}`);
+      console.log(`✅ NEW: Reviews & Ratings System with Persistence Added!`);
     });
 
   } catch (error) {
