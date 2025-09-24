@@ -1,3 +1,5 @@
+// Load environment variables
+require('dotenv').config();
 // server.js - COMPLETE Universal Student API v2.0 WITH REVIEWS SYSTEM
 const express = require('express');
 const cors = require('cors');
@@ -7,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 
+
 // Import database and routes
 const { initializeDatabase } = require('./database/connection');
 const authRoutes = require('./routes/auth');
@@ -14,6 +17,9 @@ const productRoutes = require('./routes/products');
 const cartRoutes = require('./routes/cart');
 const wishlistRoutes = require('./routes/wishlist');
 const reviewsRoutes = require('./routes/reviews'); // NEW: Reviews & Ratings System
+// Advanced authentication routes
+const advancedAuthRoutes = require('./routes/advanced-auth');
+app.use('/api/v1/auth', advancedAuthRoutes);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
