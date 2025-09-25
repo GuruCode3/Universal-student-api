@@ -1,22 +1,43 @@
-// utils/email-service.js - Real Email Service Configuration
-const nodemailer = require('nodemailer');
+// utils/email-service.js - Railway Compatible Email Service Configuration
+let nodemailer;
+
+// Safe nodemailer import for Railway
+try {
+  nodemailer = require('nodemailer');
+  console.log('📧 Nodemailer imported successfully');
+} catch (error) {
+  console.error('❌ Failed to import nodemailer:', error.message);
+  console.log('📧 Email functionality will be disabled');
+}
 
 // Email service configuration
 class EmailService {
   constructor() {
     this.transporter = null;
+    this.isAvailable = false;
     this.initialize();
   }
 
   async initialize() {
     try {
+      // Check if nodemailer is available
+      if (!nodemailer) {
+        console.log('📧 Nodemailer not available, email functionality disabled');
+        return;
+      }
+
       // Gmail SMTP Configuration (Production Ready)
       if (process.env.EMAIL_SERVICE === 'gmail') {
+        if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+          console.log('⚠️ Gmail credentials missing, skipping Gmail setup');
+          return;
+        }
+
         this.transporter = nodemailer.createTransporter({
           service: 'gmail',
           auth: {
-            user: process.env.GMAIL_USER, // your-email@gmail.com
-            pass: process.env.GMAIL_APP_PASSWORD // App Password (not regular password)
+            user: process.env.GMAIL_USER,
+            pass: process.env.GMAIL_APP_PASSWORD
           },
           secure: true,
           port: 465
@@ -25,6 +46,11 @@ class EmailService {
       
       // SendGrid SMTP Configuration (Recommended for production)
       else if (process.env.EMAIL_SERVICE === 'sendgrid') {
+        if (!process.env.SENDGRID_API_KEY) {
+          console.log('⚠️ SendGrid API key missing, skipping SendGrid setup');
+          return;
+        }
+
         this.transporter = nodemailer.createTransporter({
           host: 'smtp.sendgrid.net',
           port: 587,
@@ -32,15 +58,25 @@ class EmailService {
           auth: {
             user: 'apikey',
             pass: process.env.SENDGRID_API_KEY
+          },
+          tls: {
+            rejectUnauthorized: false
           }
         });
       }
       
+      // Demo/Development mode
+      else if (process.env.EMAIL_SERVICE === 'demo' || process.env.EMAIL_SERVICE === 'disabled') {
+        console.log('📧 Email service in demo mode - no actual emails will be sent');
+        this.isAvailable = false;
+        return;
+      }
+      
       // Generic SMTP Configuration
-      else {
+      else if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
         this.transporter = nodemailer.createTransporter({
-          host: process.env.SMTP_HOST || 'smtp.gmail.com',
-          port: process.env.SMTP_PORT || 587,
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT) || 587,
           secure: process.env.SMTP_SECURE === 'true',
           auth: {
             user: process.env.SMTP_USER,
@@ -51,24 +87,53 @@ class EmailService {
           }
         });
       }
+      else {
+        console.log('📧 No email service configured, email functionality disabled');
+        return;
+      }
 
-      // Verify connection
+      // Verify connection if transporter exists
       if (this.transporter) {
-        await this.transporter.verify();
-        console.log('✅ Email service connected successfully');
+        try {
+          await this.transporter.verify();
+          this.isAvailable = true;
+          console.log('✅ Email service connected successfully');
+          console.log('📧 Email service ready:', process.env.EMAIL_SERVICE || 'default');
+        } catch (verifyError) {
+          console.error('❌ Email service verification failed:', verifyError.message);
+          this.transporter = null;
+          this.isAvailable = false;
+        }
       }
       
     } catch (error) {
       console.error('❌ Email service initialization failed:', error.message);
       console.log('📧 Email functionality will be disabled');
+      this.transporter = null;
+      this.isAvailable = false;
     }
+  }
+
+  // Check if email service is available
+  isEmailServiceAvailable() {
+    return this.isAvailable && this.transporter !== null;
   }
 
   // Send password reset email
   async sendPasswordResetEmail(to, resetToken, userFirstName = null) {
     try {
-      if (!this.transporter) {
-        throw new Error('Email service not initialized');
+      if (!this.isEmailServiceAvailable()) {
+        console.log('📧 Email service not available, returning demo response');
+        return {
+          success: false,
+          error: 'Email service not initialized',
+          recipient: to,
+          demo_info: {
+            reset_token: resetToken,
+            reset_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`,
+            message: 'In production, this would send an email'
+          }
+        };
       }
 
       const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
@@ -76,7 +141,7 @@ class EmailService {
       const mailOptions = {
         from: {
           name: 'Universal Student API',
-          address: process.env.FROM_EMAIL || process.env.GMAIL_USER
+          address: process.env.FROM_EMAIL || process.env.GMAIL_USER || 'noreply@universal-student-api.com'
         },
         to: to,
         subject: 'Password Reset Request - Universal Student API',
@@ -110,8 +175,18 @@ class EmailService {
   // Send email verification email
   async sendEmailVerification(to, verificationToken, userFirstName = null) {
     try {
-      if (!this.transporter) {
-        throw new Error('Email service not initialized');
+      if (!this.isEmailServiceAvailable()) {
+        console.log('📧 Email service not available, returning demo response');
+        return {
+          success: false,
+          error: 'Email service not initialized',
+          recipient: to,
+          demo_info: {
+            verification_token: verificationToken,
+            verification_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`,
+            message: 'In production, this would send an email'
+          }
+        };
       }
 
       const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
@@ -119,7 +194,7 @@ class EmailService {
       const mailOptions = {
         from: {
           name: 'Universal Student API',
-          address: process.env.FROM_EMAIL || process.env.GMAIL_USER
+          address: process.env.FROM_EMAIL || process.env.GMAIL_USER || 'noreply@universal-student-api.com'
         },
         to: to,
         subject: 'Verify Your Email - Universal Student API',
@@ -153,14 +228,18 @@ class EmailService {
   // Send order confirmation email
   async sendOrderConfirmation(to, orderData, userFirstName = null) {
     try {
-      if (!this.transporter) {
-        throw new Error('Email service not initialized');
+      if (!this.isEmailServiceAvailable()) {
+        return {
+          success: false,
+          error: 'Email service not initialized',
+          recipient: to
+        };
       }
 
       const mailOptions = {
         from: {
           name: 'Universal Student API',
-          address: process.env.FROM_EMAIL || process.env.GMAIL_USER
+          address: process.env.FROM_EMAIL || process.env.GMAIL_USER || 'noreply@universal-student-api.com'
         },
         to: to,
         subject: `Order Confirmation #${orderData.id}`,
@@ -213,7 +292,7 @@ class EmailService {
     <body>
         <div class="container">
             <div class="header">
-                <h2>🔐 Password Reset Request</h2>
+                <h2>Password Reset Request</h2>
             </div>
             
             <p>Hello${firstName ? ` ${firstName}` : ''},</p>
@@ -269,7 +348,7 @@ class EmailService {
     <body>
         <div class="container">
             <div class="header">
-                <h2>📧 Verify Your Email Address</h2>
+                <h2>Verify Your Email Address</h2>
             </div>
             
             <p>Hello${firstName ? ` ${firstName}` : ''},</p>
@@ -335,7 +414,7 @@ class EmailService {
     <body>
         <div class="container">
             <div class="header">
-                <h2>🎉 Order Confirmation</h2>
+                <h2>Order Confirmation</h2>
                 <p>Order #${orderData.id}</p>
             </div>
             
@@ -440,9 +519,32 @@ This is a demo order confirmation from Universal Student API.
 For questions, contact your instructor.
     `;
   }
+
+  // Get email service status
+  getServiceStatus() {
+    return {
+      available: this.isAvailable,
+      service: process.env.EMAIL_SERVICE || 'not configured',
+      transporter_ready: !!this.transporter,
+      nodemailer_loaded: !!nodemailer
+    };
+  }
 }
 
-// Create singleton instance
-const emailService = new EmailService();
+// Create singleton instance with error handling
+let emailService;
+try {
+  emailService = new EmailService();
+} catch (error) {
+  console.error('❌ Failed to create email service instance:', error);
+  // Create fallback service
+  emailService = {
+    isEmailServiceAvailable: () => false,
+    sendPasswordResetEmail: () => Promise.resolve({ success: false, error: 'Email service unavailable' }),
+    sendEmailVerification: () => Promise.resolve({ success: false, error: 'Email service unavailable' }),
+    sendOrderConfirmation: () => Promise.resolve({ success: false, error: 'Email service unavailable' }),
+    getServiceStatus: () => ({ available: false, error: 'Service initialization failed' })
+  };
+}
 
 module.exports = emailService;
