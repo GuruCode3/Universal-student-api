@@ -1,0 +1,8 @@
+# # 1. ძირითადი API სტატუსი
+# GET https://universal-student-api-production.up.railway.app/
+
+# 2. Advanced Auth სტატუსი  
+# GET https://universal-student-api-production.up.railway.app/api/v1/auth/advanced-status
+
+# 3. Email სერვისის ტესტი
+GET https://universal-student-api-production.up.railway.app/api/v1/auth/test-email?to=your-email@gmail.com
