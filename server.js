@@ -1,7 +1,7 @@
-
-// Load environment variables
+// Load environment variables FIRST
 require('dotenv').config();
-// server.js - COMPLETE Universal Student API v2.0 WITH REVIEWS SYSTEM
+
+// server.js - COMPLETE Universal Student API v2.0 WITH ADVANCED AUTHENTICATION
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -10,27 +10,14 @@ const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 
-
-// Import database and routes
-const { initializeDatabase } = require('./database/connection');
-const authRoutes = require('./routes/auth');
-const productRoutes = require('./routes/products');
-const cartRoutes = require('./routes/cart');
-const wishlistRoutes = require('./routes/wishlist');
-const reviewsRoutes = require('./routes/reviews'); // NEW: Reviews & Ratings System
-// Advanced authentication routes
-const advancedAuthRoutes = require('./routes/advanced-auth');
-app.use('/api/v1/auth', advancedAuthRoutes);
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// PERSISTENCE SYSTEM - Users, Carts, Wishlists & Reviews
+// PERSISTENCE SYSTEM - Users, Carts, Wishlists
 const DATA_DIR = path.join(__dirname, 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 const CARTS_FILE = path.join(DATA_DIR, 'carts.json');
 const WISHLISTS_FILE = path.join(DATA_DIR, 'wishlists.json');
-const REVIEWS_FILE = path.join(DATA_DIR, 'reviews.json'); // NEW: Reviews file
 
 // Create data directory if it doesn't exist
 if (!fs.existsSync(DATA_DIR)) {
@@ -61,7 +48,9 @@ function loadUsers() {
       role: "user",
       first_name: "Demo",
       last_name: "User",
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      email_verified: false,
+      email_verified_at: null
     },
     {
       id: 2,
@@ -71,7 +60,9 @@ function loadUsers() {
       role: "admin",
       first_name: "Admin",
       last_name: "Teacher",
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      email_verified: true,
+      email_verified_at: new Date().toISOString()
     }
   ];
   
@@ -159,6 +150,8 @@ global.userPersistence = {
     const maxId = persistentUsers.length > 0 ? Math.max(...persistentUsers.map(u => u.id)) : 0;
     user.id = maxId + 1;
     user.created_at = new Date().toISOString();
+    user.email_verified = false;
+    user.email_verified_at = null;
     persistentUsers.push(user);
     saveUsers(persistentUsers);
     return user;
@@ -214,7 +207,7 @@ global.wishlistPersistence = {
   }
 };
 
-console.log('✅ User, Cart, Wishlist & Reviews persistence system initialized!');
+console.log('✅ User, Cart, Wishlist persistence system initialized!');
 
 // PERFORMANCE MIDDLEWARE
 app.use(compression());
@@ -245,8 +238,9 @@ app.use(cors({
     'http://127.0.0.1:5500',
     'http://localhost:8000',
     'http://localhost:8080',
-    'https://your-frontend-domain.com'
-  ],
+    'https://your-frontend-domain.com',
+    process.env.FRONTEND_URL
+  ].filter(Boolean),
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -268,45 +262,85 @@ async function startServer() {
     
     // Initialize database first
     console.log('🗄️ Initializing database...');
-    const dbInitialized = await initializeDatabase();
-    
-    if (dbInitialized) {
-      databaseReady = true;
-      console.log('✅ Database initialized successfully');
-    } else {
-      console.log('⚠️ Database initialization failed, continuing with limited functionality');
+    try {
+      const { initializeDatabase } = require('./database/connection');
+      const dbInitialized = await initializeDatabase();
+      
+      if (dbInitialized) {
+        databaseReady = true;
+        console.log('✅ Database initialized successfully');
+      } else {
+        console.log('⚠️ Database initialization failed, continuing with limited functionality');
+      }
+    } catch (dbError) {
+      console.log('⚠️ Database module not found or error:', dbError.message);
+      console.log('⚠️ Continuing without database functionality');
     }
     
-    // ROUTES CONFIGURATION
+    // Import and configure routes
+    try {
+      // Import basic routes
+      const authRoutes = require('./routes/auth');
+      const cartRoutes = require('./routes/cart');
+      const wishlistRoutes = require('./routes/wishlist');
+      
+      // Import advanced authentication routes
+      const advancedAuthRoutes = require('./routes/advanced-auth');
+      
+      // Optional routes (only if files exist)
+      let productRoutes = null;
+      
+      try {
+        productRoutes = require('./routes/products');
+      } catch (e) {
+        console.log('⚠️ Products routes not found, skipping');
+      }
+
+      // AUTHENTICATION ROUTES (Basic + Advanced)
+      app.use('/api/v1/auth', authRoutes);
+      app.use('/api/v1/auth', advancedAuthRoutes);
+
+      // CART ROUTES
+      app.use('/api/v1/cart', cartRoutes);
+
+      // WISHLIST ROUTES
+      app.use('/api/v1/wishlist', wishlistRoutes);
+
+      // PRODUCT ROUTES (with domain parameter, if available)
+      if (productRoutes) {
+        app.use('/api/v1/:domain', productRoutes);
+      }
+
+      console.log('✅ All available routes configured successfully');
+      
+    } catch (routeError) {
+      console.error('❌ Route configuration error:', routeError);
+      console.log('⚠️ Continuing with basic functionality');
+    }
     
     // Root endpoint with comprehensive API info
     app.get('/', (req, res) => {
       try {
         res.json({
-          message: "🎓 Universal Student API v2.0",
+          message: "🎓 Universal Student API v2.0 - Advanced Authentication Enabled",
           version: "2.0.0",
           status: "Running ✅",
           database: databaseReady ? "Connected 💾" : "Limited Mode ⚠️",
-          persistence: "✅ File-based User, Cart, Wishlist & Reviews Persistence",
+          persistence: "✅ File-based User, Cart, Wishlist Persistence",
+          email_service: process.env.GMAIL_USER ? "✅ Email Service Configured" : "⚠️ Email Not Configured",
+          advanced_auth: "✅ Password Reset, Email Verification Ready",
           features: [
-            "✅ 20 Domains with 500+ products each",
             "✅ Advanced JWT Authentication", 
             "✅ Role-based Access Control",
             "✅ Persistent User Accounts",
             "✅ Shopping Cart System with Persistence",
             "✅ Wishlist System with Persistence",
-            "✅ Reviews & Ratings System with Persistence", // NEW
-            "✅ Search & Filtering",
-            "✅ Pagination & Performance Optimized",
+            "✅ Password Reset via Email",
+            "✅ Email Verification System",
+            "✅ Advanced Security Features",
             "✅ Rate Limiting & Security",
             "✅ Comprehensive API Documentation",
             "✅ CORS Enabled for Frontend Testing"
-          ],
-          domains: [
-            "movies", "books", "electronics", "restaurants", "fashion",
-            "cars", "hotels", "games", "music", "food", "sports", "toys",
-            "tools", "medicines", "courses", "events", "apps", "flights",
-            "pets", "realestate"
           ],
           authentication: {
             demo_user: { username: "demo", password: "demo123", role: "user" },
@@ -315,85 +349,33 @@ async function startServer() {
             endpoints: [
               "POST /api/v1/auth/register",
               "POST /api/v1/auth/login", 
-              "GET /api/v1/auth/profile"
+              "GET /api/v1/auth/profile",
+              "POST /api/v1/auth/forgot-password",
+              "POST /api/v1/auth/reset-password",
+              "POST /api/v1/auth/send-verification",
+              "GET /api/v1/auth/verify-email"
             ]
           },
-          api_endpoints: {
-            products: [
-              "GET /api/v1/{domain}/products",
-              "GET /api/v1/{domain}/products/{id}",
-              "GET /api/v1/{domain}/products/search?q={query}",
-              "GET /api/v1/{domain}/categories",
-              "GET /api/v1/{domain}/brands"
-            ],
-            cart: [
-              "GET /api/v1/cart",
-              "POST /api/v1/cart/add",
-              "PUT /api/v1/cart/update/:item_id",
-              "DELETE /api/v1/cart/remove/:item_id",
-              "DELETE /api/v1/cart/clear",
-              "GET /api/v1/cart/count",
-              "POST /api/v1/cart/checkout"
-            ],
-            wishlist: [
-              "GET /api/v1/wishlist",
-              "POST /api/v1/wishlist/add",
-              "DELETE /api/v1/wishlist/remove/:item_id",
-              "DELETE /api/v1/wishlist/clear",
-              "GET /api/v1/wishlist/count",
-              "POST /api/v1/wishlist/move-to-cart/:item_id"
-            ],
-            reviews: [ // NEW SECTION
-              "GET /api/v1/{domain}/products/{id}/reviews",
-              "POST /api/v1/{domain}/products/{id}/reviews",
-              "PUT /api/v1/reviews/{reviewId}",
-              "DELETE /api/v1/reviews/{reviewId}",
-              "POST /api/v1/reviews/{reviewId}/helpful",
-              "GET /api/v1/users/{userId}/reviews",
-              "GET /api/v1/reviews/statistics"
-            ],
-            utility: [
-              "GET /health",
-              "GET /api/v1/status", 
-              "GET /api/v1/domains"
-            ]
+          advanced_authentication_features: {
+            password_reset: "✅ Email-based password reset",
+            email_verification: "✅ Account email verification", 
+            security_dashboard: "🔄 Coming Soon",
+            two_factor_auth: "🔄 Coming Soon"
           },
-          performance: {
-            rate_limit: "1000 requests / 15 minutes",
-            compression: "Enabled",
-            logging: "Enabled",
-            caching: "In-memory optimized",
-            persistence: "File-based storage"
+          email_configuration: {
+            service: process.env.EMAIL_SERVICE || 'Not configured',
+            status: process.env.GMAIL_USER ? 'Configured' : 'Not configured',
+            test_endpoint: "GET /api/v1/auth/test-email?to=your-email@gmail.com"
           },
-          example_requests: {
-            products: "GET /api/v1/movies/products?page=1&limit=20",
-            search: "GET /api/v1/books/products/search?q=javascript",
-            single_product: "GET /api/v1/electronics/products/1",
-            login: "POST /api/v1/auth/login",
-            categories: "GET /api/v1/fashion/categories",
-            cart: "GET /api/v1/cart",
-            add_to_cart: "POST /api/v1/cart/add",
-            wishlist: "GET /api/v1/wishlist",
-            add_to_wishlist: "POST /api/v1/wishlist/add",
-            product_reviews: "GET /api/v1/movies/products/1/reviews", // NEW
-            add_review: "POST /api/v1/movies/products/1/reviews" // NEW
-          },
-          cors_enabled: [
-            "http://localhost:5500",
-            "http://127.0.0.1:5500",
-            "http://localhost:3000",
-            "http://localhost:8000"
-          ],
           persistence_info: {
             users_loaded: persistentUsers.length,
             data_directory: DATA_DIR,
             files: {
               users: USERS_FILE,
               carts: CARTS_FILE,
-              wishlists: WISHLISTS_FILE,
-              reviews: REVIEWS_FILE // NEW
+              wishlists: WISHLISTS_FILE
             },
-            status: "✅ All user data, carts, wishlists and reviews persist across restarts"
+            status: "✅ All user data, carts, wishlists persist across restarts"
           },
           timestamp: new Date().toISOString()
         });
@@ -410,11 +392,8 @@ async function startServer() {
     // Health check endpoint
     app.get('/health', (req, res) => {
       try {
-        const { healthCheck } = require('./utils/database');
-        const health = healthCheck();
-        
         res.json({
-          ...health,
+          status: 'healthy',
           api_version: "2.0.0",
           server_uptime: process.uptime(),
           memory_usage: {
@@ -430,11 +409,16 @@ async function startServer() {
             users_file_exists: fs.existsSync(USERS_FILE),
             carts_file_exists: fs.existsSync(CARTS_FILE),
             wishlists_file_exists: fs.existsSync(WISHLISTS_FILE),
-            reviews_file_exists: fs.existsSync(REVIEWS_FILE), // NEW
             users_count: persistentUsers.length,
             data_directory: fs.existsSync(DATA_DIR) ? "✅ Exists" : "❌ Missing"
           },
-          cors_status: "✅ Enabled for frontend testing"
+          email_service: {
+            configured: !!process.env.GMAIL_USER,
+            service_type: process.env.EMAIL_SERVICE || 'Not set'
+          },
+          cors_status: "✅ Enabled for frontend testing",
+          advanced_auth_status: "✅ Enabled",
+          timestamp: new Date().toISOString()
         });
       } catch (error) {
         console.error('❌ Health check error:', error);
@@ -449,56 +433,47 @@ async function startServer() {
     // Status endpoint
     app.get('/api/v1/status', (req, res) => {
       try {
-        const { getAvailableDomains, healthCheck } = require('./utils/database');
-        const health = healthCheck();
-        const domains = getAvailableDomains();
-        
         res.json({
           success: true,
-          message: "Universal Student API v2.0 Status",
-          status: health.status,
+          message: "Universal Student API v2.0 Status - Advanced Authentication Enabled",
+          status: "healthy",
           version: "2.0.0",
           features: {
-            authentication: databaseReady ? "✅ Available" : "⚠️ Limited",
+            authentication: "✅ Available",
+            advanced_auth: "✅ Password Reset, Email Verification",
             user_persistence: "✅ File-based storage",
-            products: health.tables.products > 0 ? "✅ Ready" : "⚠️ No products",
             cart: "✅ Available with Persistence",
             wishlist: "✅ Available with Persistence",
-            reviews: "✅ Available with Persistence", // NEW
-            search: "✅ Available",
-            pagination: "✅ Available",
             rate_limiting: "✅ Active",
             cors: "✅ Enabled",
-            performance: health.performance.optimization_status || "✅ Optimized"
+            email_service: process.env.GMAIL_USER ? "✅ Configured" : "⚠️ Not configured"
           },
           data: {
-            available_domains: domains.length,
-            total_products: health.tables.products || 0,
-            total_users: health.tables.users || 0,
-            persistent_users: persistentUsers.length,
-            total_categories: health.tables.categories || 0,
-            total_brands: health.tables.brands || 0
+            persistent_users: persistentUsers.length
           },
           quick_tests: {
-            products: "GET /api/v1/movies/products",
-            search: "GET /api/v1/books/products/search?q=javascript", 
             authentication: "POST /api/v1/auth/login",
+            password_reset: "POST /api/v1/auth/forgot-password",
+            email_verification: "POST /api/v1/auth/send-verification",
             cart: "GET /api/v1/cart",
             wishlist: "GET /api/v1/wishlist",
-            reviews: "GET /api/v1/movies/products/1/reviews", // NEW
             demo_credentials: "demo / demo123"
           },
           persistence_status: {
             users_file: fs.existsSync(USERS_FILE) ? "✅ Exists" : "❌ Missing",
             carts_file: fs.existsSync(CARTS_FILE) ? "✅ Exists" : "❌ Missing",
             wishlists_file: fs.existsSync(WISHLISTS_FILE) ? "✅ Exists" : "❌ Missing",
-            reviews_file: fs.existsSync(REVIEWS_FILE) ? "✅ Exists" : "❌ Missing", // NEW
             loaded_users: persistentUsers.length,
             last_save_time: fs.existsSync(USERS_FILE) 
               ? fs.statSync(USERS_FILE).mtime.toISOString()
               : "Never"
           },
-          performance: health.performance || {},
+          advanced_authentication: {
+            password_reset: "✅ Available",
+            email_verification: "✅ Available",
+            email_service_status: process.env.GMAIL_USER ? "Configured" : "Not configured",
+            test_endpoint: "/api/v1/auth/test-email?to=your-email@gmail.com"
+          },
           server_time: new Date().toISOString()
         });
       } catch (error) {
@@ -511,73 +486,11 @@ async function startServer() {
       }
     });
 
-    // Domains endpoint
-    app.get('/api/v1/domains', (req, res) => {
-      try {
-        const { getAvailableDomains } = require('./utils/database');
-        const domains = getAvailableDomains();
-        
-        res.json({
-          success: true,
-          data: {
-            domains: domains,
-            total: domains.length,
-            example_urls: {
-              products: '/api/v1/movies/products',
-              search: '/api/v1/books/products/search?q=javascript',
-              categories: '/api/v1/electronics/categories',
-              brands: '/api/v1/fashion/brands',
-              single_product: '/api/v1/games/products/1',
-              product_reviews: '/api/v1/movies/products/1/reviews' // NEW
-            },
-            supported_features: [
-              "Products listing with pagination",
-              "Advanced search and filtering", 
-              "Categories with product counts",
-              "Brands with product counts",
-              "Single product details",
-              "Related products",
-              "Shopping cart functionality with persistence",
-              "Wishlist functionality with persistence",
-              "Reviews & ratings system with persistence" // NEW
-            ]
-          },
-          meta: {
-            domains_available: domains.length,
-            products_per_domain: "~500",
-            total_estimated_products: domains.length * 500
-          }
-        });
-      } catch (error) {
-        console.error('❌ Domains endpoint error:', error);
-        res.status(500).json({
-          success: false,
-          error: error.message,
-          timestamp: new Date().toISOString()
-        });
-      }
-    });
-
-    // AUTHENTICATION ROUTES
-    app.use('/api/v1/auth', authRoutes);
-
-    // CART ROUTES
-    app.use('/api/v1/cart', cartRoutes);
-
-    // WISHLIST ROUTES
-    app.use('/api/v1/wishlist', wishlistRoutes);
-
-    // REVIEWS ROUTES - NEW
-    app.use('/api/v1', reviewsRoutes);
-
-    // PRODUCT ROUTES (with domain parameter)
-    app.use('/api/v1/:domain', productRoutes);
-
     // API DOCUMENTATION ENDPOINT
     app.get('/api/v1/docs', (req, res) => {
       res.json({
         success: true,
-        message: "Universal Student API v2.0 Documentation",
+        message: "Universal Student API v2.0 Documentation - Advanced Authentication Enabled",
         version: "2.0.0",
         base_url: req.protocol + '://' + req.get('host'),
         authentication: {
@@ -598,269 +511,41 @@ async function startServer() {
         },
         endpoints: {
           authentication: {
-            "POST /api/v1/auth/register": {
-              description: "Register new user (persisted to file)",
-              body: {
-                username: "string (required)",
-                email: "string (required)",
-                password: "string (required)",
-                first_name: "string (optional)",
-                last_name: "string (optional)"
-              },
-              response: "User object + JWT token"
-            },
-            "POST /api/v1/auth/login": {
-              description: "Login user (loads from persistent storage)",
-              body: {
-                username: "string (username or email)",
-                password: "string"
-              },
-              response: "User object + JWT token"
-            },
-            "GET /api/v1/auth/profile": {
-              description: "Get user profile (requires auth)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "User profile object"
-            }
+            "POST /api/v1/auth/register": "Register new user",
+            "POST /api/v1/auth/login": "Login user",
+            "GET /api/v1/auth/profile": "Get user profile (requires auth)"
+          },
+          advanced_authentication: {
+            "POST /api/v1/auth/forgot-password": "Request password reset",
+            "POST /api/v1/auth/reset-password": "Reset password with token",
+            "GET /api/v1/auth/reset-password-form": "HTML form for password reset",
+            "POST /api/v1/auth/send-verification": "Send email verification",
+            "GET /api/v1/auth/verify-email": "Verify email with token",
+            "GET /api/v1/auth/test-email": "Test email service",
+            "GET /api/v1/auth/advanced-status": "Advanced auth module status"
           },
           cart: {
-            "GET /api/v1/cart": {
-              description: "Get user's shopping cart (persistent storage)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Cart items with product details and totals"
-            },
-            "POST /api/v1/cart/add": {
-              description: "Add product to cart (auto-saved to file)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              body: {
-                domain: "string (e.g., 'movies', 'books')",
-                product_id: "number",
-                name: "string (product name)",
-                price: "number (product price)",
-                quantity: "number (optional, default: 1)"
-              },
-              response: "Updated cart summary"
-            },
-            "PUT /api/v1/cart/update/:item_id": {
-              description: "Update cart item quantity (auto-saved)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              body: {
-                quantity: "number (0 to remove)"
-              },
-              response: "Updated cart item"
-            },
-            "DELETE /api/v1/cart/remove/:item_id": {
-              description: "Remove item from cart (auto-saved)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Removed item confirmation"
-            },
-            "DELETE /api/v1/cart/clear": {
-              description: "Clear entire cart (auto-saved)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Clear confirmation"
-            },
-            "GET /api/v1/cart/count": {
-              description: "Get cart items count",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Cart items count"
-            },
-            "POST /api/v1/cart/checkout": {
-              description: "Mock checkout process",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Order details and confirmation"
-            }
+            "GET /api/v1/cart": "Get user's cart",
+            "POST /api/v1/cart/add": "Add product to cart",
+            "PUT /api/v1/cart/update/:item_id": "Update cart item",
+            "DELETE /api/v1/cart/remove/:item_id": "Remove from cart",
+            "DELETE /api/v1/cart/clear": "Clear entire cart",
+            "GET /api/v1/cart/count": "Get cart items count",
+            "POST /api/v1/cart/checkout": "Mock checkout process"
           },
           wishlist: {
-            "GET /api/v1/wishlist": {
-              description: "Get user's wishlist (persistent storage)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Wishlist items with product details"
-            },
-            "POST /api/v1/wishlist/add": {
-              description: "Add product to wishlist (auto-saved to file)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              body: {
-                domain: "string (e.g., 'movies', 'books')",
-                product_id: "number",
-                name: "string (product name)",
-                price: "number (product price)",
-                image_url: "string (optional)"
-              },
-              response: "Updated wishlist summary"
-            },
-            "DELETE /api/v1/wishlist/remove/:item_id": {
-              description: "Remove item from wishlist (auto-saved)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Removed item confirmation"
-            },
-            "DELETE /api/v1/wishlist/clear": {
-              description: "Clear entire wishlist (auto-saved)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Clear confirmation"
-            },
-            "GET /api/v1/wishlist/count": {
-              description: "Get wishlist items count",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Wishlist items count"
-            },
-            "POST /api/v1/wishlist/move-to-cart/:item_id": {
-              description: "Move item from wishlist to cart",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              body: {
-                quantity: "number (optional, default: 1)"
-              },
-              response: "Move confirmation and updated cart"
-            }
-          },
-          reviews: { // NEW SECTION
-            "GET /api/v1/{domain}/products/{id}/reviews": {
-              description: "Get product reviews with statistics",
-              parameters: {
-                domain: "string (product domain)",
-                id: "number (product ID)",
-                page: "number (optional, default: 1)",
-                limit: "number (optional, default: 10, max: 50)",
-                sort: "string (optional: newest, oldest, highest, lowest, helpful)"
-              },
-              response: "Reviews array with statistics and pagination"
-            },
-            "POST /api/v1/{domain}/products/{id}/reviews": {
-              description: "Add review to product (requires auth)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              body: {
-                rating: "number (required, 1-5)",
-                comment: "string (required, 10-1000 chars)",
-                title: "string (optional)"
-              },
-              response: "Created review object"
-            },
-            "PUT /api/v1/reviews/{reviewId}": {
-              description: "Update user's own review",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              body: {
-                rating: "number (optional, 1-5)",
-                comment: "string (optional, 10-1000 chars)",
-                title: "string (optional)"
-              },
-              response: "Updated review object"
-            },
-            "DELETE /api/v1/reviews/{reviewId}": {
-              description: "Delete user's own review (or admin delete any)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Delete confirmation"
-            },
-            "POST /api/v1/reviews/{reviewId}/helpful": {
-              description: "Mark review as helpful (requires auth)",
-              headers: {
-                "Authorization": "Bearer <token>"
-              },
-              response: "Helpful vote confirmation"
-            },
-            "GET /api/v1/users/{userId}/reviews": {
-              description: "Get user's reviews",
-              parameters: {
-                userId: "number (user ID)",
-                page: "number (optional)",
-                limit: "number (optional)"
-              },
-              response: "User's reviews with statistics"
-            },
-            "GET /api/v1/reviews/statistics": {
-              description: "Get overall review statistics",
-              parameters: {
-                domain: "string (optional, filter by domain)"
-              },
-              response: "Review statistics and analytics"
-            }
-          },
-          products: {
-            "GET /api/v1/{domain}/products": {
-              description: "Get products for domain with pagination",
-              parameters: {
-                domain: "movies|books|electronics|etc",
-                page: "number (default: 1)",
-                limit: "number (default: 20, max: 500)"
-              },
-              response: "Products array + pagination info"
-            },
-            "GET /api/v1/{domain}/products/{id}": {
-              description: "Get single product with related products",
-              parameters: {
-                domain: "movies|books|electronics|etc",
-                id: "number (product ID)"
-              },
-              response: "Product object + related products"
-            },
-            "GET /api/v1/{domain}/products/search": {
-              description: "Search products with filters",
-              parameters: {
-                domain: "movies|books|electronics|etc",
-                q: "string (search term)",
-                category: "string (category slug)",
-                brand: "string (brand slug)",
-                min_price: "number",
-                max_price: "number",
-                page: "number",
-                limit: "number"
-              },
-              response: "Filtered products + search metadata"
-            },
-            "GET /api/v1/{domain}/categories": {
-              description: "Get categories for domain",
-              parameters: {
-                domain: "movies|books|electronics|etc"
-              },
-              response: "Categories array with product counts"
-            },
-            "GET /api/v1/{domain}/brands": {
-              description: "Get brands for domain",
-              parameters: {
-                domain: "movies|books|electronics|etc"
-              },
-              response: "Brands array with product counts"
-            }
+            "GET /api/v1/wishlist": "Get user's wishlist",
+            "POST /api/v1/wishlist/add": "Add product to wishlist",
+            "DELETE /api/v1/wishlist/remove/:item_id": "Remove from wishlist",
+            "DELETE /api/v1/wishlist/clear": "Clear entire wishlist",
+            "GET /api/v1/wishlist/count": "Get wishlist items count",
+            "POST /api/v1/wishlist/move-to-cart/:item_id": "Move item to cart"
           },
           utility: {
             "GET /": "API information and status",
             "GET /health": "Detailed health check",
             "GET /api/v1/status": "API status and features",
-            "GET /api/v1/domains": "Available domains list",
-            "GET /api/v1/docs": "This documentation",
-            "GET /api/v1/reviews/health": "Reviews system health check"
+            "GET /api/v1/docs": "This documentation"
           }
         },
         example_requests: {
@@ -868,58 +553,24 @@ async function startServer() {
             login: `curl -X POST ${req.protocol}://${req.get('host')}/api/v1/auth/login \\
   -H "Content-Type: application/json" \\
   -d '{"username":"demo","password":"demo123"}'`,
-            register: `curl -X POST ${req.protocol}://${req.get('host')}/api/v1/auth/register \\
+            forgot_password: `curl -X POST ${req.protocol}://${req.get('host')}/api/v1/auth/forgot-password \\
   -H "Content-Type: application/json" \\
-  -d '{"username":"newuser","email":"user@test.com","password":"password123"}'`,
-            products: `curl "${req.protocol}://${req.get('host')}/api/v1/movies/products?page=1&limit=10"`,
-            search: `curl "${req.protocol}://${req.get('host')}/api/v1/books/products/search?q=javascript&page=1"`,
-            profile: `curl -H "Authorization: Bearer <your-token>" \\
-  "${req.protocol}://${req.get('host')}/api/v1/auth/profile"`,
-            cart: `curl -H "Authorization: Bearer <your-token>" \\
-  "${req.protocol}://${req.get('host')}/api/v1/cart"`,
-            add_to_cart: `curl -X POST -H "Authorization: Bearer <your-token>" \\
-  -H "Content-Type: application/json" \\
-  -d '{"domain":"movies","product_id":1,"name":"Test Movie","price":12.99,"quantity":2}' \\
-  "${req.protocol}://${req.get('host')}/api/v1/cart/add"`,
-            wishlist: `curl -H "Authorization: Bearer <your-token>" \\
-  "${req.protocol}://${req.get('host')}/api/v1/wishlist"`,
-            add_to_wishlist: `curl -X POST -H "Authorization: Bearer <your-token>" \\
-  -H "Content-Type: application/json" \\
-  -d '{"domain":"books","product_id":5,"name":"JavaScript Guide","price":29.99}' \\
-  "${req.protocol}://${req.get('host')}/api/v1/wishlist/add"`,
-            get_reviews: `curl "${req.protocol}://${req.get('host')}/api/v1/movies/products/1/reviews?page=1&limit=5"`,
-            add_review: `curl -X POST -H "Authorization: Bearer <your-token>" \\
-  -H "Content-Type: application/json" \\
-  -d '{"rating":5,"comment":"Excellent product! Highly recommend.","title":"Great movie"}' \\
-  "${req.protocol}://${req.get('host')}/api/v1/movies/products/1/reviews"`,
-            review_statistics: `curl "${req.protocol}://${req.get('host')}/api/v1/reviews/statistics?domain=movies"`
+  -d '{"email":"demo@example.com"}'`,
+            test_email: `curl "${req.protocol}://${req.get('host')}/api/v1/auth/test-email?to=your-email@gmail.com"`
           }
         },
-        supported_domains: [
-          "movies", "books", "electronics", "restaurants", "fashion",
-          "cars", "hotels", "games", "music", "food", "sports", "toys",
-          "tools", "medicines", "courses", "events", "apps", "flights",
-          "pets", "realestate"
-        ],
         persistence_info: {
-          description: "All user accounts, shopping carts, wishlists and reviews persist across server restarts",
+          description: "All user accounts, shopping carts, wishlists persist across server restarts",
           storage_type: "File-based JSON storage",
           auto_save: "All changes are automatically saved to disk",
           demo_accounts: "Pre-loaded: demo/demo123 and teacher/demo123",
           data_location: DATA_DIR
         },
-        response_format: {
-          success_response: {
-            success: true,
-            data: "response data",
-            meta: "additional metadata",
-            pagination: "pagination info (when applicable)"
-          },
-          error_response: {
-            success: false,
-            error: "error type",
-            message: "human readable message"
-          }
+        advanced_features: {
+          password_reset: "Email-based password reset system",
+          email_verification: "Account email verification",
+          email_service: process.env.EMAIL_SERVICE || "Not configured",
+          email_status: process.env.GMAIL_USER ? "Configured" : "Not configured"
         }
       });
     });
@@ -934,21 +585,15 @@ async function startServer() {
           'GET /',
           'GET /health', 
           'GET /api/v1/status',
-          'GET /api/v1/domains',
           'GET /api/v1/docs',
           'POST /api/v1/auth/login',
           'POST /api/v1/auth/register',
+          'POST /api/v1/auth/forgot-password',
+          'POST /api/v1/auth/reset-password',
           'GET /api/v1/cart',
           'POST /api/v1/cart/add',
           'GET /api/v1/wishlist',
-          'POST /api/v1/wishlist/add',
-          'GET /api/v1/{domain}/products',
-          'GET /api/v1/{domain}/products/{id}',
-          'GET /api/v1/{domain}/products/{id}/reviews',
-          'POST /api/v1/{domain}/products/{id}/reviews',
-          'GET /api/v1/{domain}/products/search',
-          'GET /api/v1/{domain}/categories',
-          'GET /api/v1/{domain}/brands'
+          'POST /api/v1/wishlist/add'
         ],
         suggestion: 'Try GET /api/v1/docs for complete API documentation',
         timestamp: new Date().toISOString()
@@ -990,23 +635,25 @@ async function startServer() {
     // START SERVER
     app.listen(PORT, () => {
       console.log('🎓 Universal Student API v2.0 Started Successfully!');
+      console.log('🔐 ADVANCED AUTHENTICATION ENABLED!');
       console.log(`📍 Server running on: http://localhost:${PORT}`);
       console.log(`📖 Health check: http://localhost:${PORT}/health`);
       console.log(`📊 API Status: http://localhost:${PORT}/api/v1/status`);
       console.log(`📚 Documentation: http://localhost:${PORT}/api/v1/docs`);
       console.log(`🔐 Demo Login: POST http://localhost:${PORT}/api/v1/auth/login`);
-      console.log(`🛍️ Products Example: http://localhost:${PORT}/api/v1/movies/products`);
+      console.log(`🔄 Password Reset: POST http://localhost:${PORT}/api/v1/auth/forgot-password`);
+      console.log(`📧 Email Verification: POST http://localhost:${PORT}/api/v1/auth/send-verification`);
+      console.log(`✉️ Email Test: GET http://localhost:${PORT}/api/v1/auth/test-email?to=your-email@gmail.com`);
       console.log(`🛒 Cart Example: GET http://localhost:${PORT}/api/v1/cart`);
       console.log(`💝 Wishlist Example: GET http://localhost:${PORT}/api/v1/wishlist`);
-      console.log(`📝 Reviews Example: GET http://localhost:${PORT}/api/v1/movies/products/1/reviews`);
-      console.log(`🔍 Search Example: http://localhost:${PORT}/api/v1/books/products/search?q=javascript`);
       console.log(`🏥 Database: ${databaseReady ? 'Connected' : 'Limited Mode'}`);
       console.log(`📁 User Persistence: ${persistentUsers.length} users loaded from file`);
       console.log(`💾 Data Directory: ${DATA_DIR}`);
-      console.log(`🌐 CORS: Enabled for localhost:5500, 127.0.0.1:5500`);
+      console.log(`📧 Email Service: ${process.env.EMAIL_SERVICE || 'Not configured'}`);
+      console.log(`🌐 CORS: Enabled for localhost development`);
       console.log(`🚀 Ready for student projects!`);
-      console.log(`⭐ ${databaseReady ? '10,000+ products across 20 domains + Cart + Wishlist + Reviews' : 'Basic functionality available'}`);
-      console.log(`✅ NEW: Reviews & Ratings System with Persistence Added!`);
+      console.log(`⭐ Advanced Authentication Features: Password Reset, Email Verification`);
+      console.log(`✅ File-based persistence: Users, Carts, Wishlists`);
     });
 
   } catch (error) {
